@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "motleycrew"
+version = "0.1.0"
+description = "A lightweight agent interaction framework."
+authors = ["MotleyCrew <github@motleycrew.ai>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<=3.13"
+langchain = "^0.1"
+crewai = "^0.16"
+setuptools = "^69.2.0"
+duckduckgo-search = "^5.2.1"
+llama-index = "^0.10.27"
+langchain-experimental = "^0.0.57"
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.2.0"
+pytest = "^8.0.2"
+pytest-cov = "^4.1.0"
+flake8 = "^7.0.0"
+mypy = "^1.8.0"
+isort = "^5.13.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

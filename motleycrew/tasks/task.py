@@ -68,6 +68,15 @@ class Task:
             upstream_results_section=upstream_results_section,
         )
 
+    def increment_tools_errors(self) -> None:
+        """
+        For compatibility with crewai.Agent.execute_task
+        It is called when an exception is raised in the tool, so for now we just re-raise it here
+        TODO: do we want to handle tool errors in future like CrewAI handles them?
+        :return:
+        """
+        raise
+
     def is_ready(self) -> bool:
         return not self.done and all(t.done for t in self.upstream_tasks)
 

@@ -88,7 +88,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent):
         else:
             input_ = json.dumps(kwargs)
 
-        logging.info("Made the args: %s", input)
+        logging.info("Made the args: %s", input_)
 
         # TODO: pass context of parent task to agent nicely?
         # TODO: mark the current task as depending on the new task
@@ -104,7 +104,10 @@ class MotleyAgentParent(MotleyAgentAbstractParent):
 
         # TODO: make sure tools return task objects, which are properly used by callers
         logging.info("Executing subtask '%s'", task.name)
+        self.crew.task_graph.set_task_running(task=task)
         result = self.crew.execute(task, return_result=True)
+
         logging.info("Finished subtask '%s' - %s", task.name, result)
+        self.crew.task_graph.set_task_done(task=task)
 
         return result

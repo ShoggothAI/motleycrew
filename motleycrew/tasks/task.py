@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, Sequence, Set
 from motleycrew.agent.parent import MotleyAgentAbstractParent
 
 if TYPE_CHECKING:
-    from motleycrew.tasks.graph import MotleyCrew
+    from motleycrew import MotleyCrew
 
 PROMPT_TEMPLATE_WITH_DEPS = """
 {description}

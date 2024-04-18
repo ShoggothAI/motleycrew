@@ -1,14 +1,15 @@
 import logging
 import json
-from typing import TYPE_CHECKING, Any, Sequence, Callable
+from typing import TYPE_CHECKING, Any, Sequence
 
 from langchain_core.tools import Tool
 
 from motleycrew.agent.parent import MotleyAgentAbstractParent
-from motleycrew.tasks import Task, TaskGraph
+from motleycrew.tasks import Task
 from motleycrew.tool import MotleyTool
 
 from motleycrew.common import MotleySupportedTool
+from motleycrew.common import MotleyAgentFactory
 from motleycrew.common.exceptions import AgentNotMaterialized
 from motleycrew.common.exceptions import CannotModifyMaterializedAgent
 
@@ -21,7 +22,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent):
         self,
         goal: str,
         name: str | None = None,
-        agent_factory: Callable[[dict[str, MotleyTool]], Any] | None = None,
+        agent_factory: MotleyAgentFactory | None = None,
         delegation: bool | Sequence[MotleyAgentAbstractParent] = False,
         tools: Sequence[MotleySupportedTool] | None = None,
         verbose: bool = False,
@@ -77,6 +78,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent):
 
     def call_as_tool(self, *args, **kwargs) -> Any:
         logging.info("Entering delegation for %s", self.name)
+        assert self.crew, "can't accept delegated task outside of a crew"
 
         if len(args) > 0:
             input_ = args[0]
@@ -97,7 +99,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent):
             # TODO inject the new subtask as a dep and reschedule the parent
             # TODO probably can't do this from here since we won't know if
             # there are other tasks to schedule
-            task_graph=TaskGraph(),
+            crew=self.crew,
         )
 
         # TODO: make sure tools return task objects, which are properly used by callers

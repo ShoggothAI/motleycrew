@@ -1,4 +1,4 @@
-from typing import Any, Optional, Sequence, Callable
+from typing import Any, Optional, Sequence
 
 from llama_index.core.agent import AgentRunner
 from langchain_core.runnables import RunnableConfig

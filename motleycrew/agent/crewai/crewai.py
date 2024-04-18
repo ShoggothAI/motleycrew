@@ -1,5 +1,4 @@
-import logging
-from typing import Any, Optional, Sequence, Callable
+from typing import Any, Optional, Sequence
 
 from crewai import Agent
 from langchain_core.runnables import RunnableConfig

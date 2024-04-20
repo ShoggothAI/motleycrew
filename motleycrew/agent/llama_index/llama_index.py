@@ -1,13 +1,13 @@
-from typing import Any, Optional, Sequence, Callable
+from typing import Any, Optional, Sequence
 
 from llama_index.core.agent import AgentRunner
 from langchain_core.runnables import RunnableConfig
 
 from motleycrew.agent.parent import MotleyAgentAbstractParent
 from motleycrew.agent.shared import MotleyAgentParent
-from motleycrew.tasks import Task, TaskGraph
-from motleycrew.tool import MotleyTool
+from motleycrew.tasks import Task
 from motleycrew.common import MotleySupportedTool
+from motleycrew.common import MotleyAgentFactory
 
 
 class LlamaIndexMotleyAgentParent(MotleyAgentParent):
@@ -15,7 +15,7 @@ class LlamaIndexMotleyAgentParent(MotleyAgentParent):
         self,
         goal: str,
         name: str | None = None,
-        agent_factory: Callable[[dict[str, MotleyTool]], AgentRunner] | None = None,
+        agent_factory: MotleyAgentFactory | None = None,
         delegation: bool | Sequence[MotleyAgentAbstractParent] = False,
         tools: Sequence[MotleySupportedTool] | None = None,
         verbose: bool = False
@@ -36,8 +36,10 @@ class LlamaIndexMotleyAgentParent(MotleyAgentParent):
         **kwargs: Any,
     ) -> Any:
         self.materialize()
+        self.agent: AgentRunner
 
         if isinstance(task, str):
+            assert self.crew, "can't create a task outside a crew"
             # TODO: feed in context/task.message_history correctly
             # TODO: attach the current task, if any, as a dependency of the new task
             # TODO: this preamble should really be a decorator to be shared across agent wrappers
@@ -48,7 +50,7 @@ class LlamaIndexMotleyAgentParent(MotleyAgentParent):
                 # TODO inject the new subtask as a dep and reschedule the parent
                 # TODO probably can't do this from here since we won't know if
                 # there are other tasks to schedule
-                task_graph=TaskGraph(),
+                crew=self.crew,
             )
         elif not isinstance(task, Task):
             # TODO: should really have a conversion function here from langchain tools to crewai tools
@@ -66,7 +68,7 @@ class LlamaIndexMotleyAgentParent(MotleyAgentParent):
         delegation: bool | Sequence[MotleyAgentAbstractParent] = False,
         tools: Sequence[MotleySupportedTool] | None = None,
         verbose: bool = False,
-    ):
+    ) -> "LlamaIndexMotleyAgentParent":
         wrapped_agent = LlamaIndexMotleyAgentParent(
             goal=goal,
             delegation=delegation,

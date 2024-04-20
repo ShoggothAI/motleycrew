@@ -2,6 +2,7 @@ from typing import Optional
 
 from langchain_core.tools import Tool
 from langchain_core.prompts import PromptTemplate
+from langchain_core.prompts.base import BasePromptTemplate
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.pydantic_v1 import BaseModel, Field
 
@@ -15,7 +16,7 @@ class LLMTool(MotleyTool):
         self,
         name: str,
         description: str,
-        prompt: str,
+        prompt: str | BasePromptTemplate,
         llm: Optional[BaseLanguageModel] = None,
     ):
         langchain_tool = create_llm_langchain_tool(name, description, prompt, llm)
@@ -25,7 +26,7 @@ class LLMTool(MotleyTool):
 def create_llm_langchain_tool(
     name: str,
     description: str,
-    prompt: str,
+    prompt: str | BasePromptTemplate,
     llm: Optional[BaseLanguageModel] = None,
     input_description: Optional[str] = "Input for the tool.",
 ):
@@ -37,11 +38,13 @@ def create_llm_langchain_tool(
 
         input: str = Field(description=input_description)
 
-    p = PromptTemplate.from_template(prompt)
-    assert "input" in p.input_variables, "Prompt must contain an `input` variable"
+    if not isinstance(prompt, BasePromptTemplate):
+        prompt = PromptTemplate.from_template(prompt)
+
+    assert "input" in prompt.input_variables, "Prompt must contain an `input` variable"
 
     def call_llm(input: str) -> str:
-        chain = p | llm
+        chain = prompt | llm
         return chain.invoke({"input": input})
 
     return Tool.from_function(

@@ -14,7 +14,8 @@ class CrewAIMotleyAgent(CrewAIMotleyAgentParent):
         delegation: bool | Sequence[MotleyAgentAbstractParent] = False,
         tools: Sequence[MotleySupportedTool] | None = None,
         llm: Optional[Any] = None,
-        verbose: bool = False,) -> "CrewAIMotleyAgent":
+        verbose: bool = False,
+    ):
         return cls.from_crewai_params(
             role=role,
             goal=goal,

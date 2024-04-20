@@ -1,10 +1,8 @@
 from typing import Sequence
 
-
 from langchain import hub
 from langchain_core.language_models import BaseLanguageModel
 from langchain.agents import create_react_agent
-
 
 from motleycrew.agent.parent import MotleyAgentAbstractParent
 from motleycrew.agent.langchain.langchain import LangchainMotleyAgentParent

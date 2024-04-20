@@ -1,3 +1,5 @@
+import os.path
+
 from dotenv import load_dotenv
 
 from motleycrew import MotleyCrew, Task
@@ -8,7 +10,7 @@ from motleycrew.common.utils import configure_logging
 load_dotenv()
 configure_logging(verbose=True)
 
-image_generator_tool = DallEImageGeneratorTool()
+image_generator_tool = DallEImageGeneratorTool(os.path.realpath("./images"))
 # For saving images locally use the line below
 # image_generator_tool = DallEImageGeneratorTool(images_directory="images")
 

@@ -33,19 +33,23 @@ def create_llm_langchain_tool(
     if llm is None:
         llm = init_llm(llm_framework=LLMFramework.LANGCHAIN)
 
-    class LLMToolInput(BaseModel):
-        """Input for the tool."""
-
-        input: str = Field(description=input_description)
-
     if not isinstance(prompt, BasePromptTemplate):
         prompt = PromptTemplate.from_template(prompt)
 
-    assert "input" in prompt.input_variables, "Prompt must contain an `input` variable"
+    assert (
+        len(prompt.input_variables) == 1
+    ), "Prompt must contain exactly one input variable"
+    input_var = prompt.input_variables[0]
+
+    class LLMToolInput(BaseModel):
+        """Input for the tool."""
+
+        # TODO: how hard is it to get that name from prompt.input_variables?
+        input: str = Field(description=input_description)
 
     def call_llm(input: str) -> str:
         chain = prompt | llm
-        return chain.invoke({"input": input})
+        return chain.invoke({input_var: input})
 
     return Tool.from_function(
         func=call_llm,

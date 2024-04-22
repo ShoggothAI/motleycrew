@@ -9,6 +9,7 @@ from motleycrew.agent.shared import MotleyAgentParent
 from motleycrew.tasks import Task
 
 from motleycrew.tool import MotleyTool
+from motleycrew.tracking import add_default_callbacks_to_langchain_config
 from motleycrew.common import MotleySupportedTool
 from motleycrew.common import LLMFramework
 from motleycrew.common.llms import init_llm
@@ -41,6 +42,7 @@ class LangchainMotleyAgentParent(MotleyAgentParent):
     ) -> Task:
         self.materialize()
 
+        config = add_default_callbacks_to_langchain_config(config)
         if isinstance(task, str):
             # TODO: feed in context/task.message_history correctly
             # TODO: attach the current task, if any, as a dependency of the new task

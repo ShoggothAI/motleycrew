@@ -10,6 +10,7 @@ from motleycrew.agent.shared import MotleyAgentParent
 from motleycrew.tasks import Task
 
 from motleycrew.tool import MotleyTool
+from motleycrew.tracking import add_default_callbacks_to_langchain_config
 from motleycrew.common import MotleySupportedTool
 from motleycrew.common import MotleyAgentFactory
 from motleycrew.common import LLMFramework
@@ -44,6 +45,7 @@ class LangchainMotleyAgentParent(MotleyAgentParent):
         self.materialize()
         self.agent: AgentExecutor
 
+        config = add_default_callbacks_to_langchain_config(config)
         if isinstance(task, str):
             assert self.crew, "can't create a task outside a crew"
             # TODO: feed in context/task.message_history correctly

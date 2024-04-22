@@ -52,12 +52,6 @@ class Task:
 
         self.crew.add_task(self)
 
-        self.human_input = ''
-        self.tools_errors: int = 0
-
-    def increment_tools_errors(self):
-        self.tools_errors += 1
-
     def prompt(self) -> str:
         """
         For compatibility with crewai.Agent.execute_task

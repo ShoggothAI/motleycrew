@@ -9,8 +9,9 @@ load_dotenv()
 configure_logging(verbose=True)
 
 image_generator_tool = DallEImageGeneratorTool()
-# For saving images locally use the line below
-# image_generator_tool = DallEImageGeneratorTool(images_directory="images")
+# By default images are saved to ./img directory
+# If you want to skip downloading and just get the image URL, use the line below instead
+# image_generator_tool = DallEImageGeneratorTool(images_directory=None)
 
 writer = CrewAIMotleyAgent(
     role="Short stories writer",

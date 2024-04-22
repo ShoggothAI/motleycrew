@@ -10,6 +10,7 @@ from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_community.utilities.dalle_image_generator import DallEAPIWrapper
 
 from .tool import MotleyTool
+from motleycrew.common import Defaults
 import motleycrew.common.utils as motley_utils
 
 
@@ -34,7 +35,13 @@ def download_image(url: str, file_path: str) -> Optional[str]:
 
 
 class DallEImageGeneratorTool(MotleyTool):
-    def __init__(self, images_directory: Optional[str] = None):
+    def __init__(
+        self, images_directory: Optional[str] = Defaults.DEFAULT_IMAGES_DIRECTORY
+    ):
+        """
+        Run Dall-E with a prompt, optionally download the image and return the file path.
+        If images_directory param is set to None, the images are not downloaded and URLs are returned instead.
+        """
         langchain_tool = create_dalle_image_generator_langchain_tool(
             images_directory=images_directory
         )

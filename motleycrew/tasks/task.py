@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, Sequence, Set
 from motleycrew.agent.parent import MotleyAgentAbstractParent
 
 if TYPE_CHECKING:
-    from motleycrew.tasks.graph import MotleyCrew
+    from motleycrew import MotleyCrew
 
 PROMPT_TEMPLATE_WITH_DEPS = """
 {description}
@@ -73,6 +73,15 @@ class Task:
             description=self.description,
             upstream_results_section=upstream_results_section,
         )
+
+    def increment_tools_errors(self) -> None:
+        """
+        For compatibility with crewai.Agent.execute_task
+        It is called when an exception is raised in the tool, so for now we just re-raise it here
+        TODO: do we want to handle tool errors in future like CrewAI handles them?
+        :return:
+        """
+        raise
 
     def is_ready(self) -> bool:
         return not self.done and all(t.done for t in self.upstream_tasks)

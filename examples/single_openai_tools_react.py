@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 from langchain_community.tools import DuckDuckGoSearchRun
 
-from motleycrew import MotleyCrew, Task, MotleyTool
+from motleycrew import MotleyCrew, Task
 from motleycrew.agent.langchain.openai_tools_react import ReactOpenAIToolsAgent
 from motleycrew.agent.langchain.react import ReactMotleyAgent
 

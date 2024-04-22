@@ -1,14 +1,15 @@
 import logging
 import json
-from typing import TYPE_CHECKING, Any, Sequence, Callable
+from typing import TYPE_CHECKING, Any, Sequence
 
 from langchain_core.tools import Tool
 
 from motleycrew.agent.parent import MotleyAgentAbstractParent
-from motleycrew.tasks import Task, TaskGraph
+from motleycrew.tasks import Task
 from motleycrew.tool import MotleyTool
 
 from motleycrew.common import MotleySupportedTool
+from motleycrew.common import MotleyAgentFactory
 from motleycrew.common.exceptions import AgentNotMaterialized
 from motleycrew.common.exceptions import CannotModifyMaterializedAgent
 
@@ -21,7 +22,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent):
         self,
         goal: str,
         name: str | None = None,
-        agent_factory: Callable[[dict[str, MotleyTool]], Any] | None = None,
+        agent_factory: MotleyAgentFactory | None = None,
         delegation: bool | Sequence[MotleyAgentAbstractParent] = False,
         tools: Sequence[MotleySupportedTool] | None = None,
         verbose: bool = False,
@@ -77,6 +78,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent):
 
     def call_as_tool(self, *args, **kwargs) -> Any:
         logging.info("Entering delegation for %s", self.name)
+        assert self.crew, "can't accept delegated task outside of a crew"
 
         if len(args) > 0:
             input_ = args[0]
@@ -86,7 +88,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent):
         else:
             input_ = json.dumps(kwargs)
 
-        logging.info("Made the args: %s", input)
+        logging.info("Made the args: %s", input_)
 
         # TODO: pass context of parent task to agent nicely?
         # TODO: mark the current task as depending on the new task
@@ -97,12 +99,15 @@ class MotleyAgentParent(MotleyAgentAbstractParent):
             # TODO inject the new subtask as a dep and reschedule the parent
             # TODO probably can't do this from here since we won't know if
             # there are other tasks to schedule
-            task_graph=TaskGraph(),
+            crew=self.crew,
         )
 
         # TODO: make sure tools return task objects, which are properly used by callers
         logging.info("Executing subtask '%s'", task.name)
+        self.crew.task_graph.set_task_running(task=task)
         result = self.crew.execute(task, return_result=True)
+
         logging.info("Finished subtask '%s' - %s", task.name, result)
+        self.crew.task_graph.set_task_done(task=task)
 
         return result

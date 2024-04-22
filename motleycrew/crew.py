@@ -1,3 +1,4 @@
+import logging
 import concurrent.futures
 import os
 from concurrent.futures import Future, ThreadPoolExecutor
@@ -34,12 +35,14 @@ class MotleyCrew:
 
         # TODO: need to specify agents both to tasks and to crew, redundant?
         self.agents = agents
+        for agent in self.agents:
+            agent.crew = self
 
         if self.single_thread:
-            print("Running in single-thread mode")
+            logging.info("Running in single-thread mode")
             return self._run_sync()
 
-        print("Running in threaded mode")
+        logging.info("Running in threaded mode")
         return self._run_async()
 
     def _run_sync(self):
@@ -59,8 +62,12 @@ class MotleyCrew:
             )
 
             for future in done:
+                exc = future.exception()
+                if exc:
+                    raise exc
+
                 task = future.mc_task
-                print(f"Finished task '{task.name}'")
+                logging.info(f"Finished task '{task.name}'")
                 self.futures.remove(future)
                 tasks.set_task_done(task)
                 self.adispatch_next_batch()
@@ -73,7 +80,7 @@ class MotleyCrew:
     def dispatch_next_batch(self):
         next_ = self.task_graph.get_ready_tasks()
         for t in next_:
-            print(f"Dispatching task '{t.name}'")
+            logging.info(f"Dispatching task '{t.name}'")
             self.task_graph.set_task_running(t)
             self.execute(t, True)
             self.task_graph.set_task_done(t)
@@ -82,7 +89,7 @@ class MotleyCrew:
         next_ = self.task_graph.get_ready_tasks()
         for t in next_:
             self.task_graph.set_task_running(t)
-            print(f"Dispatching task '{t.name}'")
+            logging.info(f"Dispatching task '{t.name}'")
             future = self.thread_pool.submit(
                 self.execute,
                 t,
@@ -107,6 +114,8 @@ class MotleyCrew:
         else:
             agent = spawn_agent(task)
 
+        logging.info("Assigning task '%s' to agent '%s'", task.name, agent.name)
+
         tools = self.get_agent_tools(agent, task)
         agent.add_tools(tools)
 
@@ -120,7 +129,9 @@ class MotleyCrew:
         # Add the agents as tools to each other for delegation
         # later might want to get a bit fancier here to prevent endlessly-deep delegation
         # TODO: do we want to auto-include the agents from the tasks in this?
-        tools = self.tools
+        tools = []
+        tools += self.tools
+
         if agent.delegation is True:
             tools += [aa.as_tool() for aa in self.agents if aa != agent]
         elif isinstance(agent.delegation, Iterable):

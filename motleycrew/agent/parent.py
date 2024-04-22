@@ -1,8 +1,10 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Optional, Any, Union
+from typing import TYPE_CHECKING, Optional, Any, Union
 
-from langchain_core.messages import BaseMessage
 from langchain_core.runnables import RunnableConfig
+
+if TYPE_CHECKING:
+    from motleycrew.tasks import Task
 
 
 class MotleyAgentAbstractParent(ABC):

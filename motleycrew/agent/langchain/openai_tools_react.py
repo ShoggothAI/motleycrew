@@ -153,7 +153,6 @@ def create_openai_tools_react_agent(
             )
     """
     if prompt is None:
-
         think_prompt = default_think_prompt
         act_prompt = default_act_prompt
     else:
@@ -209,7 +208,7 @@ class ReactOpenAIToolsAgent(LangchainMotleyAgentParent):
         cls,
         tools: Sequence[MotleySupportedTool],
         goal: str = "",  # gets ignored at the moment
-        prompt: str | None = None,
+        prompt: ChatPromptTemplate | Sequence[ChatPromptTemplate] | None = None,
         llm: BaseLanguageModel | None = None,
         delegation: bool | Sequence[MotleyAgentAbstractParent] = False,
         verbose: bool = False,

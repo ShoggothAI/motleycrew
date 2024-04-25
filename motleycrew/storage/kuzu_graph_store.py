@@ -5,12 +5,10 @@ Kùzu graph store index.
 
 from typing import Any, Dict, List, Optional
 
-from llama_index.core.graph_stores.types import GraphStore
-
 import kuzu
 
 
-class MotleyQuestionGraphStore(GraphStore):
+class MotleyQuestionGraphStore:
     IS_SUBQUESTION_PREDICATE = "IS_SUBQUESTION"
 
     def __init__(
@@ -175,7 +173,6 @@ class MotleyQuestionGraphStore(GraphStore):
 
 if __name__ == "__main__":
     from pathlib import Path
-    import kuzu
 
     here = Path(__file__).parent
     db_path = here / "test1"

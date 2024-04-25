@@ -1060,6 +1060,45 @@ files = [
 ]
 
 [[package]]
+name = "kuzu"
+version = "0.1.0"
+description = "An in-process property graph database management system built for query speed and scalability."
+optional = false
+python-versions = "*"
+files = [
+    {file = "kuzu-0.1.0-cp310-cp310-macosx_10_15_x86_64.whl", hash = "sha256:f60ca54ef3c8627665e376ffa0f044ee922f4cac2b32ed0bb2d20cd1589993be"},
+    {file = "kuzu-0.1.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:e3b9302b2b12aa504e22be8f71f58a44594f4609027b791db3b58f27d3ec7eea"},
+    {file = "kuzu-0.1.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a817b73edfb79382cef15db5b9cdd57cef9a95f398811ad5d7ae6a4329ff9613"},
+    {file = "kuzu-0.1.0-cp310-cp310-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:45605768da01d9c4d9047379905b8dd83d0be30fb0bd8c49ab862c84685ea7e3"},
+    {file = "kuzu-0.1.0-cp310-cp310-win_amd64.whl", hash = "sha256:9e410b9c7785db065b58707ede9df2f611e15bd3da4d3f4ac8f28e45f651a030"},
+    {file = "kuzu-0.1.0-cp311-cp311-macosx_10_15_x86_64.whl", hash = "sha256:16543b69ddb7171c723cd77df38d338d6c5607bcfaee700c71abb686293f0346"},
+    {file = "kuzu-0.1.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:8b4492a904c7345428fc2493583dca1f4f5ee7cdb590006e4648b613ee8fb8b1"},
+    {file = "kuzu-0.1.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c8f459426c7a92887a0ee235b87295fdab6ab70e4e1d52647f3b31750784d699"},
+    {file = "kuzu-0.1.0-cp311-cp311-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:c3ceebcae55ea47867a6a80c16103164167c4a8fa670184168f0cf91dd82337a"},
+    {file = "kuzu-0.1.0-cp311-cp311-win_amd64.whl", hash = "sha256:c24fd6b9633081a79ceedb757a33f028ece31b9d691414db8f97e1be67739462"},
+    {file = "kuzu-0.1.0-cp312-cp312-macosx_10_15_x86_64.whl", hash = "sha256:a0b64068983c289dee9fc624dde4b697e0307bd6c3e90ffcdc8d7d61c4fa450e"},
+    {file = "kuzu-0.1.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:d9bea48a3db41a75413b531caa8fd7eb0bbf67357181cebac806d9c188550d1c"},
+    {file = "kuzu-0.1.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:15ac9171197c0d6ff8b5adc30043c0a3f012d2fc17529c7afcf9c5659db4cf69"},
+    {file = "kuzu-0.1.0-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:ec0557cda5735ba03bf28fe766180f3fa92319e3e1611e744248f4ed28357423"},
+    {file = "kuzu-0.1.0-cp312-cp312-win_amd64.whl", hash = "sha256:229e1902d1c82faef0fc07dc617ec82d927131dd519a4908f61cfce0f452ba74"},
+    {file = "kuzu-0.1.0-cp37-cp37m-macosx_10_15_x86_64.whl", hash = "sha256:07b1eb930afe5efd392fc0ad5a58ea27216a464e95231661aacbd0013294cee0"},
+    {file = "kuzu-0.1.0-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:6c954af85a5be173741322e239a4c1d8a274d0ff2d0a006386dba587aa3e64c8"},
+    {file = "kuzu-0.1.0-cp37-cp37m-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:4d761b610ba83448cc6ba51ddd376489d525dddcf8d74492de15cd472ecffd7c"},
+    {file = "kuzu-0.1.0-cp37-cp37m-win_amd64.whl", hash = "sha256:cdf8dd2277e595719a6706e6340912323dc4db067c8169e24949f4746d467a96"},
+    {file = "kuzu-0.1.0-cp38-cp38-macosx_10_15_x86_64.whl", hash = "sha256:bd0ab78ba72c8befb275d6ad55f19e738f9387f7540fa36faf413ecb76bb8563"},
+    {file = "kuzu-0.1.0-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:6b1fe702f671063c626bd1390cf20910b49893192ae77b303acd6b9f3f62f661"},
+    {file = "kuzu-0.1.0-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b488f83e5fc4a1bf6a15ed70712e4c2b9c6296f25c4c2a9f8e8015e81f831151"},
+    {file = "kuzu-0.1.0-cp38-cp38-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:61ab2d6aa98bee1bf7c3f6893a1706a408531846d1de5b9624eb490ca2117b2c"},
+    {file = "kuzu-0.1.0-cp38-cp38-win_amd64.whl", hash = "sha256:80000e12a0703f5062ab3560e701a6a1b2e10992c31de6912f9e5291509b1659"},
+    {file = "kuzu-0.1.0-cp39-cp39-macosx_10_15_x86_64.whl", hash = "sha256:967a99fb3cdea73c3bfa86c45a78ed896468318f6061e42c352e3df96b370e0f"},
+    {file = "kuzu-0.1.0-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:65d72f536ed91aa114dae8400e5cdd22ba05540782de39462a7da550ed3d438a"},
+    {file = "kuzu-0.1.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:74a5eb43e9ae5b1e4ca3cf61cd845c3e300dc737284fda384441af01ad05bd54"},
+    {file = "kuzu-0.1.0-cp39-cp39-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:2e78bd924cdcace890e7ed25917d8221b941f239a05391c5d2a08c70b516096e"},
+    {file = "kuzu-0.1.0-cp39-cp39-win_amd64.whl", hash = "sha256:37432b996f706354b6c469b6ea1bdd9d7fba4d61256f041e723fc8eefbedcadd"},
+    {file = "kuzu-0.1.0.tar.gz", hash = "sha256:12883c9f7d1621c8f4ab50b85ff89d011aef45f7f1328a2c1c6417d5e1456cae"},
+]
+
+[[package]]
 name = "langchain"
 version = "0.1.16"
 description = "Building applications with LLMs through composability"
@@ -1344,6 +1383,21 @@ files = [
 ]
 
 [package.dependencies]
+llama-index-core = ">=0.10.1,<0.11.0"
+
+[[package]]
+name = "llama-index-graph-stores-kuzu"
+version = "0.1.2"
+description = "llama-index graph stores kuzu integration"
+optional = false
+python-versions = ">=3.8.1,<4.0"
+files = [
+    {file = "llama_index_graph_stores_kuzu-0.1.2-py3-none-any.whl", hash = "sha256:eba188bc6afdc246cfd15114359fb8d2db4a34e88e3e96385a383d4fbc7a1dcd"},
+    {file = "llama_index_graph_stores_kuzu-0.1.2.tar.gz", hash = "sha256:0458860bde83d28cdd760a0cb5502cb0b191cae5896d814c1c420dcb99dbb8fd"},
+]
+
+[package.dependencies]
+kuzu = ">=0.1.0,<0.2.0"
 llama-index-core = ">=0.10.1,<0.11.0"
 
 [[package]]
@@ -3274,4 +3328,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<=3.13"
-content-hash = "2b4c279975a9bf627bdd621f23b95cc401ee4bfa70be9acb7e1adea510e535e1"
+content-hash = "a9a8a5a94aa310dc866ec41a0fba6c0ff748d27d71cd38d5b5012d9f247a2357"

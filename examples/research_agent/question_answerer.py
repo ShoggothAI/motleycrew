@@ -15,7 +15,9 @@ from langchain_core.runnables import (
 
 from llama_index.core.graph_stores.types import GraphStore
 from motleycrew.tool import MotleyTool, LLMTool
+from motleycrew.storage import MotleyGraphStore
 from motleycrew.common.utils import print_passthrough
+
 
 _default_prompt = PromptTemplate.from_template(
     """
@@ -36,7 +38,7 @@ _default_prompt = PromptTemplate.from_template(
 class AnswerSubQuestionTool(MotleyTool):
     def __init__(
         self,
-        graph: GraphStore,
+        graph: MotleyGraphStore,
         prompt: str | BasePromptTemplate = None,
     ):
         langchain_tool = create_answer_question_langchain_tool(
@@ -62,7 +64,7 @@ class QuestionAnswererInput(BaseModel):
 
 
 def create_answer_question_langchain_tool(
-    graph: GraphStore,
+    graph: MotleyGraphStore,
     prompt: str | BasePromptTemplate = None,
 ) -> Tool:
     """
@@ -77,10 +79,10 @@ def create_answer_question_langchain_tool(
         description="Tool to answer a question from notes and sub-questions",
     )
     """
-    	Gets a valid question node ID, question, and context as input dict
-    	Retrieves child quuestion answers
-    	Feeds all that to LLM to answer Q (research_agent prompt)
-    	Attaches answer to the node
+    Gets a valid question node ID, question, and context as input dict
+    Retrieves child question answers
+    Feeds all that to LLM to answer Q (research_agent prompt)
+    Attaches answer to the node
     """
 
     @chain

@@ -2,45 +2,27 @@ import logging
 import sys
 import kuzu
 
-from langchain.prompts import PromptTemplate
+from langchain.tools import Tool
 
-from motleycrew.storage import MotleyKuzuGraphStore
-from motleycrew.tool.llm_tool import LLMTool
+from motleycrew import MotleyTool
+from motleycrew.storage import MotleyGraphStore
+
+from question_struct import Question
+from question_generator import QuestionGeneratorTool
+from question_generator import QuestionGeneratorToolInput
+from question_prioritizer import QuestionPrioritizerTool
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
 
-QUESTION_PRIORITIZATION_TEMPLATE = PromptTemplate(
-    template=(
-        "You are provided with the following list of questions:"
-        " {unanswered_questions} \n"
-        " Your task is to choose one question from the above list"
-        " that is the most pertinent to the following query:\n"
-        " '{original_question}' \n"
-        " Respond with one question out of the provided list of questions."
-        " Return the questions as it is without any edits."
-        " Format your response like:\n"
-        " #. question"
-    ),
-    input_variables=["unanswered_questions", "original_question"],
-)
-
-
 class KnowledgeGainingOrchestrator:
-    def __init__(self, db_path: str):
-        self.db = kuzu.Database(db_path)
-        self.storage = MotleyKuzuGraphStore(
-            self.db, node_table_schema={"question": "STRING", "answer": "STRING", "context": "STRING"}
-        )
+    def __init__(self, storage: MotleyGraphStore, query_tool: MotleyTool):
+        self.storage = storage
+        self.query_tool = query_tool
+        self.question_prioritization_tool = QuestionPrioritizerTool()
+        self.question_generation_tool = QuestionGeneratorTool(query_tool=query_tool, graph=self.storage)
 
-        self.question_prioritization_tool = LLMTool(
-            name="question_prioritization_tool",
-            description="find the most important question",
-            prompt=QUESTION_PRIORITIZATION_TEMPLATE,
-        )
-        self.question_generation_tool = None
-
-    def get_unanswered_questions(self, only_without_children: bool = False) -> list[dict]:
+    def get_unanswered_questions(self, only_without_children: bool = False) -> list[Question]:
         if only_without_children:
             query = "MATCH (n1:{}) WHERE n1.answer IS NULL AND NOT (n1)-[:{}]->(:{}) RETURN n1;".format(
                 self.storage.node_table_name, self.storage.rel_table_name, self.storage.node_table_name
@@ -49,7 +31,7 @@ class KnowledgeGainingOrchestrator:
             query = "MATCH (n1:{}) WHERE n1.answer IS NULL RETURN n1;".format(self.storage.node_table_name)
 
         query_result = self.storage.run_query(query)
-        return [row[0] for row in query_result]  # flatten
+        return [Question.deserialize(row[0]) for row in query_result]
 
     def __call__(self, query: str, max_iter: int):
         self.storage.create_entity({"question": query})
@@ -60,25 +42,56 @@ class KnowledgeGainingOrchestrator:
             unanswered_questions = self.get_unanswered_questions(only_without_children=True)
             logging.info("Loaded unanswered questions: %s", unanswered_questions)
 
-            tool_input = "\n".join(f"{i}. {question}" for i, question in enumerate(unanswered_questions))
-            most_pertinent_question_raw = self.question_prioritization_tool.invoke(tool_input)
+            question_prioritization_tool_input = {
+                "unanswered_questions": "\n".join(
+                    f"{i}. {question.question}" for i, question in enumerate(unanswered_questions)
+                ),
+                "original_question": query,
+            }
+            most_pertinent_question_raw = self.question_prioritization_tool.invoke(
+                question_prioritization_tool_input
+            ).content
             logging.info("Most pertinent question according to the tool: %s", most_pertinent_question_raw)
 
             i, most_pertinent_question_text = most_pertinent_question_raw.split(".", 1)
+            i = int(i)
             assert i < len(unanswered_questions)
 
             most_pertinent_question = unanswered_questions[i]
-            assert most_pertinent_question_text.strip() == most_pertinent_question["question"].strip()
+            assert most_pertinent_question_text.strip() == most_pertinent_question.question.strip()
 
             logging.info("Generating new questions")
+            self.question_generation_tool.invoke({"question": most_pertinent_question})
 
 
 if __name__ == "__main__":
     from pathlib import Path
     import shutil
+    from dotenv import load_dotenv
+    from motleycrew.storage import MotleyKuzuGraphStore
 
+    load_dotenv()
     here = Path(__file__).parent
     db_path = here / "research_db"
     shutil.rmtree(db_path, ignore_errors=True)
 
-    orchestrator = KnowledgeGainingOrchestrator(db_path=str(db_path))
+    db = kuzu.Database(db_path)
+    storage = MotleyKuzuGraphStore(
+        db, node_table_schema={"question": "STRING", "answer": "STRING", "context": "STRING"}
+    )
+
+    query_tool = MotleyTool.from_langchain_tool(
+        Tool.from_function(
+            func=lambda question: [
+                "Germany has consisted of many different states over the years",
+                "The capital of France has moved in 1815, from Lyons to Paris",
+                "France actually has two capitals, one in the north and one in the south",
+            ],
+            name="Query Tool",
+            description="Query the library for relevant information.",
+            args_schema=QuestionGeneratorToolInput,
+        )
+    )
+
+    orchestrator = KnowledgeGainingOrchestrator(storage=storage, query_tool=query_tool)
+    orchestrator(query="What is the capital of France?", max_iter=5)

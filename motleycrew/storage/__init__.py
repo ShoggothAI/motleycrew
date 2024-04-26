@@ -1,1 +1,1 @@
-from .kuzu_graph_store import MotleyQuestionGraphStore
+from .kuzu_graph_store import MotleyKuzuGraphStore

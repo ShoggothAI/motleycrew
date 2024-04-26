@@ -1,4 +1,7 @@
+import os
+
 from motleycrew.caсhing.http_cache import (
+    BaseHttpCache,
     RequestsHttpCaching,
     HttpxHttpCaching,
     CurlCffiHttpCaching,
@@ -10,6 +13,17 @@ caching_http_library_list = [
     HttpxHttpCaching(),
     CurlCffiHttpCaching(),
 ]
+
+
+def set_strong_cache(val: bool):
+    """Enabling disabling the strictly caching option"""
+    BaseHttpCache.strong_cache = bool(val)
+
+
+def set_cache_location(location: str) -> str:
+    """Sets the caching root directory, returns the absolute path of the derrictory"""
+    BaseHttpCache.root_cache_dir = location
+    return os.path.abspath(BaseHttpCache.root_cache_dir)
 
 
 def enable_cache():

@@ -26,6 +26,10 @@ class CacheException(Exception):
     """Exception for caching process"""
 
 
+class StrongCacheException(BaseException):
+    """Exception use of cache only"""
+
+
 load_dotenv()
 
 
@@ -60,6 +64,7 @@ class BaseHttpCache(ABC):
     library_name: str = ""
     app_name = os.environ.get("APP_NAME") or "motleycrew"
     root_cache_dir = platformdirs.user_cache_dir(app_name)
+    strong_cache = False
 
     def __init__(self, *args, **kwargs):
         self.is_caching = False
@@ -156,10 +161,9 @@ class BaseHttpCache(ABC):
         cache_file, url = cache_data
 
         # If cache exists, load and return it
-        if cache_file.exists():
-            result = self.read_from_cache(cache_file, url)
-            if result is not None:
-                return result
+        result = self.load_cache_response(cache_file, url)
+        if result is not None:
+            return result
 
         # Otherwise, call the function and save its result to the cache
         result = func(*args, **kwargs)
@@ -174,11 +178,10 @@ class BaseHttpCache(ABC):
             return await func(*args, **kwargs)
         cache_file, url = cache_data
 
-        # If cache exists, load and return it
-        if cache_file.exists():
-            result = self.read_from_cache(cache_file, url)
-            if result is not None:
-                return result
+        #  If cache exists, load and return it
+        result = self.load_cache_response(cache_file, url)
+        if result is not None:
+            return result
 
         # Otherwise, call the function and save its result to the cache
         result = await func(*args, **kwargs)
@@ -186,8 +189,17 @@ class BaseHttpCache(ABC):
         self.write_to_cache(result, cache_file, url)
         return result
 
-    @staticmethod
-    def read_from_cache(cache_file: Path, url: str = "") -> Union[Any, None]:
+    def load_cache_response(self, cache_file: Path, url: str) -> Union[Any, None]:
+        """Loads and returns the cached response"""
+        if cache_file.exists():
+            return self.read_from_cache(cache_file, url)
+        elif self.strong_cache:
+            msg = "Cache file not found: {}\nthe strictly caching option is enabled.".format(
+                str(cache_file)
+            )
+            raise StrongCacheException(msg)
+
+    def read_from_cache(self, cache_file: Path, url: str = "") -> Union[Any, None]:
         """Reads and returns a serialized object from a file"""
         try:
             with cache_file.open("rb") as f:
@@ -196,6 +208,11 @@ class BaseHttpCache(ABC):
                 return result
         except Exception as e:
             logging.warning("Unpickling failed for {}".format(cache_file))
+            if self.strong_cache:
+                msg = "Error reading cached file: {}\n{}".format(
+                    str(e), str(cache_file)
+                )
+                raise StrongCacheException(msg)
         return None
 
     def write_to_cache(self, response: Any, cache_file: Path, url: str = "") -> None:

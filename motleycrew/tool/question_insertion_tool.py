@@ -12,12 +12,12 @@ from motleycrew.tool import MotleyTool
 
 
 class QuestionInsertionTool(MotleyTool):
-    def __init__(self, node_id: str, graph: GraphStore):
+    def __init__(self, question: str, graph: GraphStore):
 
         langchain_tool = create_question_insertion_langchain_tool(
             name="Question Insertion Tool",
             description="Insert a list of questions (supplied as a list of strings) into the graph.",
-            node_id=node_id,
+            question=question,
             graph=graph,
         )
 
@@ -35,13 +35,13 @@ class QuestionInsertionToolInput(BaseModel):
 def create_question_insertion_langchain_tool(
     name: str,
     description: str,
-    node_id: str,
+    question: str,
     graph: GraphStore,
 ):
     def insert_questions(questions: list[str]) -> None:
-        for question in questions:
+        for subquestion in questions:
             # TODO: change! This is a placeholder implementation
-            graph.upsert_triplet(node_id, "IS_SUBQUESTION", question)
+            graph.upsert_triplet(question, "IS_SUBQUESTION", subquestion)
 
     return Tool.from_function(
         func=insert_questions,
@@ -62,10 +62,10 @@ if __name__ == "__main__":
 
     children_1 = ["What is the capital of France?", "What is the capital of Germany?"]
     children_2 = ["What is the capital of Italy?", "What is the capital of Spain?"]
-    tool = QuestionInsertionTool(node_id="Starting question", graph=graph_store)
+    tool = QuestionInsertionTool(question="Starting question", graph=graph_store)
     tool.invoke({"questions": children_1})
     tool2 = QuestionInsertionTool(
-        node_id="What is the capital of France?", graph=graph_store
+        question="What is the capital of France?", graph=graph_store
     )
     tool2.invoke({"questions": children_2})
     print(

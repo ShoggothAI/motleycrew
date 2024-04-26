@@ -2,7 +2,7 @@ from typing import Union, Sequence, List
 
 from dotenv import load_dotenv
 
-
+from llama_index.graph_stores.kuzu import KuzuGraphStore
 from langchain.schema import AIMessage, HumanMessage, SystemMessage, BaseMessage
 from langchain_core.prompts.chat import ChatPromptTemplate
 from motleycrew.agent.langchain.react import ReactMotleyAgent
@@ -58,7 +58,8 @@ illustrator_prompt = ChatPromptTemplate.from_messages(
             content="""Your task is to specify the illustrations that would fit this story. 
     Make sure the illustrations are varied in style, eye-catching, and some of them humorous.
     Describe each illustration in a way suitable for entering in a Midjourney prompt.  
-    Each description should be detailed and verbose. Don't explain the purpose of the illustrations, just describe in great 
+    Each description should be detailed and verbose. Don't explain the purpose of the illustrations, 
+    just describe in great 
     detail what each illustration should show, in a way suitable for a generative image prompt.
     There should be at most 5 and at least 3 illustrations.
     Return the illustration descriptions as a list in the format 
@@ -106,7 +107,8 @@ seo_expert = LLMTool(
 
 
 writer = ReactMotleyAgent(
-    prompt="You are a professional freelance copywriter with 10 years of experience."
+    prompt="You are a professional freelance copywriter with 10 years of experience.",
+    tools=[editor, illustrator, seo_expert],
 )
 
 # Create tasks for your agents
@@ -132,3 +134,5 @@ task1 = Task(
             Information begins: {text} <END>""",
     agent=writer,
 )
+
+crew.run(verbose=2)

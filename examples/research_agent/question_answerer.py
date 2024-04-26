@@ -112,7 +112,7 @@ def create_answer_question_langchain_tool(
         """
         Inserts the answer into the graph.
         """
-        graph.update_property(id=question_id, name="answer", value=answer)
+        graph.update_properties(id=question_id, values={"answer": answer})
 
     this_chain = (
         {

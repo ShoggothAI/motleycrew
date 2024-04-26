@@ -15,9 +15,9 @@ class Question:
 
         if self.id:
             data["id"] = json.dumps(self.id)
-        if self.context:
+        if self.question:
             data["question"] = json.dumps(self.question)
-        if self.context:
+        if self.answer:
             data["answer"] = json.dumps(self.answer)
         if self.context:
             data["context"] = json.dumps(self.context)

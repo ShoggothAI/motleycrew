@@ -3,6 +3,9 @@ from typing import Optional, Any
 
 
 class MotleyGraphStore(ABC):
+    node_table_name: str
+    rel_table_name: str
+
     @abstractmethod
     def check_entity_exists(self, entity_id: int) -> bool:
         pass
@@ -25,5 +28,11 @@ class MotleyGraphStore(ABC):
         """Delete a given entity and its relations"""
         pass
 
+    @abstractmethod
     def set_property(self, entity_id: int, property_name: str, property_value: Any):
+        pass
+
+    @abstractmethod
+    def run_query(self, query: str, parameters: Optional[dict] = None) -> list[list]:
+        """Run a Cypher query and return the results in standard Python containers"""
         pass

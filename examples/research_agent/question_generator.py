@@ -1,4 +1,4 @@
-from typing import List, Optional, Dict, Any
+from typing import Optional, Any
 import json
 from pathlib import Path
 
@@ -6,7 +6,6 @@ from langchain_core.language_models import BaseLanguageModel
 from langchain_core.runnables import (
     RunnablePassthrough,
     RunnableLambda,
-    RunnableParallel,
 )
 from langchain_core.tools import Tool
 from langchain_core.prompts.base import BasePromptTemplate
@@ -14,19 +13,20 @@ from langchain_core.prompts import PromptTemplate
 
 from langchain_core.pydantic_v1 import BaseModel, Field
 
-# TODO: fallback interface if LlamaIndex is not available
-from llama_index.core.graph_stores.types import GraphStore
-
 from motleycrew.tool import MotleyTool
 from motleycrew.common import LLMFramework
 from motleycrew.common.llms import init_llm
-from motleycrew.tool.question_insertion_tool import QuestionInsertionTool
 from motleycrew.common.utils import print_passthrough
+from motleycrew.storage import MotleyGraphStore
+
+from question_struct import Question
+from question_inserter import QuestionInsertionTool
+
 
 default_prompt = PromptTemplate.from_template(
     """
 You are a part of a team. The ultimate goal of your team is to
-answer the following Question: '{question}'.\n
+answer the following Question: '{question_text}'.\n
 Your team has discovered some new text (delimited by ```) that may be relevant to your ultimate goal.
 text: \n ``` {context} ``` \n
 Your task is to ask new questions that may help your team achieve the ultimate goal.
@@ -57,7 +57,7 @@ class QuestionGeneratorTool(MotleyTool):
     def __init__(
         self,
         query_tool: MotleyTool,
-        graph: GraphStore,
+        graph: MotleyGraphStore,
         max_questions: int = 3,
         llm: Optional[BaseLanguageModel] = None,
         prompt: str | BasePromptTemplate = None,
@@ -76,14 +76,12 @@ class QuestionGeneratorTool(MotleyTool):
 class QuestionGeneratorToolInput(BaseModel):
     """Input for the Question Generator Tool."""
 
-    question: str = Field(
-        description="The input question for which to generate subquestions."
-    )
+    question: Question = Field(description="The input question for which to generate subquestions.")
 
 
 def create_question_generator_langchain_tool(
     query_tool: MotleyTool,
-    graph: GraphStore,
+    graph: MotleyGraphStore,
     max_questions: int = 3,
     llm: Optional[BaseLanguageModel] = None,
     prompt: str | BasePromptTemplate = None,
@@ -98,14 +96,10 @@ def create_question_generator_langchain_tool(
     elif isinstance(prompt, str):
         prompt = PromptTemplate.from_template(prompt)
 
-    assert isinstance(
-        prompt, BasePromptTemplate
-    ), "Prompt must be a string or a BasePromptTemplate"
+    assert isinstance(prompt, BasePromptTemplate), "Prompt must be a string or a BasePromptTemplate"
 
-    def partial_inserter(question: dict[str, str]):
-        out = QuestionInsertionTool(
-            graph=graph, question=question["question"]
-        ).to_langchain_tool()
+    def partial_inserter(question: Question):
+        out = QuestionInsertionTool(graph=graph, question=question).to_langchain_tool()
         return (out,)
 
     def insert_questions(input_dict) -> None:
@@ -124,7 +118,10 @@ def create_question_generator_langchain_tool(
         }
         | RunnableLambda(print_passthrough)
         | {
-            "subquestions": prompt.partial(num_questions=max_questions) | llm,
+            "subquestions": RunnablePassthrough.assign(question_text=lambda x: x["question"]["question"].question)
+            | RunnableLambda(print_passthrough)
+            | prompt.partial(num_questions=max_questions)
+            | llm,
             "question_inserter": RunnablePassthrough(),
         }
         | RunnableLambda(insert_questions)

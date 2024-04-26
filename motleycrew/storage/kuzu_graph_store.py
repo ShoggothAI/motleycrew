@@ -7,8 +7,10 @@ from typing import Any, Dict, List, Optional
 
 import kuzu
 
+from motleycrew.storage import MotleyGraphStore
 
-class MotleyKuzuGraphStore:
+
+class MotleyKuzuGraphStore(MotleyGraphStore):
     def __init__(
         self,
         database: Any,
@@ -81,11 +83,11 @@ class MotleyKuzuGraphStore:
         cypher_mapping = cypher_mapping.rstrip(", ") + "}"
         return cypher_mapping, parameters
 
-    def create_entity(self, entity: dict) -> int:
+    def create_entity(self, entity: dict) -> dict:
         """Create a new entity and return its id"""
         cypher_mapping, parameters = MotleyKuzuGraphStore._dict_to_cypher_mapping_with_parameters(entity)
         create_result = self.connection.execute(
-            "CREATE (n:{} {}) RETURN n.id".format(self.node_table_name, cypher_mapping), parameters=parameters
+            "CREATE (n:{} {}) RETURN n".format(self.node_table_name, cypher_mapping), parameters=parameters
         )
         assert create_result.has_next()
         return create_result.get_next()[0]

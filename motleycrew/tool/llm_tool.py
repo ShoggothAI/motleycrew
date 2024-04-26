@@ -18,8 +18,11 @@ class LLMTool(MotleyTool):
         description: str,
         prompt: str | BasePromptTemplate,
         llm: Optional[BaseLanguageModel] = None,
+        input_description: Optional[str] = "Input for the tool.",
     ):
-        langchain_tool = create_llm_langchain_tool(name, description, prompt, llm)
+        langchain_tool = create_llm_langchain_tool(
+            name=name, description=description, prompt=prompt, llm=llm, input_description=input_description
+        )
         super().__init__(langchain_tool)
 
 
@@ -27,8 +30,8 @@ def create_llm_langchain_tool(
     name: str,
     description: str,
     prompt: str | BasePromptTemplate,
-    llm: Optional[BaseLanguageModel] = None,
-    input_description: Optional[str] = "Input for the tool.",
+    llm: Optional[BaseLanguageModel],
+    input_description: Optional[str],
 ):
     if llm is None:
         llm = init_llm(llm_framework=LLMFramework.LANGCHAIN)
@@ -36,9 +39,7 @@ def create_llm_langchain_tool(
     if not isinstance(prompt, BasePromptTemplate):
         prompt = PromptTemplate.from_template(prompt)
 
-    assert (
-        len(prompt.input_variables) == 1
-    ), "Prompt must contain exactly one input variable"
+    assert len(prompt.input_variables) == 1, "Prompt must contain exactly one input variable"
     input_var = prompt.input_variables[0]
 
     class LLMToolInput(BaseModel):

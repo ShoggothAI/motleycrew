@@ -16,7 +16,7 @@ langchain-experimental = "^0.0.57"
 python-dotenv = "^1.0.0"
 lunary = "^1.0.3"
 langchainhub = "^0.1.15"
-llama-index-graph-stores-kuzu = "^0.1.2"
+kuzu = "^0.3.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.2.0"

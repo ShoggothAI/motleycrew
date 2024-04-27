@@ -66,7 +66,8 @@ class BaseHttpCache(ABC):
     library_name: str = ""
     app_name = os.environ.get("APP_NAME") or "motleycrew"
     root_cache_dir = platformdirs.user_cache_dir(app_name)
-    strong_cache = False
+    strong_cache: bool = False
+    update_cache_if_exists: bool = False
 
     def __init__(self, *args, **kwargs):
         self.is_caching = False
@@ -193,7 +194,7 @@ class BaseHttpCache(ABC):
 
     def load_cache_response(self, cache_file: Path, url: str) -> Union[Any, None]:
         """Loads and returns the cached response"""
-        if cache_file.exists():
+        if cache_file.exists() and not self.update_cache_if_exists:
             return self.read_from_cache(cache_file, url)
         elif self.strong_cache:
             msg = "Cache file not found: {}\nthe strictly caching option is enabled.".format(

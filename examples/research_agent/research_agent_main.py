@@ -17,7 +17,7 @@ DATA_DIR = os.path.join(WORKING_DIR, "mahabharata/text/TinyTales")
 PERSIST_DIR = WORKING_DIR / "storage"
 
 QUESTION = "Why did Arjuna kill Karna, his half-brother?"
-MAX_ITER = 2
+MAX_ITER = 20
 ANSWER_LENGTH = 200
 
 

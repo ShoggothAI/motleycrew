@@ -3,9 +3,6 @@ import os.path
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import StructuredTool
 
-from llama_index.core.tools import RetrieverTool
-
-
 from llama_index.core.node_parser import SentenceSplitter
 from llama_index.embeddings.openai import OpenAIEmbedding
 
@@ -17,9 +14,10 @@ from llama_index.core import (
 )
 
 from motleycrew.tool import MotleyTool
+from question_struct import Question
 
 
-def make_retriever_tool(DATA_DIR, PERSIST_DIR):
+def make_retriever_tool(DATA_DIR, PERSIST_DIR, return_strings_only: bool = False):
     text_embedding_model = "text-embedding-ada-002"
     embeddings = OpenAIEmbedding(model=text_embedding_model)
 
@@ -44,12 +42,12 @@ def make_retriever_tool(DATA_DIR, PERSIST_DIR):
     class RetrieverToolInput(BaseModel):
         """Input for the Retriever Tool."""
 
-        question: str = Field(
-            description="The input question for which to retrieve relevant data."
-        )
+        question: Question = Field(description="The input question for which to retrieve relevant data.")
 
-    def call_retriever(question: str) -> str:
-        out = retriever.retrieve(question)
+    def call_retriever(question: Question) -> list:
+        out = retriever.retrieve(question.question)
+        if return_strings_only:
+            return [node.text for node in out]
         return out
 
     retriever_tool = StructuredTool.from_function(
@@ -66,13 +64,12 @@ if __name__ == "__main__":
 
     # check if storage already exists
     here = os.path.dirname(os.path.abspath(__file__))
-    root = os.path.realpath(os.path.join(here, "../../.."))
-    DATA_DIR = os.path.join(root, "mahabharata/text/TinyTales")
+    DATA_DIR = os.path.join(here, "mahabharata/text/TinyTales")
 
     PERSIST_DIR = "./storage"
 
     retriever_tool = make_retriever_tool(DATA_DIR, PERSIST_DIR)
     response2 = retriever_tool.invoke(
-        {"question": "What are the most interesting facts about Arjuna?"}
+        {"question": Question(question="What are the most interesting facts about Arjuna?")}
     )
-    print("yay!")
+    print(response2)

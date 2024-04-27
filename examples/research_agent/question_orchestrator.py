@@ -1,18 +1,11 @@
 import logging
-import sys
-import kuzu
-
-from langchain.tools import Tool
 
 from motleycrew import MotleyTool
 from motleycrew.storage import MotleyGraphStore
 
 from question_struct import Question
 from question_generator import QuestionGeneratorTool
-from question_generator import QuestionGeneratorToolInput
 from question_prioritizer import QuestionPrioritizerTool
-
-logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
 
 class KnowledgeGainingOrchestrator:
@@ -30,35 +23,23 @@ class KnowledgeGainingOrchestrator:
         else:
             query = "MATCH (n1:{}) WHERE n1.answer IS NULL RETURN n1;".format(self.storage.node_table_name)
 
-        query_result = self.storage.run_query(query)
+        query_result = self.storage.run_cypher_query(query)
         return [Question.deserialize(row[0]) for row in query_result]
 
     def __call__(self, query: str, max_iter: int):
-        self.storage.create_entity({"question": query})
+        question = Question(question=query)
+        self.storage.create_entity(question.serialize())
 
         for iter_n in range(max_iter):
-            logging.info("====== Iteration %s of %s ======", iter_n, max_iter)
+            logging.info("====== Iteration %s of %s ======", iter_n + 1, max_iter)
 
             unanswered_questions = self.get_unanswered_questions(only_without_children=True)
             logging.info("Loaded unanswered questions: %s", unanswered_questions)
 
-            question_prioritization_tool_input = {
-                "unanswered_questions": "\n".join(
-                    f"{i}. {question.question}" for i, question in enumerate(unanswered_questions)
-                ),
-                "original_question": query,
-            }
-            most_pertinent_question_raw = self.question_prioritization_tool.invoke(
-                question_prioritization_tool_input
-            ).content
-            logging.info("Most pertinent question according to the tool: %s", most_pertinent_question_raw)
-
-            i, most_pertinent_question_text = most_pertinent_question_raw.split(".", 1)
-            i = int(i)
-            assert i < len(unanswered_questions)
-
-            most_pertinent_question = unanswered_questions[i]
-            assert most_pertinent_question_text.strip() == most_pertinent_question.question.strip()
+            most_pertinent_question = self.question_prioritization_tool.invoke(
+                {"original_question": question, "unanswered_questions": unanswered_questions}
+            )
+            logging.info("Most pertinent question according to the tool: %s", most_pertinent_question)
 
             logging.info("Generating new questions")
             self.question_generation_tool.invoke({"question": most_pertinent_question})
@@ -67,10 +48,17 @@ class KnowledgeGainingOrchestrator:
 if __name__ == "__main__":
     from pathlib import Path
     import shutil
+    import os
+    import kuzu
     from dotenv import load_dotenv
     from motleycrew.storage import MotleyKuzuGraphStore
+    from motleycrew.common.utils import configure_logging
+
+    from retriever_tool import make_retriever_tool
 
     load_dotenv()
+    configure_logging(verbose=True)
+
     here = Path(__file__).parent
     db_path = here / "research_db"
     shutil.rmtree(db_path, ignore_errors=True)
@@ -80,18 +68,11 @@ if __name__ == "__main__":
         db, node_table_schema={"question": "STRING", "answer": "STRING", "context": "STRING"}
     )
 
-    query_tool = MotleyTool.from_langchain_tool(
-        Tool.from_function(
-            func=lambda question: [
-                "Germany has consisted of many different states over the years",
-                "The capital of France has moved in 1815, from Lyons to Paris",
-                "France actually has two capitals, one in the north and one in the south",
-            ],
-            name="Query Tool",
-            description="Query the library for relevant information.",
-            args_schema=QuestionGeneratorToolInput,
-        )
-    )
+    DATA_DIR = os.path.join(here, "mahabharata/text/TinyTales")
+
+    PERSIST_DIR = "./storage"
+
+    query_tool = make_retriever_tool(DATA_DIR, PERSIST_DIR, return_strings_only=True)
 
     orchestrator = KnowledgeGainingOrchestrator(storage=storage, query_tool=query_tool)
-    orchestrator(query="What is the capital of France?", max_iter=5)
+    orchestrator(query="Why did Arjuna kill Karna, his half-brother?", max_iter=5)

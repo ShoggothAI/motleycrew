@@ -34,8 +34,8 @@ If you think that the text is relevant to your ultimate goal, then ask new quest
 New questions should be based only on the text and the goal Question and no other previous knowledge.
 
 You can ask up to {num_questions} new questions.
-Return the questions as a json list of strings, don't return anything else 
-except this valid json list of strings.
+Return the questions each on a new line and ending with a single question mark.
+Don't return anything else except these questions.
 """
 )
 
@@ -104,10 +104,18 @@ def create_question_generator_langchain_tool(
 
     def insert_questions(input_dict) -> None:
         inserter = input_dict["question_inserter"]["question_inserter"][0]
-        questions = json.loads(input_dict["subquestions"].content)
+        questions_raw = input_dict["subquestions"].content
+        questions = [q.strip() for q in questions_raw.split("\n") if len(q.strip()) > 1]
+
         inserter.invoke({"questions": questions})
 
-        print("yay!")
+    def set_context(input_dict: dict):
+        context = input_dict["context"]
+        graph.set_property(
+            entity_id=input_dict["question"]["question"].id,
+            property_name="context",
+            property_value=json.dumps(input_dict["context"]),
+        )
 
     # TODO: add context to question node
     pipeline = (
@@ -121,6 +129,7 @@ def create_question_generator_langchain_tool(
             "subquestions": RunnablePassthrough.assign(question_text=lambda x: x["question"]["question"].question)
             | prompt.partial(num_questions=max_questions)
             | llm,
+            "context_setter": RunnableLambda(set_context),
             "question_inserter": RunnablePassthrough(),
         }
         | RunnableLambda(print_passthrough)

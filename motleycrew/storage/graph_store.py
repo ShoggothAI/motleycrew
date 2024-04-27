@@ -33,6 +33,6 @@ class MotleyGraphStore(ABC):
         pass
 
     @abstractmethod
-    def run_query(self, query: str, parameters: Optional[dict] = None) -> list[list]:
+    def run_cypher_query(self, query: str, parameters: Optional[dict] = None) -> list[list]:
         """Run a Cypher query and return the results in standard Python containers"""
         pass

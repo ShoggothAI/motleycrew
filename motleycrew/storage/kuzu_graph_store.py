@@ -136,12 +136,12 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
         query = """
                     MATCH (n1:{})
                     WHERE n1.id = $entity_id
-                    SET n1.{} = $property_value;
+                    SET n1.{} = $property_value RETURN n1;
                 """
         prepared_statement = self.connection.prepare(query.format(self.node_table_name, property_name))
         self.connection.execute(prepared_statement, {"entity_id": entity_id, "property_value": property_value})
 
-    def run_query(self, query: str, parameters: Optional[dict] = None) -> list[list]:
+    def run_cypher_query(self, query: str, parameters: Optional[dict] = None) -> list[list]:
         """Run a Cypher query and return the results"""
         query_result = self.connection.execute(query=query, parameters=parameters)
         retval = []
@@ -193,12 +193,12 @@ if __name__ == "__main__":
 
     IS_SUBQUESTION_PREDICATE = "is_subquestion"
 
-    q1_id = graph_store.create_entity({"question": "q1"})
+    q1_id = graph_store.create_entity({"question": "q1"})["id"]
     assert graph_store.get_entity(q1_id)["question"] == "q1"
 
-    q2_id = graph_store.create_entity({"question": "q2"})
-    q3_id = graph_store.create_entity({"question": "q3"})
-    q4_id = graph_store.create_entity({"question": "q4"})
+    q2_id = graph_store.create_entity({"question": "q2"})["id"]
+    q3_id = graph_store.create_entity({"question": "q3"})["id"]
+    q4_id = graph_store.create_entity({"question": "q4"})["id"]
     graph_store.create_rel(q1_id, q2_id, IS_SUBQUESTION_PREDICATE)
     graph_store.create_rel(q1_id, q3_id, IS_SUBQUESTION_PREDICATE)
     graph_store.create_rel(q3_id, q4_id, IS_SUBQUESTION_PREDICATE)

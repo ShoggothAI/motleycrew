@@ -35,11 +35,12 @@ class StrongCacheException(BaseException):
 load_dotenv()
 
 
-def file_cache(http_cache: "BaseHttpCache"):
+def file_cache(http_cache: "BaseHttpCache", updating_parameters: dict = {}):
     """Decorator to cache function output based on its inputs, ignoring specified parameters."""
 
     def decorator(func):
         def wrapper(*args, **kwargs):
+            kwargs.update(updating_parameters)
             return http_cache.get_response(func, *args, **kwargs)
 
         return wrapper
@@ -47,11 +48,12 @@ def file_cache(http_cache: "BaseHttpCache"):
     return decorator
 
 
-def afile_cache(http_cache: "BaseHttpCache"):
+def afile_cache(http_cache: "BaseHttpCache", updating_parameters: dict = {}):
     """Async decorator to cache function output based on its inputs, ignoring specified parameters."""
 
     def decorator(func):
         async def wrapper(*args, **kwargs):
+            kwargs.update(updating_parameters)
             return await http_cache.aget_response(func, *args, **kwargs)
 
         return wrapper
@@ -291,7 +293,7 @@ class HttpxHttpCaching(BaseHttpCache):
     def _enable(self):
         """Replacing the original function with a caching function"""
 
-        @file_cache(self)
+        @file_cache(self, updating_parameters={"stream": False})
         def request_func(s, request, *args, **kwargs):
             return self.library_method(s, request, **kwargs)
 

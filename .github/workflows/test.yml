@@ -51,4 +51,4 @@ jobs:
       run: poetry run pytest
 
     - name: Run integration tests
-      run: poetry run tests/run_integration_tests.py
+      run: poetry run python tests/run_integration_tests.py

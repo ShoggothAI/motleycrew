@@ -16,8 +16,8 @@ from langchain_community.tools import DuckDuckGoSearchRun
 from motleycrew import MotleyCrew, Task
 from motleycrew.agent.llama_index import ReActLlamaIndexMotleyAgent
 
-CACHE_DIR = "cache"
-DATA_DIR = "data"
+CACHE_DIR = "tests/cache"
+DATA_DIR = "tests/data"
 STRONG_CACHE = True
 LOGGING_LEVEL = logging.ERROR
 

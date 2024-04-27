@@ -9,8 +9,10 @@ import fnmatch
 
 from dotenv import load_dotenv
 import requests
-from httpx import Client
+from requests.structures import CaseInsensitiveDict
+from httpx import Client, Headers
 from curl_cffi.requests import AsyncSession
+from curl_cffi.requests import Headers as CurlCffiHeaders
 import cloudpickle
 import platformdirs
 
@@ -245,6 +247,12 @@ class RequestsHttpCaching(BaseHttpCache):
         """Finds the url in the arguments and returns it"""
         return args[1]
 
+    def prepare_response(self, response: Any) -> Any:
+        """Preparing the response object before saving"""
+        response.headers = CaseInsensitiveDict()
+        response.request.headers = CaseInsensitiveDict()
+        return response
+
     def _enable(self):
         """Replacing the original function with a caching function"""
 
@@ -272,6 +280,12 @@ class HttpxHttpCaching(BaseHttpCache):
     def get_url(self, *args, **kwargs) -> str:
         """Finds the url in the arguments and returns it"""
         return str(args[1].url)
+
+    def prepare_response(self, response: Any) -> Any:
+        """Preparing the response object before saving"""
+        response.headers = Headers()
+        response.request.headers = Headers()
+        return response
 
     def _enable(self):
         """Replacing the original function with a caching function"""
@@ -303,6 +317,8 @@ class CurlCffiHttpCaching(BaseHttpCache):
 
     def prepare_response(self, response: Any) -> Any:
         """Preparing the response object before saving"""
+        response.headers = CurlCffiHeaders()
+        response.request.headers = CurlCffiHeaders()
         response.curl = None
         response.cookies.jar._cookies_lock = FakeRLock()
         return response

@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 from langchain_community.tools import DuckDuckGoSearchRun
 
-from motleycrew import MotleyCrew, Task
+from motleycrew import MotleyCrew, TaskRecipe
 from motleycrew.agent.crewai import CrewAIMotleyAgent
 
 load_dotenv()
@@ -15,8 +15,8 @@ researcher = CrewAIMotleyAgent(
 Your expertise lies in identifying emerging trends.
 You have a knack for dissecting complex data and presenting actionable insights.""",
     verbose=True,
-    delegation=False,
     tools=[search_tool],
+    delegation=False,  # Will be ignored
 )
 
 writer = CrewAIMotleyAgent(
@@ -25,24 +25,19 @@ writer = CrewAIMotleyAgent(
     backstory="""You are a renowned Content Strategist, known for your insightful and engaging articles.
 You transform complex concepts into compelling narratives.""",
     verbose=True,
-    delegation=True,
 )
 
 # Create tasks for your agents
 crew = MotleyCrew()
-task1 = Task(
-    crew=crew,
-    name="produce comprehensive analysis report on AI advancements",
+task1 = crew.create_task(
     description="""Conduct a comprehensive analysis of the latest advancements in AI in 2024.
 Identify key trends, breakthrough technologies, and potential industry impacts.
 Your final answer MUST be a full analysis report""",
     agent=researcher,
-    documents=["paper1.pdf", "paper2.pdf"],  # will be ignored for now
 )
 
-task2 = Task(
-    crew=crew,
-    name="provide a literature summary of recent papers on AI",
+task2 = crew.create_task(
+    name="description",
     description="""Conduct a comprehensive literature review of the latest advancements in AI in 2024.
 Identify key papers, researchers, and companies in the space.
 Your final answer MUST be a full literature review with citations""",
@@ -50,9 +45,8 @@ Your final answer MUST be a full literature review with citations""",
 )
 
 
-task3 = Task(
-    crew=crew,
-    name="produce blog post on AI advancements",
+task3 = crew.create_task(
+    name="generate",
     description="""Using the insights provided by a thorough web search, develop an engaging blog
 post that highlights the most significant AI advancements.
 Your post should be informative yet accessible, catering to a tech-savvy audience.
@@ -64,9 +58,6 @@ Create a blog post of at least 4 paragraphs.""",
 [task1, task2] >> task3
 
 # Get your crew to work!
-result = crew.run(
-    agents=[researcher, writer],
-    verbose=2,  # You can set it to 1 or 2 to different logging levels
-)
+result = crew.run(verbose=2)
 
 print(list(result._done)[0].outputs)

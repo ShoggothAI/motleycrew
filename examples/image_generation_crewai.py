@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 
-from motleycrew import MotleyCrew, Task
+from motleycrew import MotleyCrew, TaskRecipe
 from motleycrew.agent.crewai import CrewAIMotleyAgent
 from motleycrew.tool.image_generation import DallEImageGeneratorTool
 from motleycrew.common.utils import configure_logging
@@ -34,7 +34,7 @@ illustrator = CrewAIMotleyAgent(
 
 # Create tasks for your agents
 crew = MotleyCrew()
-write_task = Task(
+write_task = TaskRecipe(
     crew=crew,
     name="write a short story about a cat",
     description="Creatively write a short story of about 4 paragraphs "

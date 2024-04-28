@@ -7,7 +7,7 @@ from pydantic import Field
 
 from motleycrew.agent.parent import MotleyAgentAbstractParent
 from motleycrew.agent.shared import MotleyAgentParent
-from motleycrew.tasks import Task
+from motleycrew.tasks import TaskRecipe
 from motleycrew.tool import MotleyTool
 from motleycrew.common import MotleySupportedTool
 from motleycrew.common import MotleyAgentFactory
@@ -20,11 +20,11 @@ from motleycrew.tracking import add_default_callbacks_to_langchain_config
 class CrewAIAgentWithConfig(Agent):
 
     def execute_task(
-            self,
-            task: Any,
-            context: Optional[str] = None,
-            tools: Optional[List[Any]] = None,
-            config: Optional[RunnableConfig] = None
+        self,
+        task: Any,
+        context: Optional[str] = None,
+        tools: Optional[List[Any]] = None,
+        config: Optional[RunnableConfig] = None,
     ) -> str:
         """Execute a task with the agent.
 
@@ -56,7 +56,7 @@ class CrewAIAgentWithConfig(Agent):
                 "tool_names": self.agent_executor.tools_names,
                 "tools": self.agent_executor.tools_description,
             },
-            config=config
+            config=config,
         )["output"]
 
         if self.max_rpm:
@@ -90,7 +90,7 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
 
     def invoke(
         self,
-        task: Task | str,
+        task: TaskRecipe | str,
         config: Optional[RunnableConfig] = None,
         **kwargs: Any,
     ) -> Any:
@@ -102,7 +102,7 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
             # TODO: feed in context/task.message_history correctly
             # TODO: attach the current task, if any, as a dependency of the new task
             # TODO: this preamble should really be a decorator to be shared across agent wrappers
-            task = Task(
+            task = TaskRecipe(
                 description=task,
                 name=task,
                 agent=self,
@@ -111,7 +111,7 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
                 # there are other tasks to schedule
                 crew=self.crew,
             )
-        elif not isinstance(task, Task):
+        elif not isinstance(task, TaskRecipe):
             # TODO: should really have a conversion function here from langchain tools to crewai tools
             raise ValueError(f"`task` must be a string or a Task, not {type(task)}")
 

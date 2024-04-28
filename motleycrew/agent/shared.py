@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, Sequence
 from langchain_core.tools import Tool
 
 from motleycrew.agent.parent import MotleyAgentAbstractParent
-from motleycrew.tasks import Task
+from motleycrew.tasks import TaskRecipe
 from motleycrew.tool import MotleyTool
 
 from motleycrew.common import MotleySupportedTool
@@ -28,7 +28,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent):
         verbose: bool = False,
     ):
         self.name = name or goal
-        self.goal = goal  # becomes tool description
+        self.description = goal  # becomes tool description
         self.agent_factory = agent_factory
         self.delegation = delegation  # will be init'd at crew creation
         self.tools: dict[str, MotleyTool] = {}
@@ -73,41 +73,41 @@ class MotleyAgentParent(MotleyAgentAbstractParent):
     def as_tool(self) -> MotleyTool:
         # To be specialized if we expect structured input
         return MotleyTool.from_langchain_tool(
-            Tool(name=self.name, description=self.goal, func=self.call_as_tool)
+            Tool(name=self.name, description=self.description, func=self.invoke)
         )
 
-    def call_as_tool(self, *args, **kwargs) -> Any:
-        logging.info("Entering delegation for %s", self.name)
-        assert self.crew, "can't accept delegated task outside of a crew"
-
-        if len(args) > 0:
-            input_ = args[0]
-        elif "tool_input" in kwargs:
-            # Is this a crewai notation?
-            input_ = kwargs["tool_input"]
-        else:
-            input_ = json.dumps(kwargs)
-
-        logging.info("Made the args: %s", input_)
-
-        # TODO: pass context of parent task to agent nicely?
-        # TODO: mark the current task as depending on the new task
-        task = Task(
-            description=input_,
-            name=input_,
-            agent=self,
-            # TODO inject the new subtask as a dep and reschedule the parent
-            # TODO probably can't do this from here since we won't know if
-            # there are other tasks to schedule
-            crew=self.crew,
-        )
-
-        # TODO: make sure tools return task objects, which are properly used by callers
-        logging.info("Executing subtask '%s'", task.name)
-        self.crew.task_graph.set_task_running(task=task)
-        result = self.crew.execute(task, return_result=True)
-
-        logging.info("Finished subtask '%s' - %s", task.name, result)
-        self.crew.task_graph.set_task_done(task=task)
-
-        return result
+    # def call_as_tool(self, *args, **kwargs) -> Any:
+    #     logging.info("Entering delegation for %s", self.name)
+    #     assert self.crew, "can't accept delegated task outside of a crew"
+    #
+    #     if len(args) > 0:
+    #         input_ = args[0]
+    #     elif "tool_input" in kwargs:
+    #         # Is this a crewai notation?
+    #         input_ = kwargs["tool_input"]
+    #     else:
+    #         input_ = json.dumps(kwargs)
+    #
+    #     logging.info("Made the args: %s", input_)
+    #
+    #     # TODO: pass context of parent task to agent nicely?
+    #     # TODO: mark the current task as depending on the new task
+    #     task = TaskRecipe(
+    #         description=input_,
+    #         name=input_,
+    #         agent=self,
+    #         # TODO inject the new subtask as a dep and reschedule the parent
+    #         # TODO probably can't do this from here since we won't know if
+    #         # there are other tasks to schedule
+    #         crew=self.crew,
+    #     )
+    #
+    #     # TODO: make sure tools return task objects, which are properly used by callers
+    #     logging.info("Executing subtask '%s'", task.name)
+    #     self.crew.task_graph.set_task_running(task=task)
+    #     result = self.crew.execute(task, return_result=True)
+    #
+    #     logging.info("Finished subtask '%s' - %s", task.name, result)
+    #     self.crew.task_graph.set_task_done(task=task)
+    #
+    #     return result

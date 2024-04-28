@@ -107,7 +107,7 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
         assert create_result.has_next()
         return create_result.get_next()[0]
 
-    def create_rel(self, from_id: int, to_id: int, predicate: str) -> None:
+    def create_relation(self, from_id: int, to_id: int, predicate: str) -> None:
         self.connection.execute(
             (
                 "MATCH (n1:{}), (n2:{}) WHERE n1.id = $from_id AND n2.id = $to_id "
@@ -224,9 +224,9 @@ if __name__ == "__main__":
     q2_id = graph_store.create_entity({"question": "q2"})["id"]
     q3_id = graph_store.create_entity({"question": "q3"})["id"]
     q4_id = graph_store.create_entity({"question": "q4"})["id"]
-    graph_store.create_rel(q1_id, q2_id, IS_SUBQUESTION_PREDICATE)
-    graph_store.create_rel(q1_id, q3_id, IS_SUBQUESTION_PREDICATE)
-    graph_store.create_rel(q3_id, q4_id, IS_SUBQUESTION_PREDICATE)
+    graph_store.create_relation(q1_id, q2_id, IS_SUBQUESTION_PREDICATE)
+    graph_store.create_relation(q1_id, q3_id, IS_SUBQUESTION_PREDICATE)
+    graph_store.create_relation(q3_id, q4_id, IS_SUBQUESTION_PREDICATE)
 
     graph_store.delete_entity(q4_id)
     assert graph_store.get_entity(q4_id) is None

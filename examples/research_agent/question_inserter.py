@@ -45,7 +45,7 @@ def create_question_insertion_langchain_tool(
         for subquestion in questions:
             subquestion_data = graph.create_entity(Question(question=subquestion).serialize())
             subquestion_obj = Question.deserialize(subquestion_data)
-            graph.create_rel(
+            graph.create_relation(
                 from_id=question.id, to_id=subquestion_obj.id, predicate=IS_SUBQUESTION_PREDICATE
             )
 

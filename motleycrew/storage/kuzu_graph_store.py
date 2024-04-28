@@ -3,11 +3,21 @@ Code derived from: https://github.com/run-llama/llama_index/blob/802064aee72b03a
 Kùzu graph store index.
 """
 
+import logging
+from time import sleep
+
 from typing import Any, Dict, List, Optional
 
 import kuzu
+from kuzu import PreparedStatement, QueryResult
 
 from motleycrew.storage import MotleyGraphStore
+
+
+class RetryConnection(kuzu.Connection):
+    def execute(self, *args, **kwargs) -> QueryResult:
+        sleep(0)
+        return super().execute(*args, **kwargs)
 
 
 class MotleyKuzuGraphStore(MotleyGraphStore):
@@ -20,7 +30,7 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
         **kwargs: Any,
     ) -> None:
         self.database = database
-        self.connection = kuzu.Connection(database)
+        self.connection = RetryConnection(database)
         self.node_table_schema = node_table_schema
         self.node_table_name = node_table_name
         self.rel_table_name = rel_table_name
@@ -35,7 +45,9 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
                 + [f"{name} {datatype}" for name, datatype in self.node_table_schema.items()]
                 + ["PRIMARY KEY(id)"]
             )
-            self.connection.execute("CREATE NODE TABLE {} ({})".format(self.node_table_name, node_table_schema_expr))
+            self.connection.execute(
+                "CREATE NODE TABLE {} ({})".format(self.node_table_name, node_table_schema_expr)
+            )
 
         rel_tables = self.connection._get_rel_table_names()
         rel_tables = [rel_table["name"] for rel_table in rel_tables]
@@ -85,9 +97,12 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
 
     def create_entity(self, entity: dict) -> dict:
         """Create a new entity and return its id"""
-        cypher_mapping, parameters = MotleyKuzuGraphStore._dict_to_cypher_mapping_with_parameters(entity)
+        cypher_mapping, parameters = MotleyKuzuGraphStore._dict_to_cypher_mapping_with_parameters(
+            entity
+        )
         create_result = self.connection.execute(
-            "CREATE (n:{} {}) RETURN n".format(self.node_table_name, cypher_mapping), parameters=parameters
+            "CREATE (n:{} {}) RETURN n".format(self.node_table_name, cypher_mapping),
+            parameters=parameters,
         )
         assert create_result.has_next()
         return create_result.get_next()[0]
@@ -138,8 +153,13 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
                     WHERE n1.id = $entity_id
                     SET n1.{} = $property_value RETURN n1;
                 """
-        prepared_statement = self.connection.prepare(query.format(self.node_table_name, property_name))
-        self.connection.execute(prepared_statement, {"entity_id": entity_id, "property_value": property_value})
+        prepared_statement = self.connection.prepare(
+            query.format(self.node_table_name, property_name)
+        )
+        self.connection.execute(
+            prepared_statement,
+            {"entity_id": entity_id, "property_value": property_value},
+        )
 
     def run_cypher_query(self, query: str, parameters: Optional[dict] = None) -> list[list]:
         """Run a Cypher query and return the results"""
@@ -188,7 +208,12 @@ if __name__ == "__main__":
     shutil.rmtree(db_path, ignore_errors=True)
     db = kuzu.Database(str(db_path))
     graph_store = MotleyKuzuGraphStore(
-        db, node_table_schema={"question": "STRING", "answer": "STRING", "context": "STRING"}
+        db,
+        node_table_schema={
+            "question": "STRING",
+            "answer": "STRING",
+            "context": "STRING",
+        },
     )
 
     IS_SUBQUESTION_PREDICATE = "is_subquestion"
@@ -207,7 +232,9 @@ if __name__ == "__main__":
     assert graph_store.get_entity(q4_id) is None
 
     graph_store.set_property(q2_id, property_name="answer", property_value="a2")
-    graph_store.set_property(q3_id, property_name="context", property_value=json.dumps(["c3_1", "c3_2"]))
+    graph_store.set_property(
+        q3_id, property_name="context", property_value=json.dumps(["c3_1", "c3_2"])
+    )
 
     assert graph_store.get_entity(q2_id)["answer"] == "a2"
     assert json.loads(graph_store.get_entity(q3_id)["context"]) == ["c3_1", "c3_2"]

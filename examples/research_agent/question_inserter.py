@@ -30,7 +30,9 @@ class QuestionInsertionTool(MotleyTool):
 class QuestionInsertionToolInput(BaseModel):
     """Subquestions of the current question, to be inserted into the knowledge graph."""
 
-    questions: List[str] = Field(description="List of questions to be inserted into the knowledge graph.")
+    questions: List[str] = Field(
+        description="List of questions to be inserted into the knowledge graph."
+    )
 
 
 def create_question_insertion_langchain_tool(
@@ -43,7 +45,9 @@ def create_question_insertion_langchain_tool(
         for subquestion in questions:
             subquestion_data = graph.create_entity(Question(question=subquestion).serialize())
             subquestion_obj = Question.deserialize(subquestion_data)
-            graph.create_rel(from_id=question.id, to_id=subquestion_obj.id, predicate=IS_SUBQUESTION_PREDICATE)
+            graph.create_rel(
+                from_id=question.id, to_id=subquestion_obj.id, predicate=IS_SUBQUESTION_PREDICATE
+            )
 
     return Tool.from_function(
         func=insert_questions,
@@ -64,7 +68,9 @@ if __name__ == "__main__":
         db, node_table_schema={"question": "STRING", "answer": "STRING", "context": "STRING"}
     )
 
-    question_data = graph_store.create_entity(Question(question="What is the capital of France?").serialize())
+    question_data = graph_store.create_entity(
+        Question(question="What is the capital of France?").serialize()
+    )
     question = Question.deserialize(question_data)
 
     children = ["What is the capital of France?", "What is the capital of Germany?"]

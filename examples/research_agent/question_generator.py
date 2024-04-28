@@ -99,7 +99,9 @@ def create_question_generator_langchain_tool(
     assert isinstance(prompt, BasePromptTemplate), "Prompt must be a string or a BasePromptTemplate"
 
     def partial_inserter(input_dict: dict):
-        out = QuestionInsertionTool(graph=graph, question=input_dict["question"]).to_langchain_tool()
+        out = QuestionInsertionTool(
+            graph=graph, question=input_dict["question"]
+        ).to_langchain_tool()
         return (out,)
 
     def insert_questions(input_dict) -> None:
@@ -126,7 +128,9 @@ def create_question_generator_langchain_tool(
         }
         | RunnableLambda(print_passthrough)
         | {
-            "subquestions": RunnablePassthrough.assign(question_text=lambda x: x["question"]["question"].question)
+            "subquestions": RunnablePassthrough.assign(
+                question_text=lambda x: x["question"]["question"].question
+            )
             | prompt.partial(num_questions=max_questions)
             | llm,
             "context_setter": RunnableLambda(set_context),

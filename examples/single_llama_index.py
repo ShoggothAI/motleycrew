@@ -1,11 +1,17 @@
+import logging
+
 from dotenv import load_dotenv
 from langchain_community.tools import DuckDuckGoSearchRun
 
 
 from motleycrew import MotleyCrew, Task
 from motleycrew.agent.llama_index import ReActLlamaIndexMotleyAgent
+from motleycrew.caсhing import enable_cache, disable_cache
+
+logging.basicConfig(level=logging.INFO)
 
 load_dotenv()
+enable_cache()
 
 search_tool = DuckDuckGoSearchRun()
 
@@ -40,3 +46,4 @@ result = crew.run(
 print(list(result._done)[0].outputs)
 
 print("######################")
+disable_cache()

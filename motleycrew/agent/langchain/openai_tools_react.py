@@ -9,13 +9,15 @@ from langchain_core.utils.function_calling import convert_to_openai_tool
 from langchain.tools.render import render_text_description
 from langchain_core.agents import AgentFinish, AgentActionMessageLog
 
-from langchain.agents.format_scratchpad.openai_tools import format_to_openai_tool_messages
+from langchain.agents.format_scratchpad.openai_tools import (
+    format_to_openai_tool_messages,
+)
 from langchain.agents.output_parsers.openai_tools import OpenAIToolsAgentOutputParser
 
 from motleycrew.agent.parent import MotleyAgentAbstractParent
 from motleycrew.agent.langchain.langchain import LangchainMotleyAgentParent
 from motleycrew.common import MotleySupportedTool
-
+from motleycrew.common.utils import print_passthrough
 
 default_think_prompt = ChatPromptTemplate.from_template(
     """
@@ -65,10 +67,6 @@ Question: {input}
 Thought:{agent_scratchpad}
 """
 )
-
-
-def print_passthrough(x):
-    return x
 
 
 def add_thought_to_background(x: dict):

@@ -1,7 +1,9 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Sequence, Set, List
+from typing import TYPE_CHECKING, Any, Sequence, List, Optional
 from uuid import uuid4
+
+from motleycrew.tasks.parent import Task, TaskRecipe, TaskRecipeNode
 
 try:
     from crewai import Task as CrewAITask
@@ -12,7 +14,7 @@ from motleycrew.agent.parent import MotleyAgentAbstractParent
 from motleycrew.tool import MotleyTool
 
 if TYPE_CHECKING:
-    from motleycrew import MotleyCrew
+    pass
 
 PROMPT_TEMPLATE_WITH_DEPS = """
 {description}
@@ -27,20 +29,27 @@ class TaskDependencyCycleError(Exception):
     """Raised when a task is set to depend on itself"""
 
 
-class TaskRecipe:
-    @dataclass
-    class TaskRecipeNode:
-        node_id: str
-        name: str
-        description: str
-        done: bool
-        outputs: List[str]
+class SimpleTask(Task):
+    def __init__(self, node_id: int, status: str = "pending", outputs: Optional[List[Any]] = None):
+        super().__init__(status, outputs)
+        self.node_id = node_id
 
-    @dataclass
-    class TaskInput:
-        node_id: int
+    def to_crewai_task(self) -> CrewAITask:
+        if CrewAITask is None:
+            raise ImportError("crewai is not installed")
 
-    summary_type = TaskRecipeNode
+        raise NotImplementedError("This method is not yet implemented")
+        # return CrewAITask(
+        #     name=self.name or self.description, description=self.description, prompt=self.prompt
+        # )
+
+
+@dataclass
+class SimpleTaskRecipeNode(TaskRecipeNode):
+    pass
+
+
+class SimpleTaskRecipe(TaskRecipe):
 
     def __init__(
         self,
@@ -52,7 +61,7 @@ class TaskRecipe:
         creator_name: str | None = None,
         return_to_creator: bool = False,
     ):
-        self.name = name  # does it really need one? Where does it get used?
+        super().__init__(name)
         self.description = description
         self.agent = agent  # to be auto-assigned at crew creation if missing?
         self.tools = tools or []
@@ -72,14 +81,9 @@ class TaskRecipe:
         # This will be set by MotleyCrew.register_task
         self.crew = None
 
-    def get_agent(self) -> MotleyAgentAbstractParent:
-        # TODO: implement this via agent factory
-        if self.agent is None:
-            raise ValueError("Task is not associated with an agent")
-        return self.agent
-
-    def summary(self) -> TaskRecipeNode:
-        return TaskRecipe.TaskRecipeNode(
+    def summary(self) -> SimpleTaskRecipeNode:
+        # TODO: fix
+        return SimpleTaskRecipeNode(
             id=self.id,
             name=self.name,
             description=self.description,
@@ -87,41 +91,12 @@ class TaskRecipe:
             outputs=self.outputs,
         )
 
-    def identify_candidates(self) -> List["TaskInput"]:
+    def identify_candidates(self) -> List[SimpleTask]:
+        # TODO: implement via graph
         return not self.done and all(t.done for t in self.upstream_tasks)
 
-    def set_upstream(self, task: TaskRecipe) -> TaskRecipe:
-        if self.crew is None or task.crew is None:
-            raise ValueError("Both tasks must be registered with a crew")
-
-        if task is self:
-            raise TaskDependencyCycleError(f"Task {task.name} can not depend on itself")
-
-        self.crew.add_dependency(upstream=task, downstream=self)
-
-        return self
-
-    def __rshift__(self, other: TaskRecipe | Sequence[TaskRecipe]) -> TaskRecipe:
-        if isinstance(other, TaskRecipe):
-            tasks = {other}
-        else:
-            tasks = other
-
-        for task in tasks:
-            task.set_upstream(self)
-
-        return self
-
-    def __rrshift__(self, other: Sequence[TaskRecipe]) -> Sequence[TaskRecipe]:
-        for task in other:
-            self.set_upstream(task)
-        return other
-
-    def to_crewai_task(self) -> CrewAITask:
-        if CrewAITask is None:
-            raise ImportError("crewai is not installed")
-
-        raise NotImplementedError("This method is not yet implemented")
-        # return CrewAITask(
-        #     name=self.name or self.description, description=self.description, prompt=self.prompt
-        # )
+    def get_agent(self) -> MotleyAgentAbstractParent:
+        # TODO: implement this via agent factory
+        if self.agent is None:
+            raise ValueError("Task is not associated with an agent")
+        return self.agent

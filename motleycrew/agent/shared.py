@@ -92,7 +92,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent):
     #
     #     # TODO: pass context of parent task to agent nicely?
     #     # TODO: mark the current task as depending on the new task
-    #     task = TaskRecipe(
+    #     task = SimpleTaskRecipe(
     #         description=input_,
     #         name=input_,
     #         agent=self,

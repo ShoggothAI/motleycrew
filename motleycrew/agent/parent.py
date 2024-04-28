@@ -12,10 +12,10 @@ class MotleyAgentAbstractParent(ABC):
     @abstractmethod
     def invoke(
         self,
-        task: Union["TaskRecipe", str],
+        task: Union["SimpleTaskRecipe", str],
         config: Optional[RunnableConfig] = None,
         **kwargs: Any,
-    ) -> "TaskRecipe":
+    ) -> "SimpleTaskRecipe":
         pass
 
     @abstractmethod

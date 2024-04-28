@@ -1,11 +1,11 @@
 import pytest
 
 from motleycrew import MotleyCrew
-from motleycrew.tasks import Task, TaskDependencyCycleError, TaskGraph
+from motleycrew.tasks import TaskRecipe, TaskDependencyCycleError, TaskGraph
 
 
 def create_dummy_task(crew: MotleyCrew, name: str):
-    return Task(
+    return TaskRecipe(
         name=name,
         description=name,
         crew=crew,

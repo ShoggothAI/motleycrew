@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 from langchain_community.tools import DuckDuckGoSearchRun
 
-from motleycrew import MotleyCrew, Task
+from motleycrew import MotleyCrew, TaskRecipe
 from motleycrew.agent.langchain.openai_tools_react import ReactOpenAIToolsAgent
 from motleycrew.agent.langchain.react import ReactMotleyAgent
 
@@ -31,7 +31,7 @@ researcher2 = ReactMotleyAgent(tools=tools, verbose=True)
 for r in [researcher, researcher2]:
 
     crew = MotleyCrew()
-    task1 = Task(
+    task1 = TaskRecipe(
         crew=crew,
         name="produce comprehensive analysis report on AI advancements",
         description="""Conduct a comprehensive analysis of the latest advancements in AI in 2024.

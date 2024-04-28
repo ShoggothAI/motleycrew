@@ -3,6 +3,7 @@ from typing import Optional, Any
 
 
 class MotleyGraphStore(ABC):
+    # TODO: move these to object classes once the store adapter is more ORM-like
     node_table_name: str
     rel_table_name: str
 
@@ -20,7 +21,7 @@ class MotleyGraphStore(ABC):
         pass
 
     @abstractmethod
-    def create_rel(self, from_id: int, to_id: int, predicate: str) -> None:
+    def create_relation(self, from_id: int, to_id: int, predicate: str) -> None:
         pass
 
     @abstractmethod

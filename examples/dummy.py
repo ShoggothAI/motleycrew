@@ -1,12 +1,4 @@
-while True:
-    did_something = False
-    for t in self.tasks:
-        matches = t.match_tasks(self.graph)
-        if len(matches) > 0:
-            t.get_agent().invoke(matches[0])
-            did_something = True
-    if not did_something:
-        break
+
 
 
 @dataclass

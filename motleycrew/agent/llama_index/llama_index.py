@@ -5,7 +5,7 @@ from langchain_core.runnables import RunnableConfig
 
 from motleycrew.agent.parent import MotleyAgentAbstractParent
 from motleycrew.agent.shared import MotleyAgentParent
-from motleycrew.tasks import Task
+from motleycrew.tasks import TaskRecipe
 from motleycrew.common import MotleySupportedTool
 from motleycrew.common import MotleyAgentFactory
 
@@ -18,7 +18,7 @@ class LlamaIndexMotleyAgentParent(MotleyAgentParent):
         agent_factory: MotleyAgentFactory | None = None,
         delegation: bool | Sequence[MotleyAgentAbstractParent] = False,
         tools: Sequence[MotleySupportedTool] | None = None,
-        verbose: bool = False
+        verbose: bool = False,
     ):
         super().__init__(
             goal=goal,
@@ -26,12 +26,12 @@ class LlamaIndexMotleyAgentParent(MotleyAgentParent):
             agent_factory=agent_factory,
             delegation=delegation,
             tools=tools,
-            verbose=verbose
+            verbose=verbose,
         )
 
     def invoke(
         self,
-        task: Task | str,
+        task: TaskRecipe | str,
         config: Optional[RunnableConfig] = None,
         **kwargs: Any,
     ) -> Any:
@@ -43,7 +43,7 @@ class LlamaIndexMotleyAgentParent(MotleyAgentParent):
             # TODO: feed in context/task.message_history correctly
             # TODO: attach the current task, if any, as a dependency of the new task
             # TODO: this preamble should really be a decorator to be shared across agent wrappers
-            task = Task(
+            task = TaskRecipe(
                 description=task,
                 name=task,
                 agent=self,
@@ -52,7 +52,7 @@ class LlamaIndexMotleyAgentParent(MotleyAgentParent):
                 # there are other tasks to schedule
                 crew=self.crew,
             )
-        elif not isinstance(task, Task):
+        elif not isinstance(task, TaskRecipe):
             # TODO: should really have a conversion function here from langchain tools to crewai tools
             raise ValueError(f"`task` must be a string or a Task, not {type(task)}")
 
@@ -70,10 +70,7 @@ class LlamaIndexMotleyAgentParent(MotleyAgentParent):
         verbose: bool = False,
     ) -> "LlamaIndexMotleyAgentParent":
         wrapped_agent = LlamaIndexMotleyAgentParent(
-            goal=goal,
-            delegation=delegation,
-            tools=tools,
-            verbose=verbose
+            goal=goal, delegation=delegation, tools=tools, verbose=verbose
         )
         wrapped_agent._agent = agent
         return wrapped_agent

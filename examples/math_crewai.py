@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 
-from motleycrew import MotleyCrew, Task
+from motleycrew import MotleyCrew, TaskRecipe
 from motleycrew.agent.crewai import CrewAIMotleyAgent
 from motleycrew.tool.python_repl import create_repl_tool
 
@@ -31,7 +31,7 @@ problems = [
 
 # Create tasks for your agents
 crew = MotleyCrew()
-task1 = Task(
+task1 = TaskRecipe(
     crew=crew,
     name="solve math problem",
     description=f"""Create a nice human-readable solution to the following problem:

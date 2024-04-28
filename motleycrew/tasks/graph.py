@@ -10,23 +10,23 @@ class TaskGraph:
         self._running: Set[TaskRecipe] = set()
         self._done: Set[TaskRecipe] = set()
 
-    def add_task(self, task: "TaskRecipe"):
+    def add_task(self, task: "SimpleTaskRecipe"):
         self._pending.add(task)
 
-    def set_task_running(self, task: "TaskRecipe"):
+    def set_task_running(self, task: "SimpleTaskRecipe"):
         self._pending.remove(task)
         self._running.add(task)
 
-    def set_task_done(self, task: "TaskRecipe"):
+    def set_task_done(self, task: "SimpleTaskRecipe"):
         self._running.remove(task)
         self._done.add(task)
         task.done = True
 
-    def pause_running_task(self, task: "TaskRecipe"):
+    def pause_running_task(self, task: "SimpleTaskRecipe"):
         self._running.remove(task)
         self._pending.add(task)
 
-    def get_ready_tasks(self) -> List["TaskRecipe"]:
+    def get_ready_tasks(self) -> List["SimpleTaskRecipe"]:
         return [t for t in self._pending if t.is_ready()]
 
     def check_cyclical_dependencies(self):

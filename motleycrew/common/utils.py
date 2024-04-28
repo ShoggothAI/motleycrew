@@ -40,3 +40,7 @@ def generate_hex_hash(data: str, length: Optional[int] = None):
     if length is not None:
         hex_hash = hex_hash[:length]
     return hex_hash
+
+
+def print_passthrough(x):
+    return x

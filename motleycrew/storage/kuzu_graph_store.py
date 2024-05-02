@@ -13,7 +13,7 @@ import kuzu
 from kuzu import PreparedStatement, QueryResult
 import json
 
-from graph_store import MotleyGraphStore
+from motleycrew.storage import MotleyGraphStore
 
 
 ModelType = TypeVar("ModelType", bound=BaseModel)
@@ -76,7 +76,7 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
         otherwise from the class name.
         Return the table name.
         """
-        table_name = MotleyKuzuGraphStore._get_entity_table_name(entity)
+        table_name = MotleyKuzuGraphStore.get_entity_table_name(entity)
         if not self._check_node_table_exists(table_name):
             logging.info("Node table %s does not exist in the database, creating", table_name)
             self._execute_query(
@@ -112,14 +112,14 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
         if such does not already exist.
         Return the table name.
         """
-        table_name = MotleyKuzuGraphStore._get_relation_table_name(
+        table_name = MotleyKuzuGraphStore.get_relation_table_name(
             from_entity=from_entity, to_entity=to_entity
         )
         if not self._check_rel_table_exists(table_name):
             logging.info("Relation table %s does not exist in the database, creating", table_name)
 
-            from_table_name = MotleyKuzuGraphStore._get_entity_table_name(from_entity)
-            to_table_name = MotleyKuzuGraphStore._get_entity_table_name(to_entity)
+            from_table_name = MotleyKuzuGraphStore.get_entity_table_name(from_entity)
+            to_table_name = MotleyKuzuGraphStore.get_entity_table_name(to_entity)
             self._execute_query(
                 "CREATE REL TABLE {} (FROM {} TO {}, predicate STRING)".format(
                     table_name, from_table_name, to_table_name
@@ -133,7 +133,7 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
         """
         Check if an entity of given class with given id is present in the database.
         """
-        table_name = MotleyKuzuGraphStore._get_entity_table_name_by_entity_class(entity_class)
+        table_name = MotleyKuzuGraphStore.get_entity_table_name_by_entity_class(entity_class)
         if not self._check_node_table_exists(table_name):
             return False
 
@@ -147,7 +147,7 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
         """
         Check if the given entity is present in the database.
         """
-        entity_id = MotleyKuzuGraphStore._get_entity_id(entity)
+        entity_id = MotleyKuzuGraphStore.get_entity_id(entity)
         if entity_id is None:
             return False  # for cases when id attribute is not set => entity does not exist
 
@@ -161,15 +161,14 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
         """
         Check if a relation exists between two entities with given predicate.
         """
-        from_entity_id = MotleyKuzuGraphStore._get_entity_id(from_entity)
-        to_entity_id = MotleyKuzuGraphStore._get_entity_id(to_entity)
-        assert (
-            from_entity_id is not None and to_entity_id is not None
-        ), "Both entities ids must be set"
+        from_entity_id = MotleyKuzuGraphStore.get_entity_id(from_entity)
+        to_entity_id = MotleyKuzuGraphStore.get_entity_id(to_entity)
+        if from_entity_id is None or to_entity_id is None:
+            return False
 
-        from_table_name = MotleyKuzuGraphStore._get_entity_table_name(from_entity)
-        to_table_name = MotleyKuzuGraphStore._get_entity_table_name(to_entity)
-        relation_table_name = MotleyKuzuGraphStore._get_relation_table_name(
+        from_table_name = MotleyKuzuGraphStore.get_entity_table_name(from_entity)
+        to_table_name = MotleyKuzuGraphStore.get_entity_table_name(to_entity)
+        relation_table_name = MotleyKuzuGraphStore.get_relation_table_name(
             from_entity=from_entity, to_entity=to_entity
         )
         if (
@@ -206,7 +205,7 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
         Retrieve the entity of given class with given id if it is present in the database.
         Otherwise, return None.
         """
-        table_name = MotleyKuzuGraphStore._get_entity_table_name_by_entity_class(entity_class)
+        table_name = MotleyKuzuGraphStore.get_entity_table_name_by_entity_class(entity_class)
         if not self._check_node_table_exists(table_name):
             return None
 
@@ -243,7 +242,7 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
         Create a new entity, populate its id and freeze it.
         If entity table or some columns do not exist, this method also creates them.
         """
-        assert not MotleyKuzuGraphStore._get_entity_id(
+        assert not MotleyKuzuGraphStore.get_entity_id(
             entity
         ), "Entity has its {} attribute set, looks like it is already in the DB".format(
             MotleyKuzuGraphStore.ID_ATTR
@@ -287,10 +286,10 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
         )
 
         table_name = self._ensure_relation_table(from_entity=from_entity, to_entity=to_entity)
-        from_table_name = self._get_entity_table_name(from_entity)
-        to_table_name = self._get_entity_table_name(to_entity)
-        from_entity_id = MotleyKuzuGraphStore._get_entity_id(from_entity)
-        to_entity_id = MotleyKuzuGraphStore._get_entity_id(to_entity)
+        from_table_name = self.get_entity_table_name(from_entity)
+        to_table_name = self.get_entity_table_name(to_entity)
+        from_entity_id = MotleyKuzuGraphStore.get_entity_id(from_entity)
+        to_entity_id = MotleyKuzuGraphStore.get_entity_id(to_entity)
 
         logging.info(
             "Creating relation %s from %s:%s to %s:%s",
@@ -342,6 +341,10 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
         """
 
         def inner_delete_relations(table_name: str, entity_id: int) -> None:
+            if not self.connection._get_rel_table_names():
+                # Avoid Kuzu error when no relation tables exist in the database
+                return
+
             # Undirected relation removal is not supported for some reason
             self._execute_query(
                 "MATCH (n:{})-[r]->() WHERE n.id = $entity_id DELETE r".format(table_name),
@@ -362,8 +365,8 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
             entity
         )
 
-        table_name = MotleyKuzuGraphStore._get_entity_table_name(entity)
-        entity_id = MotleyKuzuGraphStore._get_entity_id(entity)
+        table_name = MotleyKuzuGraphStore.get_entity_table_name(entity)
+        entity_id = MotleyKuzuGraphStore.get_entity_id(entity)
         inner_delete_relations(table_name=table_name, entity_id=entity_id)
         inner_delete_entity(table_name=table_name, entity_id=entity_id)
 
@@ -374,8 +377,12 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
         """
         Set a property to an entity. Also sets the property in the Python object.
         """
-        entity_id = MotleyKuzuGraphStore._get_entity_id(entity)
-        table_name = MotleyKuzuGraphStore._get_entity_table_name(entity)
+        if property_value is None:
+            # TODO: remove after updating Kuzu to v0.3.3 (https://github.com/kuzudb/kuzu/pull/3098)
+            raise Exception("Kuzu does not support NoneType parameters for properties for now")
+
+        entity_id = MotleyKuzuGraphStore.get_entity_id(entity)
+        table_name = MotleyKuzuGraphStore.get_entity_table_name(entity)
         existing_property_names = self._get_node_property_names(table_name=table_name)
 
         assert property_name in entity.model_fields, "No such field in Pydantic model: {}".format(
@@ -434,7 +441,7 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
         return retval
 
     @staticmethod
-    def _get_entity_table_name(entity: ModelType) -> str:
+    def get_entity_table_name(entity: ModelType) -> str:
         table_name = getattr(entity, MotleyKuzuGraphStore.TABLE_NAME_ATTR, None)
         if not table_name:
             table_name = entity.__class__.__name__.lower()
@@ -442,7 +449,7 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
         return table_name
 
     @staticmethod
-    def _get_entity_table_name_by_entity_class(entity_class: Type[ModelType]) -> str:
+    def get_entity_table_name_by_entity_class(entity_class: Type[ModelType]) -> str:
         table_name = getattr(entity_class, MotleyKuzuGraphStore.TABLE_NAME_ATTR, None)
         if not table_name:
             table_name = entity_class.__name__.lower()
@@ -450,16 +457,16 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
         return table_name
 
     @staticmethod
-    def _get_relation_table_name(from_entity: ModelType, to_entity: ModelType) -> str:
-        from_entity_table_name = MotleyKuzuGraphStore._get_entity_table_name(from_entity)
-        to_entity_table_name = MotleyKuzuGraphStore._get_entity_table_name(to_entity)
+    def get_relation_table_name(from_entity: ModelType, to_entity: ModelType) -> str:
+        from_entity_table_name = MotleyKuzuGraphStore.get_entity_table_name(from_entity)
+        to_entity_table_name = MotleyKuzuGraphStore.get_entity_table_name(to_entity)
 
         return MotleyKuzuGraphStore.RELATION_TABLE_NAME_TEMPLATE.format(
             src=from_entity_table_name, dst=to_entity_table_name
         )
 
     @staticmethod
-    def _get_entity_id(entity: ModelType) -> Optional[int]:
+    def get_entity_id(entity: ModelType) -> Optional[int]:
         return getattr(entity, MotleyKuzuGraphStore.ID_ATTR, None)
 
     @staticmethod
@@ -474,7 +481,7 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
         See https://docs.pydantic.dev/latest/concepts/models/#faux-immutability
         """
         assert (
-            MotleyKuzuGraphStore._get_entity_id(entity) is not None
+            MotleyKuzuGraphStore.get_entity_id(entity) is not None
         ), "Cannot freeze entity because its id is not set, it may not be in the database yet"
 
         entity.model_config["frozen"] = True
@@ -495,7 +502,8 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
         cypher_mapping = "{"
         for field_name, value in entity_dict.items():
             if value is None:
-                # TODO: remove (as of Kuzu v0.3.2, parameters of type NoneType are not supported)
+                # TODO: remove after updating Kuzu to v0.3.3
+                # (https://github.com/kuzudb/kuzu/pull/3098)
                 continue
 
             _, is_json = (

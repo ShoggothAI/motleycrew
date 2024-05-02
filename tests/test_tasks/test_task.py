@@ -1,7 +1,8 @@
 import pytest
 
 from motleycrew import MotleyCrew
-from motleycrew.tasks import TaskRecipe, TaskDependencyCycleError, TaskGraph
+from motleycrew.tasks import TaskRecipe
+from motleycrew.common.exceptions import TaskDependencyCycleError
 
 
 def create_dummy_task(crew: MotleyCrew, name: str):

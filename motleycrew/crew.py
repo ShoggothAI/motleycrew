@@ -59,7 +59,7 @@ class MotleyCrew:
         # TODO: order tasks recipes according to DAG
         tasks = self.order_task_recipes(tasks)
 
-        # TODO: dipatch through call graph fix?
+        # TODO: dispatch through call graph fix?
         for agent in self.agents:
             agent.crew = self
 

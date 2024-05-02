@@ -25,10 +25,6 @@ You must use the results of these upstream tasks:
 """
 
 
-class TaskDependencyCycleError(Exception):
-    """Raised when a task is set to depend on itself"""
-
-
 class SimpleTask(Task):
     def __init__(self, node_id: int, status: str = "pending", outputs: Optional[List[Any]] = None):
         super().__init__(status, outputs)

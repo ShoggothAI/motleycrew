@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import Optional, Any, Sequence, List, TYPE_CHECKING
 
 from motleycrew.agent.parent import MotleyAgentAbstractParent
-from motleycrew.tasks.simple import TaskDependencyCycleError
+from motleycrew.common.exceptions import TaskDependencyCycleError
 
 if TYPE_CHECKING:
     from motleycrew.crew import MotleyCrew

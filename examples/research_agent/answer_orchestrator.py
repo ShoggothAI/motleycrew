@@ -10,7 +10,9 @@ from question_answerer import AnswerSubQuestionTool
 class AnswerOrchestrator:
     def __init__(self, storage: MotleyGraphStore, answer_length: int):
         self.storage = storage
-        self.question_answering_tool = AnswerSubQuestionTool(graph=self.storage, answer_length=answer_length)
+        self.question_answering_tool = AnswerSubQuestionTool(
+            graph=self.storage, answer_length=answer_length
+        )
 
     def get_unanswered_available_questions(self) -> list[Question]:
         query = (
@@ -43,7 +45,7 @@ class AnswerOrchestrator:
             logging.warning("Nothing to answer!")
             return
 
-        return Question.deserialize(self.storage.get_entity(last_question.id))
+        return Question.deserialize(self.storage.get_entity_by_class_and_id(last_question.id))
 
 
 if __name__ == "__main__":

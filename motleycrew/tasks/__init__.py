@@ -1,4 +1,5 @@
 from motleycrew.tasks.graph import TaskGraph
-from motleycrew.tasks.task import TaskRecipe, TaskDependencyCycleError
+from motleycrew.tasks.parent import TaskRecipe
+from motleycrew.tasks.simple import SimpleTaskRecipe
 
-__all__ = ["SimpleTaskRecipe", "TaskDependencyCycleError", "TaskGraph"]
+__all__ = ["SimpleTaskRecipe", "TaskGraph"]

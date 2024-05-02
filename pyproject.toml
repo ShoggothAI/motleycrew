@@ -19,6 +19,7 @@ langchainhub = "^0.1.15"
 kuzu = "^0.3.0"
 cloudpickle = "^3.0.0"
 platformdirs = "^4.2.1"
+pydantic = "^2.7.1"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.2.0"

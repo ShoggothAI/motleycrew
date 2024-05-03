@@ -84,8 +84,10 @@ class Task:
         if task is self:
             raise TaskDependencyCycleError(f"Task {task.name} can not depend on itself")
 
-        self.upstream_tasks.append(task)
-        task.downstream_tasks.append(self)
+        if task not in self.upstream_tasks:
+            self.upstream_tasks.append(task)
+        if self not in task.downstream_tasks:
+            task.downstream_tasks.append(self)
 
         return self
 

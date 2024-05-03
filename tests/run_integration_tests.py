@@ -12,9 +12,7 @@ from motleycrew.caсhing import (
     set_cache_location,
     set_strong_cache,
 )
-from langchain_community.tools import DuckDuckGoSearchRun
-from motleycrew import MotleyCrew, Task
-from motleycrew.agent.llama_index import ReActLlamaIndexMotleyAgent
+from examples.single_llama_index import main as single_llama_index_main
 
 CACHE_DIR = "tests/cache"
 DATA_DIR = "tests/data"
@@ -27,45 +25,20 @@ logger = logging.getLogger("integration_test_logger")
 class IntegrationTestException(Exception):
     """Integration tests exception"""
 
-    def __init__(self, function_name: str, *args, **kwargs):
+    def __init__(self, test_name: str, *args, **kwargs):
         super(IntegrationTestException, self).__init__(*args, **kwargs)
-        self.function_name = function_name
+        self.test_name = test_name
 
     def __str__(self):
         super_str = super(IntegrationTestException, self).__str__()
-        return "{} {}: {}".format(self.__class__, self.function_name, super_str)
+        return "{} {}: {}".format(self.__class__, self.test_name, super_str)
 
 
 def single_llama_index_test():
     """Test example single_llama_index"""
-
-    function_name = inspect.stack()[0][3]
-    search_tool = DuckDuckGoSearchRun()
-    researcher = ReActLlamaIndexMotleyAgent(
-        goal="Uncover cutting-edge developments in AI and data science",
-        tools=[search_tool],
-        verbose=True,
-    )
-    crew = MotleyCrew()
-    # Create tasks for your agents
-    task1 = Task(
-        crew=crew,
-        name="produce comprehensive analysis report on AI advancements",
-        description="""Conduct a comprehensive analysis of the latest advancements in AI in 2024.
-      Identify key trends, breakthrough technologies, and potential industry impacts.
-      Your final answer MUST be a full analysis report""",
-        agent=researcher,
-        documents=["paper1.pdf", "paper2.pdf"],
-    )
-
-    # Instantiate your crew with a sequential process
-    result = crew.run(
-        agents=[researcher],
-        verbose=2,  # You can set it to 1 or 2 to different logging levels
-    )
-
-    content = list(result._done)[0].outputs[0].response
-    excepted_content = read_content(function_name)
+    test_name = inspect.stack()[0][3]
+    content = single_llama_index_main()
+    excepted_content = read_content(test_name)
     comparison_results(content, excepted_content)
 
 
@@ -82,22 +55,22 @@ def comparison_results(result: str, excepted_result: str) -> list:
     return diff
 
 
-def build_excepted_content_file_path(function_name: str, extension: str = "txt") -> str:
+def build_excepted_content_file_path(test_name: str, extension: str = "txt") -> str:
     """Building data file path"""
-    return os.path.join(DATA_DIR, "{}.{}".format(function_name, extension))
+    return os.path.join(DATA_DIR, "{}.{}".format(test_name, extension))
 
 
-def write_content(function_name: str, content: str, extension: str = "txt") -> bool:
+def write_content(test_name: str, content: str, extension: str = "txt") -> bool:
     """Writing data to file"""
-    file_path = build_excepted_content_file_path(function_name, extension)
+    file_path = build_excepted_content_file_path(test_name, extension)
     with open(file_path, "w") as f_o:
         f_o.write(content)
     return True
 
 
-def read_content(function_name: str, extension: str = "txt") -> str:
+def read_content(test_name: str, extension: str = "txt") -> str:
     """Reading data from file"""
-    file_path = build_excepted_content_file_path(function_name, extension)
+    file_path = build_excepted_content_file_path(test_name, extension)
     with open(file_path, "r") as f_o:
         return f_o.read()
 

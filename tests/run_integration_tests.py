@@ -39,10 +39,10 @@ def single_llama_index_test():
     test_name = inspect.stack()[0][3]
     content = single_llama_index_main()
     excepted_content = read_content(test_name)
-    comparison_results(content, excepted_content)
+    compare_results(content, excepted_content)
 
 
-def comparison_results(result: str, excepted_result: str) -> list:
+def compare_results(result: str, excepted_result: str) -> list:
     """Comparison of the received and expected results"""
     result_lines = result.splitlines()
     excepted_result_lines = excepted_result.splitlines()
@@ -75,7 +75,7 @@ def read_content(test_name: str, extension: str = "txt") -> str:
         return f_o.read()
 
 
-def find_tests_functions():
+def find_test_functions():
     """Searches for and returns a list of test functions"""
     functions_list = []
     for func_name, func in inspect.getmembers(
@@ -98,7 +98,7 @@ if __name__ == "__main__":
     data_dir.mkdir(parents=True, exist_ok=True)
 
     test_exceptions = []
-    test_functions = find_tests_functions()
+    test_functions = find_test_functions()
 
     for f in test_functions:
         try:

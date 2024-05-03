@@ -1,7 +1,7 @@
 import pytest
 
-from motleycrew.caсhing.http_cache import RequestsHttpCaching, CacheException
-from motleycrew.caсhing import http_cache
+from motleycrew.caching.http_cache import RequestsHttpCaching, CacheException
+from motleycrew.caching import http_cache
 
 
 @pytest.fixture

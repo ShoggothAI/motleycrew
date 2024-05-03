@@ -1,6 +1,6 @@
 import os
 
-from motleycrew.caсhing.http_cache import (
+from motleycrew.caching.http_cache import (
     BaseHttpCache,
     RequestsHttpCaching,
     HttpxHttpCaching,

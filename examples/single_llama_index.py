@@ -4,7 +4,7 @@ from langchain_community.tools import DuckDuckGoSearchRun
 
 from motleycrew import MotleyCrew, Task
 from motleycrew.agent.llama_index import ReActLlamaIndexMotleyAgent
-from motleycrew.caсhing import enable_cache, disable_cache
+from motleycrew.caching import enable_cache, disable_cache
 from motleycrew.common.utils import configure_logging
 
 

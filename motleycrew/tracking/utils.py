@@ -12,11 +12,14 @@ from motleycrew.common import LLMFramework
 
 def get_lunary_public_key():
     """Return lunary public key or None"""
-    return (
+    key = (
         os.environ.get("LUNARY_PUBLIC_KEY")
         or os.getenv("LUNARY_APP_ID")
         or os.getenv("LLMONITOR_APP_ID")
     )
+    if not key:
+        logging.warning("Lunary public key is not set, tracking will be disabled")
+    return key
 
 
 def create_lunary_callback() -> LunaryCallbackHandler:
@@ -66,9 +69,7 @@ def get_default_callbacks_list(
     if callable(dc_factory):
         _default_callbacks = dc_factory()
     else:
-        msg = "Default callbacks are not implemented for {} framework".format(
-            framework_name
-        )
+        msg = "Default callbacks are not implemented for {} framework".format(framework_name)
         logging.warning(msg)
 
     return _default_callbacks
@@ -104,6 +105,6 @@ def add_default_callbacks_to_langchain_config(
 
     _default_callbacks = get_default_callbacks_list()
     if _default_callbacks:
-        config_callbacks = config.get("tracking") or []
-        config["tracking"] = combine_callbacks(config_callbacks, _default_callbacks)
+        config_callbacks = config.get("callbacks") or []
+        config["callbacks"] = combine_callbacks(config_callbacks, _default_callbacks)
     return config

@@ -32,9 +32,6 @@ class StrongCacheException(BaseException):
     """Exception use of cache only"""
 
 
-load_dotenv()
-
-
 def file_cache(http_cache: "BaseHttpCache", updating_parameters: dict = {}):
     """Decorator to cache function output based on its inputs, ignoring specified parameters."""
 
@@ -90,18 +87,14 @@ class BaseHttpCache(ABC):
         """Enable caching"""
         self._enable()
         self.is_caching = True
-        library_log = (
-            "for {} library.".format(self.library_name) if self.library_name else "."
-        )
+        library_log = "for {} library.".format(self.library_name) if self.library_name else "."
         logging.info("Enable caching {} class {}".format(self.__class__, library_log))
 
     def disable(self):
         """Disable caching"""
         self._disable()
         self.is_caching = False
-        library_log = (
-            "for {} library.".format(self.library_name) if self.library_name else "."
-        )
+        library_log = "for {} library.".format(self.library_name) if self.library_name else "."
         logging.info("Disable caching {} class {}".format(self.__class__, library_log))
 
     def prepare_response(self, response: Any) -> Any:
@@ -130,11 +123,7 @@ class BaseHttpCache(ABC):
 
         # check or create cache dirs
         root_dir = Path(self.root_cache_dir)
-        cache_dir = (
-            root_dir
-            / url_parsed.hostname
-            / url_parsed.path.strip("/").replace("/", "_")
-        )
+        cache_dir = root_dir / url_parsed.hostname / url_parsed.path.strip("/").replace("/", "_")
         cache_dir.mkdir(parents=True, exist_ok=True)
 
         # Convert args to a dictionary based on the function's signature
@@ -214,9 +203,7 @@ class BaseHttpCache(ABC):
         except Exception as e:
             logging.warning("Unpickling failed for {}".format(cache_file))
             if self.strong_cache:
-                msg = "Error reading cached file: {}\n{}".format(
-                    str(e), str(cache_file)
-                )
+                msg = "Error reading cached file: {}\n{}".format(str(e), str(cache_file))
                 raise StrongCacheException(msg)
         return None
 

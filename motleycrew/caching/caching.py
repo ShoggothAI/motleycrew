@@ -1,6 +1,6 @@
 import os
 
-from motleycrew.caсhing.http_cache import (
+from motleycrew.caching.http_cache import (
     BaseHttpCache,
     RequestsHttpCaching,
     HttpxHttpCaching,
@@ -16,23 +16,23 @@ caching_http_library_list = [
 
 
 def set_strong_cache(val: bool):
-    """Enabling disabling the strictly caching option"""
+    """Enable or disable the strict-caching option"""
     BaseHttpCache.strong_cache = bool(val)
 
 
 def set_update_cache_if_exists(val: bool):
-    """Enabling disabling cache updates"""
+    """Enable or disable cache updates"""
     BaseHttpCache.update_cache_if_exists = bool(val)
 
 
 def set_cache_location(location: str) -> str:
-    """Sets the caching root directory, returns the absolute path of the derrictory"""
+    """Set the caching root directory, return the absolute path of the directory"""
     BaseHttpCache.root_cache_dir = location
     return os.path.abspath(BaseHttpCache.root_cache_dir)
 
 
 def enable_cache():
-    """The function of enable the caching process"""
+    """Enable global caching"""
     global is_caching
     for http_cache in caching_http_library_list:
         http_cache.enable()
@@ -40,7 +40,7 @@ def enable_cache():
 
 
 def disable_cache():
-    """The function of disable the caching process"""
+    """Disable global caching"""
     global is_caching
     for http_cache in caching_http_library_list:
         http_cache.disable()

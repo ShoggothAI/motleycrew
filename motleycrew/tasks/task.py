@@ -47,8 +47,8 @@ class Task:
 
         self.done: bool = False
 
-        self.upstream_tasks: Set[Task] = set()
-        self.downstream_tasks: Set[Task] = set()
+        self.upstream_tasks: list[Task] = list()
+        self.downstream_tasks: list[Task] = list()
 
         self.crew.add_task(self)
 
@@ -84,8 +84,8 @@ class Task:
         if task is self:
             raise TaskDependencyCycleError(f"Task {task.name} can not depend on itself")
 
-        self.upstream_tasks.add(task)
-        task.downstream_tasks.add(self)
+        self.upstream_tasks.append(task)
+        task.downstream_tasks.append(self)
 
         return self
 

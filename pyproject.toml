@@ -19,6 +19,8 @@ langchainhub = "^0.1.15"
 kuzu = "^0.3.0"
 cloudpickle = "^3.0.0"
 platformdirs = "^4.2.1"
+sphinx = "^7.3.7"
+sphinx-rtd-theme = "^2.0.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.2.0"

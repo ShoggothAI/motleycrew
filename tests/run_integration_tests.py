@@ -20,17 +20,16 @@ from motleycrew.caching import (
 
 from examples.delegation_crewai import main as delegation_crewai_main
 from examples.single_llama_index import main as single_llama_index_main
-from examples.single_openai_tools_react import main as single_openai_tools_react_main
 
-
-CACHE_DIR = Path(__file__).parent / "itest_cache"
-GOLDEN_DIR = Path(__file__).parent / "itest_golden_data"
 
 INTEGRATION_TESTS = {
     "single_llama_index": single_llama_index_main,
     "delegation_crewai": delegation_crewai_main,
     # "single_openai_tools_react": single_openai_tools_react_main, TODO: enable this test
 }
+
+DEFAULT_CACHE_DIR = Path(__file__).parent / "itest_cache"
+DEFAULT_GOLDEN_DIR = Path(__file__).parent / "itest_golden_data"
 
 
 def get_args_parser():
@@ -45,9 +44,9 @@ def get_args_parser():
         help="Name of the test to run (leave empty to run all tests)",
         default=None,
     )
-    parser.add_argument("--cache-dir", type=str, help="Cache directory", default=CACHE_DIR)
+    parser.add_argument("--cache-dir", type=str, help="Cache directory", default=DEFAULT_CACHE_DIR)
     parser.add_argument(
-        "--golden-dir", type=str, help="Reference data directory", default=GOLDEN_DIR
+        "--golden-dir", type=str, help="Reference data directory", default=DEFAULT_GOLDEN_DIR
     )
     parser.add_argument(
         "--update-golden",

@@ -9,8 +9,10 @@ import fnmatch
 
 from dotenv import load_dotenv
 import requests
-from httpx import Client
+from requests.structures import CaseInsensitiveDict
+from httpx import Client, Headers
 from curl_cffi.requests import AsyncSession
+from curl_cffi.requests import Headers as CurlCffiHeaders
 import cloudpickle
 import platformdirs
 
@@ -33,11 +35,12 @@ class StrongCacheException(BaseException):
 load_dotenv()
 
 
-def file_cache(http_cache: "BaseHttpCache"):
+def file_cache(http_cache: "BaseHttpCache", updating_parameters: dict = {}):
     """Decorator to cache function output based on its inputs, ignoring specified parameters."""
 
     def decorator(func):
         def wrapper(*args, **kwargs):
+            kwargs.update(updating_parameters)
             return http_cache.get_response(func, *args, **kwargs)
 
         return wrapper
@@ -45,11 +48,12 @@ def file_cache(http_cache: "BaseHttpCache"):
     return decorator
 
 
-def afile_cache(http_cache: "BaseHttpCache"):
+def afile_cache(http_cache: "BaseHttpCache", updating_parameters: dict = {}):
     """Async decorator to cache function output based on its inputs, ignoring specified parameters."""
 
     def decorator(func):
         async def wrapper(*args, **kwargs):
+            kwargs.update(updating_parameters)
             return await http_cache.aget_response(func, *args, **kwargs)
 
         return wrapper
@@ -64,7 +68,8 @@ class BaseHttpCache(ABC):
     library_name: str = ""
     app_name = os.environ.get("APP_NAME") or "motleycrew"
     root_cache_dir = platformdirs.user_cache_dir(app_name)
-    strong_cache = False
+    strong_cache: bool = False
+    update_cache_if_exists: bool = False
 
     def __init__(self, *args, **kwargs):
         self.is_caching = False
@@ -191,7 +196,7 @@ class BaseHttpCache(ABC):
 
     def load_cache_response(self, cache_file: Path, url: str) -> Union[Any, None]:
         """Loads and returns the cached response"""
-        if cache_file.exists():
+        if cache_file.exists() and not self.update_cache_if_exists:
             return self.read_from_cache(cache_file, url)
         elif self.strong_cache:
             msg = "Cache file not found: {}\nthe strictly caching option is enabled.".format(
@@ -245,6 +250,12 @@ class RequestsHttpCaching(BaseHttpCache):
         """Finds the url in the arguments and returns it"""
         return args[1]
 
+    def prepare_response(self, response: Any) -> Any:
+        """Preparing the response object before saving"""
+        response.headers = CaseInsensitiveDict()
+        response.request.headers = CaseInsensitiveDict()
+        return response
+
     def _enable(self):
         """Replacing the original function with a caching function"""
 
@@ -273,10 +284,16 @@ class HttpxHttpCaching(BaseHttpCache):
         """Finds the url in the arguments and returns it"""
         return str(args[1].url)
 
+    def prepare_response(self, response: Any) -> Any:
+        """Preparing the response object before saving"""
+        response.headers = Headers()
+        response.request.headers = Headers()
+        return response
+
     def _enable(self):
         """Replacing the original function with a caching function"""
 
-        @file_cache(self)
+        @file_cache(self, updating_parameters={"stream": False})
         def request_func(s, request, *args, **kwargs):
             return self.library_method(s, request, **kwargs)
 
@@ -303,6 +320,8 @@ class CurlCffiHttpCaching(BaseHttpCache):
 
     def prepare_response(self, response: Any) -> Any:
         """Preparing the response object before saving"""
+        response.headers = CurlCffiHeaders()
+        response.request.headers = CurlCffiHeaders()
         response.curl = None
         response.cookies.jar._cookies_lock = FakeRLock()
         return response

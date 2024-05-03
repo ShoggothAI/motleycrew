@@ -6,7 +6,7 @@ import traceback
 import inspect
 import difflib as df
 
-from motleycrew.caсhing import (
+from motleycrew.caching import (
     enable_cache,
     disable_cache,
     set_cache_location,

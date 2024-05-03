@@ -19,12 +19,6 @@ from motleycrew.storage import MotleyGraphStore
 ModelType = TypeVar("ModelType", bound=BaseModel)
 
 
-class RetryConnection(kuzu.Connection):
-    def execute(self, *args, **kwargs) -> QueryResult:
-        sleep(0)
-        return super().execute(*args, **kwargs)
-
-
 class MotleyKuzuGraphStore(MotleyGraphStore):
     TABLE_NAME_ATTR = "__tablename__"
     ID_ATTR = "_id"
@@ -45,7 +39,7 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
 
     def __init__(self, database: Any) -> None:
         self.database = database
-        self.connection = RetryConnection(database)
+        self.connection = kuzu.Connection(database)
 
     def _execute_query(
         self, query: str | PreparedStatement, parameters: Optional[dict[str, Any]] = None
@@ -57,6 +51,7 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
         if parameters:
             logging.debug("with parameters: %s", parameters)
 
+        # TODO: retries?
         return self.connection.execute(query=query, parameters=parameters)
 
     def _check_node_table_exists(self, table_name: str):

@@ -20,6 +20,11 @@ def set_strong_cache(val: bool):
     BaseHttpCache.strong_cache = bool(val)
 
 
+def set_update_cache_if_exists(val: bool):
+    """Enabling disabling cache updates"""
+    BaseHttpCache.update_cache_if_exists = bool(val)
+
+
 def set_cache_location(location: str) -> str:
     """Sets the caching root directory, returns the absolute path of the derrictory"""
     BaseHttpCache.root_cache_dir = location

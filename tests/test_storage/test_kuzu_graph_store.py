@@ -1,9 +1,9 @@
 import pytest
 
 from typing import Optional
-import random
 import kuzu
 from pydantic import BaseModel
+from pydantic import ValidationError
 from motleycrew.storage import MotleyKuzuGraphStore
 
 
@@ -21,18 +21,31 @@ def database(tmpdir):
 
 
 class TestMotleyKuzuGraphStore:
+    def test_set_get_entity_id(self):
+        entity = Entity(int_param=1)
+        MotleyKuzuGraphStore._set_entity_id(entity=entity, entity_id=2)
+        assert MotleyKuzuGraphStore.get_entity_id(entity) == 2
+
     def test_create_new_entity(self, database):
         graph_store = MotleyKuzuGraphStore(database)
         entity = Entity(int_param=1)
         created_entity = graph_store.create_entity(entity)
-        assert getattr(created_entity, "_id", None) is not None
+        assert MotleyKuzuGraphStore.get_entity_id(created_entity) is not None
+        assert MotleyKuzuGraphStore.get_entity_id(entity) is not None  # mutated in place
+
+    def test_created_entity_is_frozen(self, database):
+        graph_store = MotleyKuzuGraphStore(database)
+        entity = Entity(int_param=1)
+        created_entity = graph_store.create_entity(entity)
+        with pytest.raises(ValidationError):
+            created_entity.int_param = 2
 
     def test_create_entity_and_retrieve(self, database):
         graph_store = MotleyKuzuGraphStore(database)
 
         entity = Entity(int_param=1, optional_str_param="test", optional_list_str_param=["a", "b"])
         created_entity = graph_store.create_entity(entity)
-        created_entity_id = getattr(created_entity, "_id", None)
+        created_entity_id = MotleyKuzuGraphStore.get_entity_id(created_entity)
         assert created_entity_id is not None
 
         retrieved_entity = graph_store.get_entity_by_class_and_id(
@@ -43,7 +56,7 @@ class TestMotleyKuzuGraphStore:
     def test_create_entity_with_id_already_set(self, database):
         graph_store = MotleyKuzuGraphStore(database)
         entity = Entity(int_param=1)
-        setattr(entity, "_id", 1)
+        MotleyKuzuGraphStore._set_entity_id(entity=entity, entity_id=2)
         with pytest.raises(AssertionError):
             graph_store.create_entity(entity)
 
@@ -59,7 +72,7 @@ class TestMotleyKuzuGraphStore:
         entity = Entity(int_param=1)
         assert graph_store.check_entity_exists(entity) is False
 
-        setattr(entity, "_id", 1)
+        MotleyKuzuGraphStore._set_entity_id(entity=entity, entity_id=2)
         assert graph_store.check_entity_exists(entity) is False
 
         graph_store._ensure_entity_table(entity)
@@ -157,18 +170,26 @@ class TestMotleyKuzuGraphStore:
         entity = Entity(int_param=1)
         graph_store.create_entity(entity)
         assert entity.optional_str_param is None
-        assert graph_store.get_entity_by_class_and_id(Entity, entity._id).optional_str_param is None
+        assert (
+            graph_store.get_entity_by_class_and_id(
+                Entity, MotleyKuzuGraphStore.get_entity_id(entity)
+            ).optional_str_param
+            is None
+        )
 
         graph_store.set_property(entity, "optional_str_param", "test")
         assert entity.optional_str_param == "test"
         assert (
-            graph_store.get_entity_by_class_and_id(Entity, entity._id).optional_str_param == "test"
+            graph_store.get_entity_by_class_and_id(
+                Entity, MotleyKuzuGraphStore.get_entity_id(entity)
+            ).optional_str_param
+            == "test"
         )
 
         graph_store.set_property(entity, "optional_list_str_param", ["a", "b"])
         assert entity.optional_list_str_param == ["a", "b"]
         assert graph_store.get_entity_by_class_and_id(
-            Entity, entity._id
+            Entity, MotleyKuzuGraphStore.get_entity_id(entity)
         ).optional_list_str_param == ["a", "b"]
 
     def test_run_cypher_query(self, database):

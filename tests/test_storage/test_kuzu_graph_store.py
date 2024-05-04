@@ -150,6 +150,8 @@ class TestMotleyKuzuGraphStore:
         graph_store.delete_entity(entity)
         assert graph_store.check_entity_exists(entity) is False
 
+        entity.int_param = 2  # check that entity is not frozen
+
     def test_delete_entity_with_relations(self, database):
         graph_store = MotleyKuzuGraphStore(database)
         entity1 = Entity(int_param=1)

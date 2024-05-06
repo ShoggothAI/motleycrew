@@ -87,6 +87,7 @@ class BaseHttpCache(ABC):
         """Enable caching"""
         self._enable()
         self.is_caching = True
+    
         library_log = "for {} library.".format(self.library_name) if self.library_name else "."
         logging.info("Enable caching {} class {}".format(self.__class__, library_log))
 
@@ -94,6 +95,7 @@ class BaseHttpCache(ABC):
         """Disable caching"""
         self._disable()
         self.is_caching = False
+    
         library_log = "for {} library.".format(self.library_name) if self.library_name else "."
         logging.info("Disable caching {} class {}".format(self.__class__, library_log))
 

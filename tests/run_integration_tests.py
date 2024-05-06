@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 
 from motleycrew.common.exceptions import IntegrationTestException
 from motleycrew.common.utils import configure_logging
+
 from motleycrew.caching import (
     enable_cache,
     set_cache_location,

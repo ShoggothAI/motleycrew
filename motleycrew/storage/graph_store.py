@@ -1,83 +1,82 @@
 from abc import ABC, abstractmethod
-from typing import Optional, Any, Type, TypeVar
-from pydantic import BaseModel
-
-
-ModelType = TypeVar("ModelType", bound=BaseModel)
+from typing import Optional, Any, Type
+from motleycrew.storage import MotleyGraphNode
 
 
 class MotleyGraphStore(ABC):
     @abstractmethod
-    def check_entity_exists_by_class_and_id(
-        self, entity_class: Type[ModelType], entity_id: int
+    def check_node_exists_by_class_and_id(
+        self, node_class: Type[MotleyGraphNode], node_id: int
     ) -> bool:
         """
-        Check if an entity of given class with given id is present in the database.
+        Check if a node of given class with given id is present in the database.
         """
         pass
 
     @abstractmethod
-    def check_entity_exists(self, entity: ModelType) -> bool:
+    def check_node_exists(self, node: MotleyGraphNode) -> bool:
         """
-        Check if the given entity is present in the database.
+        Check if the given node is present in the database.
         """
         pass
 
     @abstractmethod
     def check_relation_exists(
-        self, from_entity: ModelType, to_entity: ModelType, predicate: Optional[str]
+        self, from_node: MotleyGraphNode, to_node: MotleyGraphNode, label: Optional[str]
     ) -> bool:
         """
-        Check if a relation exists between two entities with given predicate.
+        Check if a relation exists between two nodes with given label.
         """
         pass
 
     @abstractmethod
-    def get_entity_by_class_and_id(
-        self, entity_class: Type[ModelType], entity_id: int
-    ) -> Optional[ModelType]:
+    def get_node_by_class_and_id(
+        self, node_class: Type[MotleyGraphNode], node_id: int
+    ) -> Optional[MotleyGraphNode]:
         """
-        Retrieve the entity of given class with given id if it is present in the database.
+        Retrieve the node of given class with given id if it is present in the database.
         Otherwise, return None.
         """
         pass
 
     @abstractmethod
-    def create_entity(self, entity: ModelType):
+    def insert_node(self, node: MotleyGraphNode):
         """
-        Create a new entity, populate its id and freeze it.
-        If entity table or some columns do not exist, this method also creates them.
+        Insert a new node, populate its id and freeze it.
+        If node table or some columns do not exist, this method also creates them.
         """
         pass
 
     @abstractmethod
-    def create_relation(self, from_entity: ModelType, to_entity: ModelType, predicate: str) -> None:
+    def create_relation(
+        self, from_node: MotleyGraphNode, to_node: MotleyGraphNode, label: str
+    ) -> None:
         """
-        Create a relation between existing entities.
+        Create a relation with given label between existing nodes.
         If relation table does not exist, this method also creates them.
         """
         pass
 
     @abstractmethod
-    def upsert_triplet(self, from_entity: ModelType, to_entity: ModelType, predicate: str):
+    def upsert_triplet(self, from_node: MotleyGraphNode, to_node: MotleyGraphNode, label: str):
         """
-        Create a relation with a given predicate between entities, if such does not already exist.
-        If the entities do not already exist, create them too.
+        Create a relation with given label between nodes, if such does not already exist.
+        If the nodes do not already exist, create them too.
         This method also creates and/or updates all necessary tables.
         """
         pass
 
     @abstractmethod
-    def delete_entity(self, entity: ModelType) -> None:
+    def delete_node(self, node: MotleyGraphNode) -> None:
         """
-        Delete a given entity and its relations.
+        Delete a given node and its relations.
         """
         pass
 
     @abstractmethod
-    def set_property(self, entity: ModelType, property_name: str, property_value: Any):
+    def set_property(self, node: MotleyGraphNode, property_name: str, property_value: Any):
         """
-        Set a property to an entity. Also sets the property in the Python object.
+        Set a property to a node. Also sets the property in the Python object.
         """
         pass
 

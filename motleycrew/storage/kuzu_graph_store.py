@@ -8,26 +8,21 @@ from time import sleep
 
 from typing import Any, Dict, List, Optional, Type, TypeVar
 
-from pydantic import BaseModel
 import kuzu
 from kuzu import PreparedStatement, QueryResult
 import json
 
 from motleycrew.storage import MotleyGraphStore
-
-
-ModelType = TypeVar("ModelType", bound=BaseModel)
+from motleycrew.storage import MotleyGraphNode
 
 
 class MotleyKuzuGraphStore(MotleyGraphStore):
-    TABLE_NAME_ATTR = "__tablename__"
     ID_ATTR = "_id"
 
-    RELATION_TABLE_NAME_TEMPLATE = "FROM_{src}_TO_{dst}"
-    JSON_FIELD_PREFIX = "JSON__"
+    JSON_CONTENT_PREFIX = "JSON__"
 
     PYTHON_TO_CYPHER_TYPES_MAPPING = {
-        int: "INT64",  # TODO: enforce size when creating and updating entities and relations
+        int: "INT64",  # TODO: enforce size when creating and updating nodes and relations
         Optional[int]: "INT64",
         str: "STRING",
         Optional[str]: "STRING",
@@ -54,24 +49,31 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
         # TODO: retries?
         return self.connection.execute(query=query, parameters=parameters)
 
-    def _check_node_table_exists(self, table_name: str):
-        return table_name in self.connection._get_node_table_names()
+    def _check_node_table_exists(self, label: str):
+        return label in self.connection._get_node_table_names()
 
-    def _check_rel_table_exists(self, table_name: str):
-        return table_name in [row["name"] for row in self.connection._get_rel_table_names()]
+    def _check_rel_table_exists(
+        self, from_label: str, to_label: str, rel_label: Optional[str] = None
+    ):
+        for row in self.connection._get_rel_table_names():
+            if (
+                (rel_label is None or row["name"] == rel_label)
+                and row["src"] == from_label
+                and row["dst"] == to_label
+            ):
+                return True
+        return False
 
-    def _get_node_property_names(self, table_name: str):
-        return self.connection._get_node_property_names(table_name=table_name)
+    def _get_node_property_names(self, label: str):
+        return self.connection._get_node_property_names(table_name=label)
 
-    def _ensure_entity_table(self, entity: ModelType) -> str:
+    def _ensure_node_table(self, node: MotleyGraphNode) -> str:
         """
-        Create a table for storing entities of that class if such does not already exist.
+        Create a table for storing nodes of that class if such does not already exist.
         If it does exist, create all missing columns.
-        The table name is inferred from the __tablename__ attribute if it is set,
-        otherwise from the class name.
         Return the table name.
         """
-        table_name = MotleyKuzuGraphStore.get_entity_table_name(entity)
+        table_name = node.get_label()
         if not self._check_node_table_exists(table_name):
             logging.info("Node table %s does not exist in the database, creating", table_name)
             self._execute_query(
@@ -79,182 +81,165 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
             )
 
         # Create missing property columns
-        existing_property_names = self._get_node_property_names(table_name=table_name)
-        for field_name, field in entity.model_fields.items():
-            if (
-                field_name not in existing_property_names
-                and MotleyKuzuGraphStore.JSON_FIELD_PREFIX + field_name
-                not in existing_property_names
-            ):
-                logging.info("Property %s not present in table %s, creating")
-                assert not field_name.startswith(MotleyKuzuGraphStore.JSON_FIELD_PREFIX)
+        existing_property_names = self._get_node_property_names(node.get_label())
+        for field_name, field in node.model_fields.items():
+            if field_name not in existing_property_names:
+                logging.info(
+                    "Property %s not present in table for label %s, creating",
+                    field_name,
+                    node.get_label(),
+                )
                 cypher_type, is_json = (
                     MotleyKuzuGraphStore._get_cypher_type_and_is_json_by_python_type_annotation(
                         field.annotation
                     )
                 )
-                if is_json:
-                    field_name = MotleyKuzuGraphStore.JSON_FIELD_PREFIX + field_name
 
                 self._execute_query(
                     "ALTER TABLE {} ADD {} {}".format(table_name, field_name, cypher_type)
                 )
         return table_name
 
-    def _ensure_relation_table(self, from_entity: ModelType, to_entity: ModelType) -> str:
+    def _ensure_relation_table(
+        self, from_node: MotleyGraphNode, to_node: MotleyGraphNode, label: str
+    ):
         """
-        Create a table for storing relations from from_entity-like nodes to to_entity-like nodes,
+        Create a table for storing relations from from_node-like nodes to to_node-like nodes,
         if such does not already exist.
-        Return the table name.
         """
-        table_name = MotleyKuzuGraphStore.get_relation_table_name(
-            from_entity=from_entity, to_entity=to_entity
-        )
-        if not self._check_rel_table_exists(table_name):
-            logging.info("Relation table %s does not exist in the database, creating", table_name)
+        if not self._check_rel_table_exists(
+            from_label=from_node.get_label(), to_label=to_node.get_label(), rel_label=label
+        ):
+            logging.info(
+                "Relation table %s from %s to %s does not exist in the database, creating",
+                label,
+                from_node.get_label(),
+                to_node.get_label(),
+            )
 
-            from_table_name = MotleyKuzuGraphStore.get_entity_table_name(from_entity)
-            to_table_name = MotleyKuzuGraphStore.get_entity_table_name(to_entity)
             self._execute_query(
-                "CREATE REL TABLE {} (FROM {} TO {}, predicate STRING)".format(
-                    table_name, from_table_name, to_table_name
+                "CREATE REL TABLE {} (FROM {} TO {})".format(
+                    label, from_node.get_label(), to_node.get_label()
                 )
             )
-        return table_name
 
-    def check_entity_exists_by_class_and_id(
-        self, entity_class: Type[ModelType], entity_id: int
+    def check_node_exists_by_class_and_id(
+        self, node_class: Type[MotleyGraphNode], node_id: int
     ) -> bool:
         """
-        Check if an entity of given class with given id is present in the database.
+        Check if a node of given class with given id is present in the database.
         """
-        table_name = MotleyKuzuGraphStore.get_entity_table_name_by_entity_class(entity_class)
-        if not self._check_node_table_exists(table_name):
+        if not self._check_node_table_exists(node_class.get_label()):
             return False
 
         is_exists_result = self._execute_query(
-            "MATCH (n:{}) WHERE n.id = $entity_id RETURN n.id".format(table_name),
-            {"entity_id": entity_id},
+            "MATCH (n:{}) WHERE n.id = $node_id RETURN n.id".format(node_class.get_label()),
+            {"node_id": node_id},
         )
         return is_exists_result.has_next()
 
-    def check_entity_exists(self, entity: ModelType) -> bool:
+    def check_node_exists(self, node: MotleyGraphNode) -> bool:
         """
-        Check if the given entity is present in the database.
+        Check if the given node is present in the database.
         """
-        entity_id = MotleyKuzuGraphStore.get_entity_id(entity)
-        if entity_id is None:
-            return False  # for cases when id attribute is not set => entity does not exist
+        if node.id is None:
+            return False  # for cases when id attribute is not set => node does not exist
 
-        return self.check_entity_exists_by_class_and_id(
-            entity_class=entity.__class__, entity_id=entity_id
-        )
+        return self.check_node_exists_by_class_and_id(node_class=node.__class__, node_id=node.id)
 
     def check_relation_exists(
-        self, from_entity: ModelType, to_entity: ModelType, predicate: Optional[str] = None
+        self, from_node: MotleyGraphNode, to_node: MotleyGraphNode, label: Optional[str] = None
     ) -> bool:
         """
-        Check if a relation exists between two entities with given predicate.
+        Check if a relation exists between two nodes with given label.
         """
-        from_entity_id = MotleyKuzuGraphStore.get_entity_id(from_entity)
-        to_entity_id = MotleyKuzuGraphStore.get_entity_id(to_entity)
-        if from_entity_id is None or to_entity_id is None:
+        if from_node.id is None or to_node.id is None:
             return False
 
-        from_table_name = MotleyKuzuGraphStore.get_entity_table_name(from_entity)
-        to_table_name = MotleyKuzuGraphStore.get_entity_table_name(to_entity)
-        relation_table_name = MotleyKuzuGraphStore.get_relation_table_name(
-            from_entity=from_entity, to_entity=to_entity
-        )
         if (
-            not self._check_node_table_exists(from_table_name)
-            or not self._check_node_table_exists(to_table_name)
-            or not self._check_rel_table_exists(relation_table_name)
+            not self._check_node_table_exists(from_node.get_label())
+            or not self._check_node_table_exists(to_node.get_label())
+            or not self._check_rel_table_exists(
+                from_label=from_node.get_label(), to_label=to_node.get_label(), rel_label=label
+            )
         ):
             return False
 
         query = (
-            "MATCH (n1:{})-[r:{}]->(n2:{}) "
-            "WHERE n1.id = $from_entity_id AND n2.id = $to_entity_id {}"
+            "MATCH (n1:{})-[r{}]->(n2:{}) "
+            "WHERE n1.id = $from_node_id AND n2.id = $to_node_id "
             "RETURN r".format(
-                from_table_name,
-                relation_table_name,
-                to_table_name,
-                "AND r.predicate = $predicate " if predicate is not None else "",
+                from_node.get_label(),
+                (":" + label) if label else "",
+                to_node.get_label(),
             )
         )
         parameters = {
-            "from_entity_id": from_entity_id,
-            "to_entity_id": to_entity_id,
+            "from_node_id": from_node.id,
+            "to_node_id": to_node.id,
         }
-        if predicate is not None:
-            parameters["predicate"] = predicate
 
         is_exists_result = self._execute_query(query=query, parameters=parameters)
         return is_exists_result.has_next()
 
-    def get_entity_by_class_and_id(
-        self, entity_class: Type[ModelType], entity_id: int
-    ) -> Optional[ModelType]:
+    def get_node_by_class_and_id(
+        self, node_class: Type[MotleyGraphNode], node_id: int
+    ) -> Optional[MotleyGraphNode]:
         """
-        Retrieve the entity of given class with given id if it is present in the database.
+        Retrieve the node of given class with given id if it is present in the database.
         Otherwise, return None.
         """
-        table_name = MotleyKuzuGraphStore.get_entity_table_name_by_entity_class(entity_class)
-        if not self._check_node_table_exists(table_name):
+        if not self._check_node_table_exists(node_class.get_label()):
             return None
 
         query = """
                     MATCH (n:{})
-                    WHERE n.id = $entity_id
+                    WHERE n.id = $node_id
                     RETURN n;
                 """.format(
-            table_name
+            node_class.get_label()
         )
-        query_result = self._execute_query(query, {"entity_id": entity_id})
+        query_result = self._execute_query(query, {"node_id": node_id})
 
         if query_result.has_next():
             row = query_result.get_next()
-            entity_dict = row[0]
-            for field_name, value in entity_dict.copy().items():
-                if (
-                    field_name.startswith(MotleyKuzuGraphStore.JSON_FIELD_PREFIX)
-                    and value is not None
+            node_dict = row[0]
+            for field_name, value in node_dict.copy().items():
+                if isinstance(value, str) and value.startswith(
+                    MotleyKuzuGraphStore.JSON_CONTENT_PREFIX
                 ):
                     logging.debug(
-                        "Field %s is marked as JSON, attempting to deserialize value: %s",
+                        "Value for field %s is marked as JSON, attempting to deserialize: %s",
                         field_name,
                         value,
                     )
-                    new_field_name = field_name[len(MotleyKuzuGraphStore.JSON_FIELD_PREFIX) :]
-                    entity_dict[new_field_name] = json.loads(value)
-                    entity_dict.pop(field_name)
+                    node_dict[field_name] = json.loads(
+                        value[len(MotleyKuzuGraphStore.JSON_CONTENT_PREFIX) :]
+                    )
 
-            return entity_class.parse_obj(entity_dict)
+            if node_class is not None:
+                return node_class.parse_obj(node_dict)
+            return node_dict
 
-    def create_entity(self, entity: ModelType) -> ModelType:
+    def insert_node(self, node: MotleyGraphNode) -> MotleyGraphNode:
         """
-        Create a new entity, populate its id and freeze it.
-        If entity table or some columns do not exist, this method also creates them.
+        Insert a new node, populate its id and freeze it.
+        If node table or some columns do not exist, this method also creates them.
         """
-        assert not MotleyKuzuGraphStore.get_entity_id(
-            entity
-        ), "Entity has its {} attribute set, looks like it is already in the DB".format(
-            MotleyKuzuGraphStore.ID_ATTR
-        )
+        assert node.id is None, "Entity has its id set, looks like it is already in the DB"
 
-        table_name = self._ensure_entity_table(entity)
-        logging.info("Creating entity in table %s: %s", table_name, entity)
+        self._ensure_node_table(node)
+        logging.info("Inserting new node with label %s: %s", node.get_label(), node)
 
-        cypher_mapping, parameters = MotleyKuzuGraphStore._entity_to_cypher_mapping_with_parameters(
-            entity
+        cypher_mapping, parameters = MotleyKuzuGraphStore._node_to_cypher_mapping_with_parameters(
+            node
         )
         create_result = self._execute_query(
-            "CREATE (n:{} {}) RETURN n".format(table_name, cypher_mapping),
+            "CREATE (n:{} {}) RETURN n".format(node.get_label(), cypher_mapping),
             parameters=parameters,
         )
         assert create_result.has_next()
-        logging.info("Entity created OK")
+        logging.info("Node created OK")
 
         created_object = create_result.get_next()[0]
         created_object_id = created_object.get("id")
@@ -262,168 +247,163 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
             created_object
         )
 
-        MotleyKuzuGraphStore._set_entity_id(entity=entity, entity_id=created_object_id)
-        MotleyKuzuGraphStore._freeze_entity(entity)
-        return entity
+        MotleyKuzuGraphStore._set_node_id(node=node, node_id=created_object_id)
+        MotleyKuzuGraphStore._freeze_node(node)
+        return node
 
-    def create_relation(self, from_entity: ModelType, to_entity: ModelType, predicate: str) -> None:
+    def create_relation(
+        self, from_node: MotleyGraphNode, to_node: MotleyGraphNode, label: str
+    ) -> None:
         """
-        Create a relation between existing entities.
+        Create a relation between existing nodes.
         If relation table does not exist, this method also creates them.
         """
-        assert self.check_entity_exists(from_entity), (
-            "From-entity is not present in the database, "
+        assert self.check_node_exists(from_node), (
+            "From-node is not present in the database, "
             "consider using upsert_triplet() for such cases"
         )
-        assert self.check_entity_exists(to_entity), (
-            "To-entity is not present in the database, "
+        assert self.check_node_exists(to_node), (
+            "To-node is not present in the database, "
             "consider using upsert_triplet() for such cases"
         )
 
-        table_name = self._ensure_relation_table(from_entity=from_entity, to_entity=to_entity)
-        from_table_name = self.get_entity_table_name(from_entity)
-        to_table_name = self.get_entity_table_name(to_entity)
-        from_entity_id = MotleyKuzuGraphStore.get_entity_id(from_entity)
-        to_entity_id = MotleyKuzuGraphStore.get_entity_id(to_entity)
+        self._ensure_relation_table(from_node=from_node, to_node=to_node, label=label)
 
         logging.info(
             "Creating relation %s from %s:%s to %s:%s",
-            predicate,
-            from_table_name,
-            from_entity_id,
-            to_table_name,
-            to_entity_id,
+            label,
+            from_node.get_label(),
+            from_node.id,
+            to_node.get_label(),
+            to_node.id,
         )
 
         create_result = self._execute_query(
             (
                 "MATCH (n1:{}), (n2:{}) WHERE n1.id = $from_id AND n2.id = $to_id "
-                "CREATE (n1)-[r:{} {{predicate: $predicate}}]->(n2) "
+                "CREATE (n1)-[r:{}]->(n2) "
                 "RETURN r"
-            ).format(from_table_name, to_table_name, table_name),
+            ).format(from_node.get_label(), to_node.get_label(), label),
             {
-                "from_id": from_entity_id,
-                "to_id": to_entity_id,
-                "predicate": predicate,
+                "from_id": from_node.id,
+                "to_id": to_node.id,
             },
         )
         assert create_result.has_next()
         logging.info("Relation created OK")
 
-    def upsert_triplet(self, from_entity: ModelType, to_entity: ModelType, predicate: str):
+    def upsert_triplet(self, from_node: MotleyGraphNode, to_node: MotleyGraphNode, label: str):
         """
-        Create a relation with a given predicate between entities, if such does not already exist.
-        If the entities do not already exist, create them too.
+        Create a relation with a given label between nodes, if such does not already exist.
+        If the nodes do not already exist, create them too.
         This method also creates and/or updates all necessary tables.
         """
-        if not self.check_entity_exists(from_entity):
-            logging.info("Entity %s does not exist, creating", from_entity)
-            self.create_entity(from_entity)
+        if not self.check_node_exists(from_node):
+            logging.info("Node %s does not exist, creating", from_node)
+            self.insert_node(from_node)
 
-        if not self.check_entity_exists(to_entity):
-            logging.info("Entity %s does not exist, creating", to_entity)
-            self.create_entity(to_entity)
+        if not self.check_node_exists(to_node):
+            logging.info("Node %s does not exist, creating", to_node)
+            self.insert_node(to_node)
 
-        if not self.check_relation_exists(
-            from_entity=from_entity, to_entity=to_entity, predicate=predicate
-        ):
-            logging.info("Relation from %s to %s does not exist, creating", from_entity, to_entity)
-            self.create_relation(from_entity=from_entity, to_entity=to_entity, predicate=predicate)
+        if not self.check_relation_exists(from_node=from_node, to_node=to_node, label=label):
+            logging.info("Relation from %s to %s does not exist, creating", from_node, to_node)
+            self.create_relation(from_node=from_node, to_node=to_node, label=label)
 
-    def delete_entity(self, entity: ModelType) -> None:
+    def delete_node(self, node: MotleyGraphNode) -> None:
         """
-        Delete a given entity and its relations.
+        Delete a given node and its relations.
         """
 
-        def inner_delete_relations(table_name: str, entity_id: int) -> None:
+        def inner_delete_relations(node_label: str, node_id: int) -> None:
             if not self.connection._get_rel_table_names():
                 # Avoid Kuzu error when no relation tables exist in the database
                 return
 
             # Undirected relation removal is not supported for some reason
             self._execute_query(
-                "MATCH (n:{})-[r]->() WHERE n.id = $entity_id DELETE r".format(table_name),
-                {"entity_id": entity_id},
+                "MATCH (n:{})-[r]->() WHERE n.id = $node_id DELETE r".format(node_label),
+                {"node_id": node_id},
             )
             self._execute_query(
-                "MATCH (n:{})<-[r]-() WHERE n.id = $entity_id DELETE r".format(table_name),
-                {"entity_id": entity_id},
+                "MATCH (n:{})<-[r]-() WHERE n.id = $node_id DELETE r".format(node_label),
+                {"node_id": node_id},
             )
 
-        def inner_delete_entity(table_name: str, entity_id: int) -> None:
+        def inner_delete_node(node_label: str, node_id: int) -> None:
             self._execute_query(
-                "MATCH (n:{}) WHERE n.id = $entity_id DELETE n".format(table_name),
-                {"entity_id": entity_id},
+                "MATCH (n:{}) WHERE n.id = $node_id DELETE n".format(node_label),
+                {"node_id": node_id},
             )
 
-        assert self.check_entity_exists(entity), "Cannot delete nonexistent entity: {}".format(
-            entity
-        )
+        assert self.check_node_exists(node), "Cannot delete nonexistent node: {}".format(node)
 
-        table_name = MotleyKuzuGraphStore.get_entity_table_name(entity)
-        entity_id = MotleyKuzuGraphStore.get_entity_id(entity)
-        inner_delete_relations(table_name=table_name, entity_id=entity_id)
-        inner_delete_entity(table_name=table_name, entity_id=entity_id)
+        inner_delete_relations(node_label=node.get_label(), node_id=node.id)
+        inner_delete_node(node_label=node.get_label(), node_id=node.id)
 
-        MotleyKuzuGraphStore._unfreeze_entity(entity)
-        setattr(entity, MotleyKuzuGraphStore.ID_ATTR, None)
+        MotleyKuzuGraphStore._unfreeze_node(node)
+        MotleyKuzuGraphStore._set_node_id(node, None)
 
-    def set_property(self, entity: ModelType, property_name: str, property_value: Any) -> None:
+    def set_property(
+        self, node: MotleyGraphNode, property_name: str, property_value: Any
+    ) -> MotleyGraphNode:
         """
-        Set a property to an entity. Also sets the property in the Python object.
+        Set a property to a node. Also sets the property in the Python object.
         """
         if property_value is None:
             # TODO: remove after updating Kuzu to v0.3.3 (https://github.com/kuzudb/kuzu/pull/3098)
             raise Exception("Kuzu does not support NoneType parameters for properties for now")
 
-        entity_id = MotleyKuzuGraphStore.get_entity_id(entity)
-        table_name = MotleyKuzuGraphStore.get_entity_table_name(entity)
-        existing_property_names = self._get_node_property_names(table_name=table_name)
+        existing_property_names = self._get_node_property_names(node.get_label())
 
-        assert property_name in entity.model_fields, "No such field in Pydantic model: {}".format(
-            property_name
+        assert property_name in node.model_fields, "No such field in node model {}: {}".format(
+            node.__class__.__name__, property_name
         )
 
-        assert self.check_entity_exists(entity)
-        assert (
-            property_name in existing_property_names
-            or MotleyKuzuGraphStore.JSON_FIELD_PREFIX + property_name in existing_property_names
-        ), "No such field in DB table {}: {}".format(table_name, property_name)
+        assert self.check_node_exists(node)
+        assert property_name in existing_property_names, "No such field in DB table {}: {}".format(
+            node.get_label(), property_name
+        )
 
         # Running Pydantic validation beforehand to avoid writing invalid values to the DB
-        entity.__pydantic_validator__.validate_assignment(
-            entity.model_construct(), property_name, property_value
+        node.__pydantic_validator__.validate_assignment(
+            node.model_construct(), property_name, property_value
         )
 
-        if MotleyKuzuGraphStore.JSON_FIELD_PREFIX + property_name in existing_property_names:
-            db_property_name = MotleyKuzuGraphStore.JSON_FIELD_PREFIX + property_name
-            db_property_value = json.dumps(property_value) if property_value is not None else None
+        _, is_json = MotleyKuzuGraphStore._get_cypher_type_and_is_json_by_python_type_annotation(
+            node.model_fields[property_name].annotation
+        )
+
+        db_property_name = property_name
+        if is_json:
+            db_property_value = MotleyKuzuGraphStore.JSON_CONTENT_PREFIX + json.dumps(
+                property_value
+            )
         else:
-            db_property_name = property_name
             db_property_value = property_value
 
         query = """
                     MATCH (n:{})
-                    WHERE n.id = $entity_id
+                    WHERE n.id = $node_id
                     SET n.{} = $property_value RETURN n;
                 """.format(
-            table_name, db_property_name
+            node.get_label(), db_property_name
         )
 
         query_result = self._execute_query(
             query,
-            {"entity_id": entity_id, "property_value": db_property_value},
+            {"node_id": node.id, "property_value": db_property_value},
         )
         assert query_result.has_next()
         row = query_result.get_next()
-        entity_dict = row[0]
-        assert entity_dict[db_property_name] == db_property_value
+        node_dict = row[0]
+        assert node_dict[db_property_name] == db_property_value
 
         # Now set the property value in the Python object
-        MotleyKuzuGraphStore._unfreeze_entity(entity)
-        setattr(entity, property_name, property_value)
-        MotleyKuzuGraphStore._freeze_entity(entity)
-        return entity
+        MotleyKuzuGraphStore._unfreeze_node(node)
+        setattr(node, property_name, property_value)
+        MotleyKuzuGraphStore._freeze_node(node)
+        return node
 
     def run_cypher_query(self, query: str, parameters: Optional[dict] = None) -> list[list]:
         """
@@ -436,66 +416,37 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
         return retval
 
     @staticmethod
-    def get_entity_table_name(entity: ModelType) -> str:
-        table_name = getattr(entity, MotleyKuzuGraphStore.TABLE_NAME_ATTR, None)
-        if not table_name:
-            table_name = entity.__class__.__name__.lower()
-
-        return table_name
+    def _set_node_id(node: MotleyGraphNode, node_id: Optional[int]) -> None:
+        setattr(node, MotleyKuzuGraphStore.ID_ATTR, node_id)
 
     @staticmethod
-    def get_entity_table_name_by_entity_class(entity_class: Type[ModelType]) -> str:
-        table_name = getattr(entity_class, MotleyKuzuGraphStore.TABLE_NAME_ATTR, None)
-        if not table_name:
-            table_name = entity_class.__name__.lower()
-
-        return table_name
-
-    @staticmethod
-    def get_relation_table_name(from_entity: ModelType, to_entity: ModelType) -> str:
-        from_entity_table_name = MotleyKuzuGraphStore.get_entity_table_name(from_entity)
-        to_entity_table_name = MotleyKuzuGraphStore.get_entity_table_name(to_entity)
-
-        return MotleyKuzuGraphStore.RELATION_TABLE_NAME_TEMPLATE.format(
-            src=from_entity_table_name, dst=to_entity_table_name
-        )
-
-    @staticmethod
-    def get_entity_id(entity: ModelType) -> Optional[int]:
-        return getattr(entity, MotleyKuzuGraphStore.ID_ATTR, None)
-
-    @staticmethod
-    def _set_entity_id(entity: ModelType, entity_id: int) -> None:
-        setattr(entity, MotleyKuzuGraphStore.ID_ATTR, entity_id)
-
-    @staticmethod
-    def _freeze_entity(entity: ModelType) -> None:
+    def _freeze_node(node: MotleyGraphNode) -> None:
         """
-        Make the entity immutable by enabling its model_config["frozen"].
+        Make the node immutable by enabling its model_config["frozen"].
         Depends on the corresponding Pydantic feature.
         See https://docs.pydantic.dev/latest/concepts/models/#faux-immutability
         """
         assert (
-            MotleyKuzuGraphStore.get_entity_id(entity) is not None
-        ), "Cannot freeze entity because its id is not set, it may not be in the database yet"
+            node.id is not None
+        ), "Cannot freeze node because its id is not set, it may not be in the database yet"
 
-        entity.model_config["frozen"] = True
-
-    @staticmethod
-    def _unfreeze_entity(entity: ModelType) -> None:
-        """
-        Reverse operation to _freeze_entity().
-        """
-        entity.model_config["frozen"] = False
+        node.model_config["frozen"] = True
 
     @staticmethod
-    def _entity_to_cypher_mapping_with_parameters(entity: ModelType) -> tuple[str, dict]:
-        entity_dict = entity.model_dump()
+    def _unfreeze_node(node: MotleyGraphNode) -> None:
+        """
+        Reverse operation to _freeze_node().
+        """
+        node.model_config["frozen"] = False
+
+    @staticmethod
+    def _node_to_cypher_mapping_with_parameters(node: MotleyGraphNode) -> tuple[str, dict]:
+        node_dict = node.model_dump()
 
         parameters = {}
 
         cypher_mapping = "{"
-        for field_name, value in entity_dict.items():
+        for field_name, value in node_dict.items():
             if value is None:
                 # TODO: remove after updating Kuzu to v0.3.3
                 # (https://github.com/kuzudb/kuzu/pull/3098)
@@ -503,13 +454,12 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
 
             _, is_json = (
                 MotleyKuzuGraphStore._get_cypher_type_and_is_json_by_python_type_annotation(
-                    entity.model_fields[field_name].annotation
+                    node.model_fields[field_name].annotation
                 )
             )
-            if is_json:
-                field_name = MotleyKuzuGraphStore.JSON_FIELD_PREFIX + field_name
-                if value is not None:
-                    value = json.dumps(value)
+            if is_json and value is not None:
+                value = json.dumps(value)
+                value = MotleyKuzuGraphStore.JSON_CONTENT_PREFIX + value
 
             cypher_mapping += f"{field_name}: ${field_name}, "
             parameters[field_name] = value
@@ -570,37 +520,38 @@ if __name__ == "__main__":
     db = kuzu.Database(str(db_path))
     graph_store = MotleyKuzuGraphStore(db)
 
-    class Question(BaseModel):
+    class Question(MotleyGraphNode):
         question: str
         answer: Optional[str] = None
         context: Optional[List[str]] = None
 
     q1 = Question(question="q1")
-    graph_store.create_entity(q1)
+    graph_store.insert_node(q1)
     assert getattr(q1, "_id", None) is not None
     q1_id = q1._id
 
-    assert graph_store.check_entity_exists(q1)
-    assert graph_store.check_entity_exists_by_class_and_id(entity_class=Question, entity_id=q1_id)
+    assert graph_store.check_node_exists(q1)
+    assert graph_store.check_node_exists_by_class_and_id(node_class=Question, node_id=q1_id)
 
     q2 = Question(question="q2", answer="a2")
-    graph_store.upsert_triplet(from_entity=q1, to_entity=q2, predicate="p")
+    graph_store.upsert_triplet(from_node=q1, to_node=q2, label="p")
     assert getattr(q2, "_id", None) is not None
     q2_id = q2._id
 
-    assert graph_store.check_relation_exists(from_entity=q1, to_entity=q2, predicate="p")
-    assert not graph_store.check_relation_exists(from_entity=q2, to_entity=q1)
+    assert graph_store.check_relation_exists(from_node=q1, to_node=q2, label="p")
+    assert not graph_store.check_relation_exists(from_node=q2, to_node=q1)
 
-    graph_store.delete_entity(q1)
-    assert not graph_store.check_entity_exists(q1)
-    assert graph_store.get_entity_by_class_and_id(entity_class=Question, entity_id=q1_id) is None
+    graph_store.delete_node(q1)
+    assert not graph_store.check_node_exists(q1)
+    assert graph_store.get_node_by_class_and_id(node_class=Question, node_id=q1_id) is None
 
     graph_store.set_property(q2, property_name="context", property_value=["abc", "def"])
     assert q2.context == ["abc", "def"]
 
-    assert graph_store.get_entity_by_class_and_id(
-        entity_class=Question, entity_id=q2_id
-    ).context == ["abc", "def"]
+    assert graph_store.get_node_by_class_and_id(node_class=Question, node_id=q2_id).context == [
+        "abc",
+        "def",
+    ]
 
     print(f"docker run -p 8000:8000  -v {db_path}:/database --rm kuzudb/explorer: latest")
     print("MATCH (A)-[r]->(B) RETURN *;")

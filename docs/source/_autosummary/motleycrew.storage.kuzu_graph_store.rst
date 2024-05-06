@@ -16,8 +16,14 @@ motleycrew.storage.kuzu\_graph\_store
    .. rubric:: Classes
 
    .. autosummary::
+     :toctree:
    
-      MotleyKuzuGraphStore
+     MotleyKuzuGraphStore
+   
+   .. autoclass:: MotleyKuzuGraphStore
+     :members:
+     :undoc-members:
+     :private-members:
    
    
 

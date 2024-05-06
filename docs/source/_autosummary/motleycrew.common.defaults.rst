@@ -16,8 +16,14 @@ motleycrew.common.defaults
    .. rubric:: Classes
 
    .. autosummary::
+     :toctree:
    
-      Defaults
+     Defaults
+   
+   .. autoclass:: Defaults
+     :members:
+     :undoc-members:
+     :private-members:
    
    
 

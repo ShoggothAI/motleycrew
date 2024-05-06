@@ -13,7 +13,7 @@ motleycrew.crew
 
    .. autosummary::
    
-      spawn_agent
+   .. autofunction:: spawn_agent
    
    
 
@@ -22,8 +22,14 @@ motleycrew.crew
    .. rubric:: Classes
 
    .. autosummary::
+     :toctree:
    
-      MotleyCrew
+     MotleyCrew
+   
+   .. autoclass:: MotleyCrew
+     :members:
+     :undoc-members:
+     :private-members:
    
    
 

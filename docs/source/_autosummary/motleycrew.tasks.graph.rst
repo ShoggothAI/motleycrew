@@ -16,8 +16,14 @@ motleycrew.tasks.graph
    .. rubric:: Classes
 
    .. autosummary::
+     :toctree:
    
-      TaskGraph
+     TaskGraph
+   
+   .. autoclass:: TaskGraph
+     :members:
+     :undoc-members:
+     :private-members:
    
    
 

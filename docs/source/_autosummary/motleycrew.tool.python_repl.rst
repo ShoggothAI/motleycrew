@@ -13,7 +13,7 @@ motleycrew.tool.python\_repl
 
    .. autosummary::
    
-      create_repl_tool
+   .. autofunction:: create_repl_tool
    
    
 
@@ -22,8 +22,14 @@ motleycrew.tool.python\_repl
    .. rubric:: Classes
 
    .. autosummary::
+     :toctree:
    
-      REPLToolInput
+     REPLToolInput
+   
+   .. autoclass:: REPLToolInput
+     :members:
+     :undoc-members:
+     :private-members:
    
    
 

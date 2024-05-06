@@ -16,8 +16,14 @@ motleycrew.agent.parent
    .. rubric:: Classes
 
    .. autosummary::
+     :toctree:
    
-      MotleyAgentAbstractParent
+     MotleyAgentAbstractParent
+   
+   .. autoclass:: MotleyAgentAbstractParent
+     :members:
+     :undoc-members:
+     :private-members:
    
    
 

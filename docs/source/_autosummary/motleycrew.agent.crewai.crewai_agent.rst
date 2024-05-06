@@ -16,8 +16,14 @@ motleycrew.agent.crewai.crewai\_agent
    .. rubric:: Classes
 
    .. autosummary::
+     :toctree:
    
-      CrewAIMotleyAgent
+     CrewAIMotleyAgent
+   
+   .. autoclass:: CrewAIMotleyAgent
+     :members:
+     :undoc-members:
+     :private-members:
    
    
 

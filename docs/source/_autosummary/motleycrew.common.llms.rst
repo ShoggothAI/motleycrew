@@ -13,9 +13,9 @@ motleycrew.common.llms
 
    .. autosummary::
    
-      init_llm
-      langchain_openai_llm
-      llama_index_openai_llm
+   .. autofunction:: init_llm
+   .. autofunction:: langchain_openai_llm
+   .. autofunction:: llama_index_openai_llm
    
    
 

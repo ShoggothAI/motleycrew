@@ -13,7 +13,7 @@ motleycrew.tool.mermaid\_evaluator\_tool
 
    .. autosummary::
    
-      eval_mermaid
+   .. autofunction:: eval_mermaid
    
    
 
@@ -22,8 +22,14 @@ motleycrew.tool.mermaid\_evaluator\_tool
    .. rubric:: Classes
 
    .. autosummary::
+     :toctree:
    
-      MermaidEvaluatorTool
+     MermaidEvaluatorTool
+   
+   .. autoclass:: MermaidEvaluatorTool
+     :members:
+     :undoc-members:
+     :private-members:
    
    
 

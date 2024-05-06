@@ -16,8 +16,14 @@ motleycrew.agent.langchain.react
    .. rubric:: Classes
 
    .. autosummary::
+     :toctree:
    
-      ReactMotleyAgent
+     ReactMotleyAgent
+   
+   .. autoclass:: ReactMotleyAgent
+     :members:
+     :undoc-members:
+     :private-members:
    
    
 

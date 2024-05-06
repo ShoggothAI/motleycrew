@@ -13,10 +13,10 @@ motleycrew.agent.langchain.openai\_tools\_react
 
    .. autosummary::
    
-      add_messages_to_action
-      add_thought_to_background
-      check_variables
-      create_openai_tools_react_agent
+   .. autofunction:: add_messages_to_action
+   .. autofunction:: add_thought_to_background
+   .. autofunction:: check_variables
+   .. autofunction:: create_openai_tools_react_agent
    
    
 
@@ -25,8 +25,14 @@ motleycrew.agent.langchain.openai\_tools\_react
    .. rubric:: Classes
 
    .. autosummary::
+     :toctree:
    
-      ReactOpenAIToolsAgent
+     ReactOpenAIToolsAgent
+   
+   .. autoclass:: ReactOpenAIToolsAgent
+     :members:
+     :undoc-members:
+     :private-members:
    
    
 

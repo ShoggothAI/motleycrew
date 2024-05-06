@@ -13,11 +13,11 @@ motleycrew.caching.caching
 
    .. autosummary::
    
-      disable_cache
-      enable_cache
-      set_cache_location
-      set_strong_cache
-      set_update_cache_if_exists
+   .. autofunction:: disable_cache
+   .. autofunction:: enable_cache
+   .. autofunction:: set_cache_location
+   .. autofunction:: set_strong_cache
+   .. autofunction:: set_update_cache_if_exists
    
    
 

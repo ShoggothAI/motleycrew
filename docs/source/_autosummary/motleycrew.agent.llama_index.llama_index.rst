@@ -16,8 +16,14 @@ motleycrew.agent.llama\_index.llama\_index
    .. rubric:: Classes
 
    .. autosummary::
+     :toctree:
    
-      LlamaIndexMotleyAgentParent
+     LlamaIndexMotleyAgentParent
+   
+   .. autoclass:: LlamaIndexMotleyAgentParent
+     :members:
+     :undoc-members:
+     :private-members:
    
    
 

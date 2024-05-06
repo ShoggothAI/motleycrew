@@ -16,8 +16,14 @@ motleycrew.agent.langchain.langchain
    .. rubric:: Classes
 
    .. autosummary::
+     :toctree:
    
-      LangchainMotleyAgentParent
+     LangchainMotleyAgentParent
+   
+   .. autoclass:: LangchainMotleyAgentParent
+     :members:
+     :undoc-members:
+     :private-members:
    
    
 

@@ -13,9 +13,9 @@ motleycrew.tool.image\_generation
 
    .. autosummary::
    
-      create_dalle_image_generator_langchain_tool
-      download_image
-      run_dalle_and_save_images
+   .. autofunction:: create_dalle_image_generator_langchain_tool
+   .. autofunction:: download_image
+   .. autofunction:: run_dalle_and_save_images
    
    
 
@@ -24,9 +24,19 @@ motleycrew.tool.image\_generation
    .. rubric:: Classes
 
    .. autosummary::
+     :toctree:
    
-      DallEImageGeneratorTool
-      DallEToolInput
+     DallEImageGeneratorTool
+     DallEToolInput
+   
+   .. autoclass:: DallEImageGeneratorTool
+     :members:
+     :undoc-members:
+     :private-members:
+   .. autoclass:: DallEToolInput
+     :members:
+     :undoc-members:
+     :private-members:
    
    
 

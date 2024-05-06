@@ -13,8 +13,8 @@ motleycrew.caching.utils
 
    .. autosummary::
    
-      hash_code
-      recursive_hash
+   .. autofunction:: hash_code
+   .. autofunction:: recursive_hash
    
    
 
@@ -23,8 +23,14 @@ motleycrew.caching.utils
    .. rubric:: Classes
 
    .. autosummary::
+     :toctree:
    
-      FakeRLock
+     FakeRLock
+   
+   .. autoclass:: FakeRLock
+     :members:
+     :undoc-members:
+     :private-members:
    
    
 

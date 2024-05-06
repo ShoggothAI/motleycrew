@@ -13,7 +13,7 @@ motleycrew.tool.tool
 
    .. autosummary::
    
-      normalize_input
+   .. autofunction:: normalize_input
    
    
 
@@ -22,8 +22,14 @@ motleycrew.tool.tool
    .. rubric:: Classes
 
    .. autosummary::
+     :toctree:
    
-      MotleyTool
+     MotleyTool
+   
+   .. autoclass:: MotleyTool
+     :members:
+     :undoc-members:
+     :private-members:
    
    
 

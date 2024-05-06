@@ -16,8 +16,14 @@ motleycrew.storage.graph\_store
    .. rubric:: Classes
 
    .. autosummary::
+     :toctree:
    
-      MotleyGraphStore
+     MotleyGraphStore
+   
+   .. autoclass:: MotleyGraphStore
+     :members:
+     :undoc-members:
+     :private-members:
    
    
 

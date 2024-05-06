@@ -13,8 +13,8 @@ motleycrew.caching.http\_cache
 
    .. autosummary::
    
-      afile_cache
-      file_cache
+   .. autofunction:: afile_cache
+   .. autofunction:: file_cache
    
    
 
@@ -23,11 +23,29 @@ motleycrew.caching.http\_cache
    .. rubric:: Classes
 
    .. autosummary::
+     :toctree:
    
-      BaseHttpCache
-      CurlCffiHttpCaching
-      HttpxHttpCaching
-      RequestsHttpCaching
+     BaseHttpCache
+     CurlCffiHttpCaching
+     HttpxHttpCaching
+     RequestsHttpCaching
+   
+   .. autoclass:: BaseHttpCache
+     :members:
+     :undoc-members:
+     :private-members:
+   .. autoclass:: CurlCffiHttpCaching
+     :members:
+     :undoc-members:
+     :private-members:
+   .. autoclass:: HttpxHttpCaching
+     :members:
+     :undoc-members:
+     :private-members:
+   .. autoclass:: RequestsHttpCaching
+     :members:
+     :undoc-members:
+     :private-members:
    
    
 

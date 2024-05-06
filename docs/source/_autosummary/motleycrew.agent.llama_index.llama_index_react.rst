@@ -16,8 +16,14 @@ motleycrew.agent.llama\_index.llama\_index\_react
    .. rubric:: Classes
 
    .. autosummary::
+     :toctree:
    
-      ReActLlamaIndexMotleyAgent
+     ReActLlamaIndexMotleyAgent
+   
+   .. autoclass:: ReActLlamaIndexMotleyAgent
+     :members:
+     :undoc-members:
+     :private-members:
    
    
 

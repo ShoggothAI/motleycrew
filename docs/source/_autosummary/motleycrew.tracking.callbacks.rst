@@ -13,7 +13,7 @@ motleycrew.tracking.callbacks
 
    .. autosummary::
    
-      event_delegate_decorator
+   .. autofunction:: event_delegate_decorator
    
    
 
@@ -22,8 +22,14 @@ motleycrew.tracking.callbacks
    .. rubric:: Classes
 
    .. autosummary::
+     :toctree:
    
-      LlamaIndexLunaryCallbackHandler
+     LlamaIndexLunaryCallbackHandler
+   
+   .. autoclass:: LlamaIndexLunaryCallbackHandler
+     :members:
+     :undoc-members:
+     :private-members:
    
    
 

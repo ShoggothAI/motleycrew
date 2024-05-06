@@ -13,7 +13,7 @@ motleycrew.tool.llm\_tool
 
    .. autosummary::
    
-      create_llm_langchain_tool
+   .. autofunction:: create_llm_langchain_tool
    
    
 
@@ -22,8 +22,14 @@ motleycrew.tool.llm\_tool
    .. rubric:: Classes
 
    .. autosummary::
+     :toctree:
    
-      LLMTool
+     LLMTool
+   
+   .. autoclass:: LLMTool
+     :members:
+     :undoc-members:
+     :private-members:
    
    
 

@@ -53,28 +53,28 @@ motleycrew.agent.crewai.crewai.CrewAIAgentWithConfig
 
    .. autosummary::
    
-      ~CrewAIAgentWithConfig.model_computed_fields
-      ~CrewAIAgentWithConfig.model_config
-      ~CrewAIAgentWithConfig.model_extra
-      ~CrewAIAgentWithConfig.model_fields
-      ~CrewAIAgentWithConfig.model_fields_set
-      ~CrewAIAgentWithConfig.formatting_errors
-      ~CrewAIAgentWithConfig.id
-      ~CrewAIAgentWithConfig.role
-      ~CrewAIAgentWithConfig.goal
-      ~CrewAIAgentWithConfig.backstory
-      ~CrewAIAgentWithConfig.max_rpm
-      ~CrewAIAgentWithConfig.memory
-      ~CrewAIAgentWithConfig.verbose
-      ~CrewAIAgentWithConfig.allow_delegation
-      ~CrewAIAgentWithConfig.tools
-      ~CrewAIAgentWithConfig.max_iter
-      ~CrewAIAgentWithConfig.agent_executor
-      ~CrewAIAgentWithConfig.tools_handler
-      ~CrewAIAgentWithConfig.cache_handler
-      ~CrewAIAgentWithConfig.step_callback
-      ~CrewAIAgentWithConfig.i18n
-      ~CrewAIAgentWithConfig.llm
-      ~CrewAIAgentWithConfig.function_calling_llm
+   .. autoattribute:: CrewAIAgentWithConfig.model_computed_fields
+   .. autoattribute:: CrewAIAgentWithConfig.model_config
+   .. autoattribute:: CrewAIAgentWithConfig.model_extra
+   .. autoattribute:: CrewAIAgentWithConfig.model_fields
+   .. autoattribute:: CrewAIAgentWithConfig.model_fields_set
+   .. autoattribute:: CrewAIAgentWithConfig.formatting_errors
+   .. autoattribute:: CrewAIAgentWithConfig.id
+   .. autoattribute:: CrewAIAgentWithConfig.role
+   .. autoattribute:: CrewAIAgentWithConfig.goal
+   .. autoattribute:: CrewAIAgentWithConfig.backstory
+   .. autoattribute:: CrewAIAgentWithConfig.max_rpm
+   .. autoattribute:: CrewAIAgentWithConfig.memory
+   .. autoattribute:: CrewAIAgentWithConfig.verbose
+   .. autoattribute:: CrewAIAgentWithConfig.allow_delegation
+   .. autoattribute:: CrewAIAgentWithConfig.tools
+   .. autoattribute:: CrewAIAgentWithConfig.max_iter
+   .. autoattribute:: CrewAIAgentWithConfig.agent_executor
+   .. autoattribute:: CrewAIAgentWithConfig.tools_handler
+   .. autoattribute:: CrewAIAgentWithConfig.cache_handler
+   .. autoattribute:: CrewAIAgentWithConfig.step_callback
+   .. autoattribute:: CrewAIAgentWithConfig.i18n
+   .. autoattribute:: CrewAIAgentWithConfig.llm
+   .. autoattribute:: CrewAIAgentWithConfig.function_calling_llm
    
    

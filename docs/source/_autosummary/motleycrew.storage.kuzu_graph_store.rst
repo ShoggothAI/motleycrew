@@ -1,4 +1,4 @@
-motleycrew.storage.kuzu\_graph\_store
+﻿motleycrew.storage.kuzu\_graph\_store
 =====================================
 
 .. automodule:: motleycrew.storage.kuzu_graph_store
@@ -22,8 +22,6 @@ motleycrew.storage.kuzu\_graph\_store
    
    .. autoclass:: MotleyKuzuGraphStore
      :members:
-     :undoc-members:
-     :private-members:
    
    
 

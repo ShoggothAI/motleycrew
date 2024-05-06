@@ -30,7 +30,7 @@ motleycrew.agent.crewai.crewai.CrewAIMotleyAgentParent
 
    .. autosummary::
    
-      ~CrewAIMotleyAgentParent.agent
-      ~CrewAIMotleyAgentParent.is_materialized
+   .. autoattribute:: CrewAIMotleyAgentParent.agent
+   .. autoattribute:: CrewAIMotleyAgentParent.is_materialized
    
    

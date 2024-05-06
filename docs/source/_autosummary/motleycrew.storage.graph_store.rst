@@ -1,4 +1,4 @@
-motleycrew.storage.graph\_store
+﻿motleycrew.storage.graph\_store
 ===============================
 
 .. automodule:: motleycrew.storage.graph_store
@@ -22,8 +22,6 @@ motleycrew.storage.graph\_store
    
    .. autoclass:: MotleyGraphStore
      :members:
-     :undoc-members:
-     :private-members:
    
    
 

@@ -1,4 +1,4 @@
-motleycrew.crew
+﻿motleycrew.crew
 ===============
 
 .. automodule:: motleycrew.crew
@@ -28,8 +28,6 @@ motleycrew.crew
    
    .. autoclass:: MotleyCrew
      :members:
-     :undoc-members:
-     :private-members:
    
    
 

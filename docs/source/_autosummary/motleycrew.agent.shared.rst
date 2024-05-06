@@ -1,4 +1,4 @@
-motleycrew.agent.shared
+﻿motleycrew.agent.shared
 =======================
 
 .. automodule:: motleycrew.agent.shared
@@ -22,8 +22,6 @@ motleycrew.agent.shared
    
    .. autoclass:: MotleyAgentParent
      :members:
-     :undoc-members:
-     :private-members:
    
    
 

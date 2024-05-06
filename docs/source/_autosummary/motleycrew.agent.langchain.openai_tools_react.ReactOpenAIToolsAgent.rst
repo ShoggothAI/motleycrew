@@ -28,7 +28,7 @@ motleycrew.agent.langchain.openai\_tools\_react.ReactOpenAIToolsAgent
 
    .. autosummary::
    
-      ~ReactOpenAIToolsAgent.agent
-      ~ReactOpenAIToolsAgent.is_materialized
+   .. autoattribute:: ReactOpenAIToolsAgent.agent
+   .. autoattribute:: ReactOpenAIToolsAgent.is_materialized
    
    

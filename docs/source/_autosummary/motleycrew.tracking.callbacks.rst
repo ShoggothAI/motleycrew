@@ -1,4 +1,4 @@
-motleycrew.tracking.callbacks
+﻿motleycrew.tracking.callbacks
 =============================
 
 .. automodule:: motleycrew.tracking.callbacks
@@ -28,8 +28,6 @@ motleycrew.tracking.callbacks
    
    .. autoclass:: LlamaIndexLunaryCallbackHandler
      :members:
-     :undoc-members:
-     :private-members:
    
    
 

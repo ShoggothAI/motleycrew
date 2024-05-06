@@ -1,4 +1,4 @@
-motleycrew.common.types
+﻿motleycrew.common.types
 =======================
 
 .. automodule:: motleycrew.common.types
@@ -22,8 +22,6 @@ motleycrew.common.types
    
    .. autoclass:: MotleyAgentFactory
      :members:
-     :undoc-members:
-     :private-members:
    
    
 

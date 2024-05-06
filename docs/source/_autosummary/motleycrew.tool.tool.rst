@@ -1,4 +1,4 @@
-motleycrew.tool.tool
+﻿motleycrew.tool.tool
 ====================
 
 .. automodule:: motleycrew.tool.tool
@@ -28,8 +28,6 @@ motleycrew.tool.tool
    
    .. autoclass:: MotleyTool
      :members:
-     :undoc-members:
-     :private-members:
    
    
 

@@ -21,10 +21,10 @@ motleycrew.common.enums.LunaryRunType
 
    .. autosummary::
    
-      ~LunaryRunType.AGENT
-      ~LunaryRunType.CHAIN
-      ~LunaryRunType.EMBED
-      ~LunaryRunType.LLM
-      ~LunaryRunType.TOOL
+   .. autoattribute:: LunaryRunType.AGENT
+   .. autoattribute:: LunaryRunType.CHAIN
+   .. autoattribute:: LunaryRunType.EMBED
+   .. autoattribute:: LunaryRunType.LLM
+   .. autoattribute:: LunaryRunType.TOOL
    
    

@@ -21,9 +21,9 @@ motleycrew.common.defaults.Defaults
 
    .. autosummary::
    
-      ~Defaults.DEFAULT_LLM_FAMILY
-      ~Defaults.DEFAULT_LLM_NAME
-      ~Defaults.DEFAULT_LLM_TEMPERATURE
-      ~Defaults.LLM_MAP
+   .. autoattribute:: Defaults.DEFAULT_LLM_FAMILY
+   .. autoattribute:: Defaults.DEFAULT_LLM_NAME
+   .. autoattribute:: Defaults.DEFAULT_LLM_TEMPERATURE
+   .. autoattribute:: Defaults.LLM_MAP
    
    

@@ -1,4 +1,4 @@
-motleycrew.tool.llm\_tool
+﻿motleycrew.tool.llm\_tool
 =========================
 
 .. automodule:: motleycrew.tool.llm_tool
@@ -28,8 +28,6 @@ motleycrew.tool.llm\_tool
    
    .. autoclass:: LLMTool
      :members:
-     :undoc-members:
-     :private-members:
    
    
 

@@ -27,7 +27,7 @@ motleycrew.agent.llama\_index.llama\_index\_react.ReActLlamaIndexMotleyAgent
 
    .. autosummary::
    
-      ~ReActLlamaIndexMotleyAgent.agent
-      ~ReActLlamaIndexMotleyAgent.is_materialized
+   .. autoattribute:: ReActLlamaIndexMotleyAgent.agent
+   .. autoattribute:: ReActLlamaIndexMotleyAgent.is_materialized
    
    

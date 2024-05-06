@@ -1,4 +1,4 @@
-motleycrew.agent.crewai.crewai
+﻿motleycrew.agent.crewai.crewai
 ==============================
 
 .. automodule:: motleycrew.agent.crewai.crewai
@@ -23,12 +23,8 @@ motleycrew.agent.crewai.crewai
    
    .. autoclass:: CrewAIAgentWithConfig
      :members:
-     :undoc-members:
-     :private-members:
    .. autoclass:: CrewAIMotleyAgentParent
      :members:
-     :undoc-members:
-     :private-members:
    
    
 

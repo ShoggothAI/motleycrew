@@ -21,7 +21,7 @@ motleycrew.common.enums.LLMFramework
 
    .. autosummary::
    
-      ~LLMFramework.LANGCHAIN
-      ~LLMFramework.LLAMA_INDEX
+   .. autoattribute:: LLMFramework.LANGCHAIN
+   .. autoattribute:: LLMFramework.LLAMA_INDEX
    
    

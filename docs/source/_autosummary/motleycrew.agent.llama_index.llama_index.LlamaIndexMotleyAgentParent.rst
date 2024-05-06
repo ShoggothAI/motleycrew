@@ -27,7 +27,7 @@ motleycrew.agent.llama\_index.llama\_index.LlamaIndexMotleyAgentParent
 
    .. autosummary::
    
-      ~LlamaIndexMotleyAgentParent.agent
-      ~LlamaIndexMotleyAgentParent.is_materialized
+   .. autoattribute:: LlamaIndexMotleyAgentParent.agent
+   .. autoattribute:: LlamaIndexMotleyAgentParent.is_materialized
    
    

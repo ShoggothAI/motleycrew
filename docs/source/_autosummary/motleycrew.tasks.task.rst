@@ -1,4 +1,4 @@
-motleycrew.tasks.task
+﻿motleycrew.tasks.task
 =====================
 
 .. automodule:: motleycrew.tasks.task
@@ -22,8 +22,6 @@ motleycrew.tasks.task
    
    .. autoclass:: Task
      :members:
-     :undoc-members:
-     :private-members:
    
    
 

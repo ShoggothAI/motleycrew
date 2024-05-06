@@ -1,4 +1,4 @@
-motleycrew.tool.python\_repl
+﻿motleycrew.tool.python\_repl
 ============================
 
 .. automodule:: motleycrew.tool.python_repl
@@ -28,8 +28,6 @@ motleycrew.tool.python\_repl
    
    .. autoclass:: REPLToolInput
      :members:
-     :undoc-members:
-     :private-members:
    
    
 

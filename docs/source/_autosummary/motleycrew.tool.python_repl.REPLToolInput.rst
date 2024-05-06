@@ -33,6 +33,6 @@ motleycrew.tool.python\_repl.REPLToolInput
 
    .. autosummary::
    
-      ~REPLToolInput.command
+   .. autoattribute:: REPLToolInput.command
    
    

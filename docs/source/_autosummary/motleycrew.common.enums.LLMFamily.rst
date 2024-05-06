@@ -21,6 +21,6 @@ motleycrew.common.enums.LLMFamily
 
    .. autosummary::
    
-      ~LLMFamily.OPENAI
+   .. autoattribute:: LLMFamily.OPENAI
    
    

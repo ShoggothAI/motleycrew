@@ -33,11 +33,11 @@ motleycrew.caching.http\_cache.CurlCffiHttpCaching
 
    .. autosummary::
    
-      ~CurlCffiHttpCaching.app_name
-      ~CurlCffiHttpCaching.ignore_params
-      ~CurlCffiHttpCaching.library_name
-      ~CurlCffiHttpCaching.root_cache_dir
-      ~CurlCffiHttpCaching.strong_cache
-      ~CurlCffiHttpCaching.update_cache_if_exists
+   .. autoattribute:: CurlCffiHttpCaching.app_name
+   .. autoattribute:: CurlCffiHttpCaching.ignore_params
+   .. autoattribute:: CurlCffiHttpCaching.library_name
+   .. autoattribute:: CurlCffiHttpCaching.root_cache_dir
+   .. autoattribute:: CurlCffiHttpCaching.strong_cache
+   .. autoattribute:: CurlCffiHttpCaching.update_cache_if_exists
    
    

@@ -1,4 +1,4 @@
-motleycrew.caching.http\_cache
+﻿motleycrew.caching.http\_cache
 ==============================
 
 .. automodule:: motleycrew.caching.http_cache
@@ -32,20 +32,12 @@ motleycrew.caching.http\_cache
    
    .. autoclass:: BaseHttpCache
      :members:
-     :undoc-members:
-     :private-members:
    .. autoclass:: CurlCffiHttpCaching
      :members:
-     :undoc-members:
-     :private-members:
    .. autoclass:: HttpxHttpCaching
      :members:
-     :undoc-members:
-     :private-members:
    .. autoclass:: RequestsHttpCaching
      :members:
-     :undoc-members:
-     :private-members:
    
    
 

@@ -26,7 +26,7 @@ motleycrew.agent.shared.MotleyAgentParent
 
    .. autosummary::
    
-      ~MotleyAgentParent.agent
-      ~MotleyAgentParent.is_materialized
+   .. autoattribute:: MotleyAgentParent.agent
+   .. autoattribute:: MotleyAgentParent.is_materialized
    
    

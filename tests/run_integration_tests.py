@@ -1,117 +1,165 @@
+import shutil
+from typing import Optional
+
 import os
-import sys
+import argparse
 from pathlib import Path
 import logging
 import traceback
-import inspect
-import difflib as df
+import difflib
+import json
+from dotenv import load_dotenv
+
+from motleycrew.common.exceptions import IntegrationTestException
+from motleycrew.common.utils import configure_logging
 
 from motleycrew.caching import (
     enable_cache,
-    disable_cache,
     set_cache_location,
     set_strong_cache,
 )
+
+from examples.delegation_crewai import main as delegation_crewai_main
 from examples.single_llama_index import main as single_llama_index_main
 
-CACHE_DIR = "tests/cache"
-DATA_DIR = "tests/data"
-STRONG_CACHE = True
-LOGGING_LEVEL = logging.ERROR
 
-logger = logging.getLogger("integration_test_logger")
+INTEGRATION_TESTS = {
+    "single_llama_index": single_llama_index_main,
+    "delegation_crewai": delegation_crewai_main,
+    # "single_openai_tools_react": single_openai_tools_react_main, TODO: enable this test
+}
 
-
-class IntegrationTestException(Exception):
-    """Integration tests exception"""
-
-    def __init__(self, test_name: str, *args, **kwargs):
-        super(IntegrationTestException, self).__init__(*args, **kwargs)
-        self.test_name = test_name
-
-    def __str__(self):
-        super_str = super(IntegrationTestException, self).__str__()
-        return "{} {}: {}".format(self.__class__, self.test_name, super_str)
+DEFAULT_CACHE_DIR = Path(__file__).parent / "itest_cache"
+DEFAULT_GOLDEN_DIR = Path(__file__).parent / "itest_golden_data"
 
 
-def single_llama_index_test():
-    """Test example single_llama_index"""
-    test_name = inspect.stack()[0][3]
-    content = single_llama_index_main()
-    excepted_content = read_content(test_name)
-    compare_results(content, excepted_content)
+def get_args_parser():
+    """Argument parser"""
+    parser = argparse.ArgumentParser(
+        description="Run integration tests", formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+    parser.add_argument(
+        "--test-name",
+        type=str,
+        choices=INTEGRATION_TESTS.keys(),
+        help="Name of the test to run (leave empty to run all tests)",
+        default=None,
+    )
+    parser.add_argument("--cache-dir", type=str, help="Cache directory", default=DEFAULT_CACHE_DIR)
+    parser.add_argument(
+        "--golden-dir", type=str, help="Reference data directory", default=DEFAULT_GOLDEN_DIR
+    )
+    parser.add_argument(
+        "--update-golden",
+        action="store_true",
+        help="Update reference data together with the cache",
+    )
+
+    return parser
 
 
-def compare_results(result: str, excepted_result: str) -> list:
-    """Comparison of the received and expected results"""
-    result_lines = result.splitlines()
-    excepted_result_lines = excepted_result.splitlines()
-    diff = list(df.unified_diff(result_lines, excepted_result_lines))
+def compare_results(result: str | list[str], expected_result: str | list[str]):
+    """Compare the received and expected results"""
+    if isinstance(result, str):
+        result = [result]
+    if isinstance(expected_result, str):
+        expected_result = [expected_result]
+
+    diff = []
+    for i, (row, expected_row) in enumerate(zip(result, expected_result)):
+        result_lines = row.splitlines()
+        expected_result_lines = expected_row.splitlines()
+        diff += list(difflib.unified_diff(result_lines, expected_result_lines))
+
     if diff:
-        message = "Result content != excepted content.\n{}\n".format(
-            "\n".join(diff[3:])
-        )
+        message = "Test result != expected result.\n{}\n".format("\n".join(diff))
         raise Exception(message)
-    return diff
 
 
-def build_excepted_content_file_path(test_name: str, extension: str = "txt") -> str:
-    """Building data file path"""
-    return os.path.join(DATA_DIR, "{}.{}".format(test_name, extension))
+def build_excepted_content_file_path(
+    golden_dir: str, test_name: str, extension: str = "txt"
+) -> str:
+    """Build golden data file path"""
+    return os.path.join(golden_dir, "{}.{}".format(test_name, extension))
 
 
-def write_content(test_name: str, content: str, extension: str = "txt") -> bool:
-    """Writing data to file"""
-    file_path = build_excepted_content_file_path(test_name, extension)
-    with open(file_path, "w") as f_o:
-        f_o.write(content)
-    return True
+def write_content(golden_dir: str, test_name: str, content: str, extension: str = "json"):
+    """Write golden data to file"""
+    file_path = build_excepted_content_file_path(golden_dir, test_name, extension)
+    with open(file_path, "w") as fd:
+        json.dump(content, fd)
 
 
-def read_content(test_name: str, extension: str = "txt") -> str:
-    """Reading data from file"""
-    file_path = build_excepted_content_file_path(test_name, extension)
-    with open(file_path, "r") as f_o:
-        return f_o.read()
+def read_golden_data(golden_dir: str, test_name: str, extension: str = "json"):
+    """Read golden data from file"""
+    file_path = build_excepted_content_file_path(golden_dir, test_name, extension)
+    with open(file_path, "r") as fd:
+        return json.load(fd)
 
 
-def find_test_functions():
-    """Searches for and returns a list of test functions"""
-    functions_list = []
-    for func_name, func in inspect.getmembers(
-        sys.modules[__name__], inspect.isfunction
-    ):
-        if func_name.endswith("_test"):
-            functions_list.append(func)
-    return functions_list
+def run_integration_tests(
+    cache_dir: str,
+    golden_dir: str,
+    update_golden: bool = False,
+    test_name: Optional[str] = None,
+):
+    failed_tests = {}
+
+    for current_test_name, test_fn in INTEGRATION_TESTS.items():
+        if test_name is not None and test_name != current_test_name:
+            continue
+
+        logging.info("Running test: %s", current_test_name)
+
+        cache_sub_dir = os.path.join(cache_dir, current_test_name)
+        if update_golden:
+            logging.info("Update-golden flag is set. Cleaning cache directory %s", cache_sub_dir)
+            shutil.rmtree(cache_sub_dir, ignore_errors=True)
+            os.makedirs(cache_sub_dir, exist_ok=True)
+            os.makedirs(golden_dir, exist_ok=True)
+            set_strong_cache(False)
+        else:
+            set_strong_cache(True)
+
+        set_cache_location(cache_sub_dir)
+        try:
+            test_result = test_fn()
+            if update_golden:
+                logging.info(
+                    "Skipping check and updating golden data for test: %s", current_test_name
+                )
+                write_content(golden_dir, current_test_name, test_result)
+            else:
+                excepted_result = read_golden_data(golden_dir, current_test_name)
+                compare_results(test_result, excepted_result)
+
+        except Exception as e:
+            logging.error("Test %s failed: %s", current_test_name, str(e))
+            failed_tests[current_test_name] = traceback.format_exc()
+
+    for t, exception in failed_tests.items():
+        logging.error("Test %s failed", t)
+        logging.error(exception)
+
+    if failed_tests:
+        raise IntegrationTestException(test_names=list(failed_tests.keys()))
+
+
+def main():
+    configure_logging(verbose=True)
+    load_dotenv()
+
+    parser = get_args_parser()
+    args = parser.parse_args()
+
+    enable_cache()
+    run_integration_tests(
+        cache_dir=args.cache_dir,
+        golden_dir=args.golden_dir,
+        update_golden=args.update_golden,
+        test_name=args.test_name,
+    )
 
 
 if __name__ == "__main__":
-
-    logger.setLevel(LOGGING_LEVEL)
-
-    enable_cache()
-    set_cache_location(CACHE_DIR)
-    set_strong_cache(STRONG_CACHE)
-
-    data_dir = Path(DATA_DIR)
-    data_dir.mkdir(parents=True, exist_ok=True)
-
-    test_exceptions = []
-    test_functions = find_test_functions()
-
-    for f in test_functions:
-        try:
-            logger.info("Start function: {}".format(f.__name__))
-            f()
-        except Exception as e:
-            msg = "{}\n{}".format(str(e), traceback.format_exc())
-            test_exceptions.append(IntegrationTestException(f.__name__, msg))
-            continue
-
-    for i, t_e in enumerate(test_exceptions):
-        if i == len(test_exceptions) - 1:
-            disable_cache()
-            raise t_e
-        logger.error(str(t_e))
-    disable_cache()
+    main()

@@ -4,7 +4,6 @@ from langchain_community.tools import DuckDuckGoSearchRun
 
 from motleycrew import MotleyCrew, Task
 from motleycrew.agent.llama_index import ReActLlamaIndexMotleyAgent
-from motleycrew.caching import enable_cache, disable_cache
 from motleycrew.common.utils import configure_logging
 
 
@@ -19,7 +18,6 @@ def main():
         verbose=True,
     )
 
-
     crew = MotleyCrew()
 
     # Create tasks for your agents
@@ -33,24 +31,20 @@ def main():
         documents=["paper1.pdf", "paper2.pdf"],
     )
 
-    # Instantiate your crew with a sequential process
+    # Get your crew to work!
     result = crew.run(
         agents=[researcher],
         verbose=2,  # You can set it to 1 or 2 to different logging levels
     )
 
-    # Get your crew to work!
-    outputs = list(result._done)[0].outputs
+    outputs = task1.outputs
     print(outputs)
-    print("######################")
 
-    return outputs[0].response
+    return [output.response for output in outputs]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     configure_logging(verbose=True)
 
     load_dotenv()
-    enable_cache()
     main()
-    disable_cache()

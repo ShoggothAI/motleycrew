@@ -28,13 +28,16 @@ extensions = [
     "sphinx_rtd_theme",
 ]
 
-templates_path = ['_templates']
+templates_path = ['_templates', '_templates/autosummary']
 exclude_patterns = []
 autosummary_generate = True
 autodoc_default_options = {
     "member-order": "bysource",
     "special-members": "__init__",
 }
+
+napoleon_google_docstring = True
+napoleon_numpy_docstring = True
 
 
 

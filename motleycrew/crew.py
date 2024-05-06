@@ -113,17 +113,14 @@ class MotleyCrew:
             agent = task.agent
         else:
             agent = spawn_agent(task)
+            tools = self.get_agent_tools(agent, task)
+            agent.add_tools(tools)
 
         logging.info("Assigning task '%s' to agent '%s'", task.name, agent.name)
 
-        tools = self.get_agent_tools(agent, task)
-        agent.add_tools(tools)
-
         return agent
 
-    def get_agent_tools(
-        self, agent: MotleyAgentParent, task: Task
-    ) -> Sequence[BaseTool]:
+    def get_agent_tools(self, agent: MotleyAgentParent, task: Task) -> Sequence[BaseTool]:
         # Task is needed later when we do smart tool selection
         # TODO: Smart tool selection goes here
         # Add the agents as tools to each other for delegation

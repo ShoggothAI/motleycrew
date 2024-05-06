@@ -31,3 +31,13 @@ class CannotModifyMaterializedAgent(Exception):
         return "Cannot modify agent{} as it is already materialized".format(
             f" `{self.agent_name}`" if self.agent_name is not None else ""
         )
+
+
+class IntegrationTestException(Exception):
+    """Integration tests exception"""
+
+    def __init__(self, test_names: list[str]):
+        self.test_names = test_names
+
+    def __str__(self):
+        return "Some integration tests failed: {}".format(self.test_names)

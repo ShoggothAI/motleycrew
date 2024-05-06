@@ -1,4 +1,4 @@
-motleycrew.agent.llama\_index.llama\_index
+﻿motleycrew.agent.llama\_index.llama\_index
 ==========================================
 
 .. automodule:: motleycrew.agent.llama_index.llama_index
@@ -22,8 +22,6 @@ motleycrew.agent.llama\_index.llama\_index
    
    .. autoclass:: LlamaIndexMotleyAgentParent
      :members:
-     :undoc-members:
-     :private-members:
    
    
 

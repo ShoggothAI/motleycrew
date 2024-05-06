@@ -1,4 +1,4 @@
-motleycrew.caching.utils
+﻿motleycrew.caching.utils
 ========================
 
 .. automodule:: motleycrew.caching.utils
@@ -29,8 +29,6 @@ motleycrew.caching.utils
    
    .. autoclass:: FakeRLock
      :members:
-     :undoc-members:
-     :private-members:
    
    
 

@@ -33,11 +33,11 @@ motleycrew.caching.http\_cache.RequestsHttpCaching
 
    .. autosummary::
    
-      ~RequestsHttpCaching.app_name
-      ~RequestsHttpCaching.ignore_params
-      ~RequestsHttpCaching.library_name
-      ~RequestsHttpCaching.root_cache_dir
-      ~RequestsHttpCaching.strong_cache
-      ~RequestsHttpCaching.update_cache_if_exists
+   .. autoattribute:: RequestsHttpCaching.app_name
+   .. autoattribute:: RequestsHttpCaching.ignore_params
+   .. autoattribute:: RequestsHttpCaching.library_name
+   .. autoattribute:: RequestsHttpCaching.root_cache_dir
+   .. autoattribute:: RequestsHttpCaching.strong_cache
+   .. autoattribute:: RequestsHttpCaching.update_cache_if_exists
    
    

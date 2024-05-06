@@ -1,4 +1,4 @@
-motleycrew.tool.mermaid\_evaluator\_tool
+﻿motleycrew.tool.mermaid\_evaluator\_tool
 ========================================
 
 .. automodule:: motleycrew.tool.mermaid_evaluator_tool
@@ -28,8 +28,6 @@ motleycrew.tool.mermaid\_evaluator\_tool
    
    .. autoclass:: MermaidEvaluatorTool
      :members:
-     :undoc-members:
-     :private-members:
    
    
 

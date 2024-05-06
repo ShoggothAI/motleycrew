@@ -1,4 +1,4 @@
-motleycrew.tasks.graph
+﻿motleycrew.tasks.graph
 ======================
 
 .. automodule:: motleycrew.tasks.graph
@@ -22,8 +22,6 @@ motleycrew.tasks.graph
    
    .. autoclass:: TaskGraph
      :members:
-     :undoc-members:
-     :private-members:
    
    
 

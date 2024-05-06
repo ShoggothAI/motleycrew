@@ -1,4 +1,4 @@
-motleycrew.agent.langchain.langchain
+﻿motleycrew.agent.langchain.langchain
 ====================================
 
 .. automodule:: motleycrew.agent.langchain.langchain
@@ -22,8 +22,6 @@ motleycrew.agent.langchain.langchain
    
    .. autoclass:: LangchainMotleyAgentParent
      :members:
-     :undoc-members:
-     :private-members:
    
    
 

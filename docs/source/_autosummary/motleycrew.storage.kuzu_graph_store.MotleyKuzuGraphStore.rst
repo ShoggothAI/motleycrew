@@ -31,8 +31,8 @@ motleycrew.storage.kuzu\_graph\_store.MotleyKuzuGraphStore
 
    .. autosummary::
    
-      ~MotleyKuzuGraphStore.client
-      ~MotleyKuzuGraphStore.node_table_name
-      ~MotleyKuzuGraphStore.rel_table_name
+   .. autoattribute:: MotleyKuzuGraphStore.client
+   .. autoattribute:: MotleyKuzuGraphStore.node_table_name
+   .. autoattribute:: MotleyKuzuGraphStore.rel_table_name
    
    

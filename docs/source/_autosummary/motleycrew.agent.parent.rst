@@ -1,4 +1,4 @@
-motleycrew.agent.parent
+﻿motleycrew.agent.parent
 =======================
 
 .. automodule:: motleycrew.agent.parent
@@ -22,8 +22,6 @@ motleycrew.agent.parent
    
    .. autoclass:: MotleyAgentAbstractParent
      :members:
-     :undoc-members:
-     :private-members:
    
    
 

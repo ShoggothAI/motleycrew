@@ -28,7 +28,7 @@ motleycrew.agent.langchain.langchain.LangchainMotleyAgentParent
 
    .. autosummary::
    
-      ~LangchainMotleyAgentParent.agent
-      ~LangchainMotleyAgentParent.is_materialized
+   .. autoattribute:: LangchainMotleyAgentParent.agent
+   .. autoattribute:: LangchainMotleyAgentParent.is_materialized
    
    

@@ -1,4 +1,4 @@
-motleycrew.agent.langchain.openai\_tools\_react
+﻿motleycrew.agent.langchain.openai\_tools\_react
 ===============================================
 
 .. automodule:: motleycrew.agent.langchain.openai_tools_react
@@ -31,8 +31,6 @@ motleycrew.agent.langchain.openai\_tools\_react
    
    .. autoclass:: ReactOpenAIToolsAgent
      :members:
-     :undoc-members:
-     :private-members:
    
    
 

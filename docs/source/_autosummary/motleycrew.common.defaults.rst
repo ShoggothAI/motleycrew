@@ -1,4 +1,4 @@
-motleycrew.common.defaults
+﻿motleycrew.common.defaults
 ==========================
 
 .. automodule:: motleycrew.common.defaults
@@ -22,8 +22,6 @@ motleycrew.common.defaults
    
    .. autoclass:: Defaults
      :members:
-     :undoc-members:
-     :private-members:
    
    
 

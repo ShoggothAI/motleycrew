@@ -26,6 +26,6 @@ motleycrew.tracking.callbacks.LlamaIndexLunaryCallbackHandler
 
    .. autosummary::
    
-      ~LlamaIndexLunaryCallbackHandler.AGENT_NAME
+   .. autoattribute:: LlamaIndexLunaryCallbackHandler.AGENT_NAME
    
    

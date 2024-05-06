@@ -33,6 +33,6 @@ motleycrew.tool.image\_generation.DallEToolInput
 
    .. autosummary::
    
-      ~DallEToolInput.description
+   .. autoattribute:: DallEToolInput.description
    
    

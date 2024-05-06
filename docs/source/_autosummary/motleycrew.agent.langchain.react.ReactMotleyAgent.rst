@@ -28,7 +28,7 @@ motleycrew.agent.langchain.react.ReactMotleyAgent
 
    .. autosummary::
    
-      ~ReactMotleyAgent.agent
-      ~ReactMotleyAgent.is_materialized
+   .. autoattribute:: ReactMotleyAgent.agent
+   .. autoattribute:: ReactMotleyAgent.is_materialized
    
    

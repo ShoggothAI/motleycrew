@@ -28,7 +28,7 @@ motleycrew.storage.graph\_store.MotleyGraphStore
 
    .. autosummary::
    
-      ~MotleyGraphStore.node_table_name
-      ~MotleyGraphStore.rel_table_name
+   .. autoattribute:: MotleyGraphStore.node_table_name
+   .. autoattribute:: MotleyGraphStore.rel_table_name
    
    

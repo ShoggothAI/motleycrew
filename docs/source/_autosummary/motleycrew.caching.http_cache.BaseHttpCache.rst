@@ -33,11 +33,11 @@ motleycrew.caching.http\_cache.BaseHttpCache
 
    .. autosummary::
    
-      ~BaseHttpCache.app_name
-      ~BaseHttpCache.ignore_params
-      ~BaseHttpCache.library_name
-      ~BaseHttpCache.root_cache_dir
-      ~BaseHttpCache.strong_cache
-      ~BaseHttpCache.update_cache_if_exists
+   .. autoattribute:: BaseHttpCache.app_name
+   .. autoattribute:: BaseHttpCache.ignore_params
+   .. autoattribute:: BaseHttpCache.library_name
+   .. autoattribute:: BaseHttpCache.root_cache_dir
+   .. autoattribute:: BaseHttpCache.strong_cache
+   .. autoattribute:: BaseHttpCache.update_cache_if_exists
    
    

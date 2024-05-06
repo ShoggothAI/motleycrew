@@ -27,6 +27,6 @@ motleycrew.tool.llm\_tool.LLMTool
 
    .. autosummary::
    
-      ~LLMTool.name
+   .. autoattribute:: LLMTool.name
    
    

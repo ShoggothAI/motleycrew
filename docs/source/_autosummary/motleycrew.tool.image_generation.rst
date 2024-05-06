@@ -1,4 +1,4 @@
-motleycrew.tool.image\_generation
+﻿motleycrew.tool.image\_generation
 =================================
 
 .. automodule:: motleycrew.tool.image_generation
@@ -31,12 +31,8 @@ motleycrew.tool.image\_generation
    
    .. autoclass:: DallEImageGeneratorTool
      :members:
-     :undoc-members:
-     :private-members:
    .. autoclass:: DallEToolInput
      :members:
-     :undoc-members:
-     :private-members:
    
    
 

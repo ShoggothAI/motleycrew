@@ -36,8 +36,6 @@
    {% for item in classes %}
    .. autoclass:: {{item}}
      :members:
-     :undoc-members:
-     :private-members:
    {%- endfor %}
    {% endif %}
    {% endblock %}

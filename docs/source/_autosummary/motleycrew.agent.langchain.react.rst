@@ -1,4 +1,4 @@
-motleycrew.agent.langchain.react
+﻿motleycrew.agent.langchain.react
 ================================
 
 .. automodule:: motleycrew.agent.langchain.react
@@ -22,8 +22,6 @@ motleycrew.agent.langchain.react
    
    .. autoclass:: ReactMotleyAgent
      :members:
-     :undoc-members:
-     :private-members:
    
    
 

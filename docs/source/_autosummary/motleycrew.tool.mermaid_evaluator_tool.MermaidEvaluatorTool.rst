@@ -27,6 +27,6 @@ motleycrew.tool.mermaid\_evaluator\_tool.MermaidEvaluatorTool
 
    .. autosummary::
    
-      ~MermaidEvaluatorTool.name
+   .. autoattribute:: MermaidEvaluatorTool.name
    
    

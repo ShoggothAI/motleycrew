@@ -21,8 +21,8 @@ motleycrew.common.enums.LunaryEventName
 
    .. autosummary::
    
-      ~LunaryEventName.END
-      ~LunaryEventName.ERROR
-      ~LunaryEventName.START
+   .. autoattribute:: LunaryEventName.END
+   .. autoattribute:: LunaryEventName.ERROR
+   .. autoattribute:: LunaryEventName.START
    
    

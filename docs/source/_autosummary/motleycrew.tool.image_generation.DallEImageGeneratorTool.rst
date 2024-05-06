@@ -27,6 +27,6 @@ motleycrew.tool.image\_generation.DallEImageGeneratorTool
 
    .. autosummary::
    
-      ~DallEImageGeneratorTool.name
+   .. autoattribute:: DallEImageGeneratorTool.name
    
    

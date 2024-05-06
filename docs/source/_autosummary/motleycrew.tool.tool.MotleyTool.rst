@@ -27,6 +27,6 @@ motleycrew.tool.tool.MotleyTool
 
    .. autosummary::
    
-      ~MotleyTool.name
+   .. autoattribute:: MotleyTool.name
    
    

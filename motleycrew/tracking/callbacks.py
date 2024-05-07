@@ -10,6 +10,7 @@ from lunary.event_queue import EventQueue
 from lunary.consumer import Consumer
 
 from motleycrew.common.enums import LunaryRunType, LunaryEventName
+from motleycrew.caching.caching import check_is_caching
 
 
 def event_delegate_decorator(f):
@@ -34,6 +35,12 @@ def event_delegate_decorator(f):
                 event_params = handler(*handler_args, **kwargs)
                 run_id = event_params.get("run_id")
                 run_type = event_params.get("run_type")
+
+                if check_is_caching():
+                    tags = event_params.get("tags", [])
+                    if "cached" not in tags:
+                        tags.append("cached")
+                        event_params["tags"] = tags
                 self._track_event(**event_params)
                 self._event_run_type_ids.append((run_type, run_id))
             except Exception as e:

@@ -26,6 +26,8 @@ extensions = [
     "sphinx.ext.coverage",
     "sphinx.ext.napoleon",
     "sphinx_rtd_theme",
+    "nbsphinx",
+    "nbsphinx_link",
 ]
 
 templates_path = ['_templates', '_templates/autosummary']

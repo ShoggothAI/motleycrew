@@ -14,7 +14,7 @@ build:
     # rust: "1.64"
     # golang: "1.19"
   apt_packages:
-    pandoc
+    - pandoc
   jobs:
     post_create_environment:
       # Install poetry

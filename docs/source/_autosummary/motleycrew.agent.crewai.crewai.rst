@@ -1,4 +1,4 @@
-﻿motleycrew.agent.crewai.crewai
+motleycrew.agent.crewai.crewai
 ==============================
 
 .. automodule:: motleycrew.agent.crewai.crewai

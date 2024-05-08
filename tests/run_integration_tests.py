@@ -9,6 +9,7 @@ import traceback
 import difflib
 import json
 from copy import copy
+from functools import partial
 
 from dotenv import load_dotenv
 import nbformat
@@ -110,6 +111,15 @@ def read_golden_data(golden_dir: str, test_name: str, extension: str = "json"):
         return json.load(fd)
 
 
+def run_ipynb(ipynb_path: str):
+    """Run jupiter notebook execution"""
+    with open(ipynb_path) as f:
+        nb = nbformat.read(f, as_version=4)
+
+    ep = ExecutePreprocessor()
+    ep.preprocess(nb)
+
+
 def build_ipynb_integration_tests() -> dict:
     """Build and return dict of ipynb integration tests functions"""
     test_functions = {}
@@ -118,14 +128,7 @@ def build_ipynb_integration_tests() -> dict:
             logging.info("Ipynb test notebook {} not found".format(test_name))
             continue
 
-        def test_function():
-            with open(nb_path) as f:
-                nb = nbformat.read(f, as_version=4)
-
-            ep = ExecutePreprocessor()
-            ep.preprocess(nb)
-
-        test_functions[test_name] = test_function
+        test_functions[test_name] = partial(run_ipynb, nb_path)
 
     return test_functions
 

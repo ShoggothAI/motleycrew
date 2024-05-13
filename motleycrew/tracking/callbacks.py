@@ -22,11 +22,11 @@ def event_delegate_decorator(f):
         else:
             event_type = kwargs.get("event_type", None)
 
-        if not [event for event in CBEventType if event.value == event_type]:
+        if not [event for event in CBEventType if event.value == event_type.value]:
             return f(*args, **kwargs)
 
         # find and call handler
-        handler_name = "_on_{}_{}".format(event_type, run_type)
+        handler_name = "_on_{}_{}".format(event_type.value, run_type)
         handler = getattr(self, handler_name, None)
         if handler is not None and callable(handler):
             handler_args = list(args)[1:]
@@ -220,9 +220,7 @@ class LlamaIndexLunaryCallbackHandler(BaseCallbackHandler):
             run_id = parent_id if parent_id else event_id
 
         _exception = payload.get(EventPayload.EXCEPTION)
-        params = self._get_initial_track_event_params(
-            run_type, LunaryEventName.ERROR, run_id
-        )
+        params = self._get_initial_track_event_params(run_type, LunaryEventName.ERROR, run_id)
         params["error"] = {"message": str(_exception), "stack": traceback.format_exc()}
         return params
 

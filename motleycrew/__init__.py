@@ -1,3 +1,3 @@
 from .crew import MotleyCrew
-from .tasks import Task, TaskGraph
+from .tasks import TaskRecipe
 from .tool import MotleyTool

@@ -1,4 +1,4 @@
-﻿motleycrew
+motleycrew
 ==========
 
 .. automodule:: motleycrew

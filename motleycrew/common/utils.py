@@ -5,8 +5,13 @@ from urllib.parse import urlparse
 from langchain_core.messages import BaseMessage
 
 
-def configure_logging(verbose: bool = False):
-    level = logging.INFO if verbose else logging.WARNING
+def configure_logging(verbose: bool = False, debug: bool = False):
+    if debug:
+        level = logging.DEBUG
+    elif verbose:
+        level = logging.INFO
+    else:
+        level = logging.WARNING
     logging.basicConfig(format="%(asctime)s - %(levelname)s - %(message)s", level=level)
 
 
@@ -19,9 +24,7 @@ def to_str(value: str | BaseMessage | Sequence[str] | Sequence[BaseMessage]) -> 
         try:
             return "\n".join([to_str(v) for v in value])
         except TypeError:
-            raise TypeError(
-                f"Expected str, BaseMessage, or an iterable of them, got {type(value)}"
-            )
+            raise TypeError(f"Expected str, BaseMessage, or an iterable of them, got {type(value)}")
 
 
 def is_http_url(url):

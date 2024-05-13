@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 class LLMFamilyNotSupported(Exception):
     def __init__(self, llm_framework: str, llm_family: str):
         self.llm_framework = llm_framework
@@ -31,6 +34,10 @@ class CannotModifyMaterializedAgent(Exception):
         return "Cannot modify agent{} as it is already materialized".format(
             f" `{self.agent_name}`" if self.agent_name is not None else ""
         )
+
+
+class TaskDependencyCycleError(Exception):
+    """Raised when a task is set to depend on itself"""
 
 
 class IntegrationTestException(Exception):

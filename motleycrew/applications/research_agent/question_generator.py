@@ -1,6 +1,6 @@
-from typing import Optional, Any
-import json
+from typing import Optional
 from pathlib import Path
+import logging
 
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.runnables import (
@@ -19,14 +19,15 @@ from motleycrew.common.llms import init_llm
 from motleycrew.common.utils import print_passthrough
 from motleycrew.storage import MotleyGraphStore
 
-from question_struct import Question
-from question_inserter import QuestionInsertionTool
 
+from motleycrew.applications.research_agent.question import Question, QuestionGenerationTask
+
+IS_SUBQUESTION_PREDICATE = "is_subquestion"
 
 default_prompt = PromptTemplate.from_template(
     """
 You are a part of a team. The ultimate goal of your team is to
-answer the following Question: '{question_text}'.\n
+answer the following Question: '{question}'.\n
 Your team has discovered some new text (delimited by ```) that may be relevant to your ultimate goal.
 text: \n ``` {context} ``` \n
 Your task is to ask new questions that may help your team achieve the ultimate goal.
@@ -73,10 +74,12 @@ class QuestionGeneratorTool(MotleyTool):
         super().__init__(langchain_tool)
 
 
-class QuestionGeneratorToolInput(BaseModel):
+class QuestionGeneratorToolInput(BaseModel, arbitrary_types_allowed=True):
     """Input for the Question Generator Tool."""
 
-    question: Question = Field(description="The input question for which to generate subquestions.")
+    task: QuestionGenerationTask = Field(
+        description="Task with the input question for which to generate subquestions."
+    )
 
 
 def create_question_generator_langchain_tool(
@@ -98,46 +101,35 @@ def create_question_generator_langchain_tool(
 
     assert isinstance(prompt, BasePromptTemplate), "Prompt must be a string or a BasePromptTemplate"
 
-    def partial_inserter(input_dict: dict):
-        out = QuestionInsertionTool(graph=graph, question=input_dict["question"]).to_langchain_tool()
-        return (out,)
-
     def insert_questions(input_dict) -> None:
-        inserter = input_dict["question_inserter"]["question_inserter"][0]
         questions_raw = input_dict["subquestions"].content
         questions = [q.strip() for q in questions_raw.split("\n") if len(q.strip()) > 1]
-
-        inserter.invoke({"questions": questions})
+        for q in questions:
+            logging.info("Inserting question: %s", q)
+            subquestion = graph.insert_node(Question(question=q))
+            graph.create_relation(input_dict["question"], subquestion, IS_SUBQUESTION_PREDICATE)
+        logging.info("Inserted %s questions", len(questions))
 
     def set_context(input_dict: dict):
-        context = input_dict["context"]
-        graph.set_property(
-            entity_id=input_dict["question"]["question"].id,
-            property_name="context",
-            property_value=json.dumps(input_dict["context"]),
-        )
+        node = input_dict["question"]
+        node.context = input_dict["context"]
 
-    # TODO: add context to question node
     pipeline = (
-        {
-            "question": RunnablePassthrough(),
-            "context": query_tool.to_langchain_tool(),
-            "question_inserter": RunnableLambda(partial_inserter),
-        }
+        RunnableLambda(print_passthrough)
+        | RunnablePassthrough().assign(context=query_tool.to_langchain_tool())
+        | RunnableLambda(print_passthrough)
+        | RunnablePassthrough().assign(
+            subquestions=prompt.partial(num_questions=str(max_questions)) | llm
+        )
         | RunnableLambda(print_passthrough)
         | {
-            "subquestions": RunnablePassthrough.assign(question_text=lambda x: x["question"]["question"].question)
-            | prompt.partial(num_questions=max_questions)
-            | llm,
-            "context_setter": RunnableLambda(set_context),
-            "question_inserter": RunnablePassthrough(),
+            "set_context": RunnableLambda(set_context),
+            "insert_questions": RunnableLambda(insert_questions),
         }
-        | RunnableLambda(print_passthrough)
-        | RunnableLambda(insert_questions)
     )
 
     return Tool.from_function(
-        func=lambda question: pipeline.invoke({"question": question}),
+        func=lambda task: pipeline.invoke({"question": task.question}),
         name="Question Generator Tool",
         description="""Generate a list of questions based on the input question, 
     and insert them into the knowledge graph.""",

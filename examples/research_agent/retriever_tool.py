@@ -14,7 +14,7 @@ from llama_index.core import (
 )
 
 from motleycrew.tool import MotleyTool
-from question_struct import Question
+from motleycrew.applications.research_agent.question import Question
 
 
 def make_retriever_tool(DATA_DIR, PERSIST_DIR, return_strings_only: bool = False):
@@ -39,10 +39,12 @@ def make_retriever_tool(DATA_DIR, PERSIST_DIR, return_strings_only: bool = False
         embed_model=embeddings,
     )
 
-    class RetrieverToolInput(BaseModel):
+    class RetrieverToolInput(BaseModel, arbitrary_types_allowed=True):
         """Input for the Retriever Tool."""
 
-        question: Question = Field(description="The input question for which to retrieve relevant data.")
+        question: Question = Field(
+            description="The input question for which to retrieve relevant data."
+        )
 
     def call_retriever(question: Question) -> list:
         out = retriever.retrieve(question.question)

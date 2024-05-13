@@ -8,7 +8,7 @@ from langchain_core.prompts.chat import ChatPromptTemplate
 from motleycrew.agent.langchain.react import ReactMotleyAgent
 
 from motleycrew.tool.llm_tool import LLMTool
-from motleycrew import MotleyCrew, Task
+from motleycrew import MotleyCrew, TaskRecipe
 
 from .blog_post_input import text
 
@@ -48,9 +48,7 @@ editor_prompt = ChatPromptTemplate.from_messages(
 
 illustrator_prompt = ChatPromptTemplate.from_messages(
     [
-        SystemMessage(
-            content="You are a professional illustrator with 10 years of experience."
-        ),
+        SystemMessage(content="You are a professional illustrator with 10 years of experience."),
         HumanMessage(
             content="You are given the following draft story, delimited by triple back quotes: ```{second_draft}```"
         ),
@@ -113,7 +111,7 @@ writer = ReactMotleyAgent(
 
 # Create tasks for your agents
 crew = MotleyCrew()
-task1 = Task(
+task1 = TaskRecipe(
     crew=crew,
     name="Write a blog post from the provided information",
     description=f"""Write a blog post of at most {max_words} words and at least {min_words}

@@ -144,6 +144,8 @@ def run_integration_tests(
     if failed_tests:
         raise IntegrationTestException(test_names=list(failed_tests.keys()))
 
+    logging.info("All tests passed!")
+
 
 def main():
     configure_logging(verbose=True)

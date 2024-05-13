@@ -12,7 +12,7 @@ from motleycrew.tool import MotleyTool, LLMTool
 from motleycrew.storage import MotleyGraphStore
 from motleycrew.common.utils import print_passthrough
 
-from question_struct import Question
+from motleycrew.applications.research_agent.question import Question, QuestionAnsweringTask
 
 
 _default_prompt = PromptTemplate.from_template(
@@ -47,21 +47,23 @@ class AnswerSubQuestionTool(MotleyTool):
         super().__init__(langchain_tool)
 
 
-class QuestionAnswererInput(BaseModel):
+class QuestionAnswererInput(BaseModel, arbitrary_types_allowed=True):
     """Data on the question to answer."""
 
-    question: Question = Field(
+    task: QuestionAnsweringTask = Field(
         description="Question node to process.",
     )
 
 
 def get_subquestions(graph: MotleyGraphStore, question: Question) -> list[Question]:
     query = "MATCH (n1:{})-[]->(n2:{}) WHERE n1.id = $question_id and n2.context IS NOT NULL RETURN n2".format(
-        graph.node_table_name, graph.node_table_name
+        Question.get_label(), Question.get_label()
     )
 
-    query_result = graph.run_cypher_query(query, parameters={"question_id": question.id})
-    return [Question.deserialize(row[0]) for row in query_result]
+    query_result = graph.run_cypher_query(
+        query, parameters={"question_id": question.id}, container=Question
+    )
+    return query_result
 
 
 def create_answer_question_langchain_tool(
@@ -108,15 +110,12 @@ def create_answer_question_langchain_tool(
         """
         question = input_dict["question"]
         answer = input_dict["answer"].content
-
-        graph.set_property(
-            entity_id=question.id,
-            property_name="answer",
-            property_value=answer,
-        )
+        question.answer = answer
 
     this_chain = (
-        RunnablePassthrough.assign(question_text=lambda x: x["question"].question, notes=write_notes)
+        RunnablePassthrough.assign(
+            question_text=lambda x: x["question"].question, notes=write_notes
+        )
         | RunnableLambda(print_passthrough)
         | RunnablePassthrough.assign(answer=subquestion_answerer.to_langchain_tool())
         | RunnableLambda(print_passthrough)
@@ -124,7 +123,7 @@ def create_answer_question_langchain_tool(
     )
 
     langchain_tool = Tool.from_function(
-        func=lambda question: this_chain.invoke({"question": question}),
+        func=lambda task: this_chain.invoke({"question": task.question}),
         name="Answer Sub-Question Tool",
         description="Answer a question based on the notes and sub-questions.",
         args_schema=QuestionAnswererInput,

@@ -2,13 +2,14 @@ from typing import Optional
 from dataclasses import dataclass
 import json
 
+from motleycrew.storage.graph_node import MotleyGraphNode
+from motleycrew.tasks import Task
+
 REPR_CONTEXT_LENGTH_LIMIT = 30
 
 
-@dataclass
-class Question:
-    id: Optional[int] = None
-    question: Optional[str] = None
+class Question(MotleyGraphNode):
+    question: str
     answer: Optional[str] = None
     context: Optional[list[str]] = None
 
@@ -26,26 +27,10 @@ class Question:
             self.id, self.question, self.answer, context_repr
         )
 
-    def serialize(self):
-        data = {}
 
-        if self.id:
-            data["id"] = self.id
-        if self.question:
-            data["question"] = self.question
-        if self.answer:
-            data["answer"] = self.answer
-        if self.context:
-            data["context"] = json.dumps(self.context)
+class QuestionGenerationTask(Task):
+    question: Question
 
-        return data
 
-    @staticmethod
-    def deserialize(data: dict):
-        context_raw = data["context"]
-        if context_raw:
-            context = json.loads(context_raw)
-        else:
-            context = None
-
-        return Question(id=data["id"], question=data["question"], answer=data["answer"], context=context)
+class QuestionAnsweringTask(Task):
+    question: Question

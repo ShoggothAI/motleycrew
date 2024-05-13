@@ -7,6 +7,12 @@ class LLMFramework:
     LLAMA_INDEX = "llama_index"
 
 
+class TaskStatus:
+    PENDING = "pending"
+    RUNNING = "running"
+    DONE = "done"
+
+
 class LunaryRunType:
     LLM = "llm"
     AGENT = "agent"

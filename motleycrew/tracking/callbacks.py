@@ -10,7 +10,6 @@ from lunary.event_queue import EventQueue
 from lunary.consumer import Consumer
 
 from motleycrew.common.enums import LunaryRunType, LunaryEventName
-from motleycrew.caching.caching import check_is_caching
 
 
 def event_delegate_decorator(f):
@@ -35,12 +34,6 @@ def event_delegate_decorator(f):
                 event_params = handler(*handler_args, **kwargs)
                 run_id = event_params.get("run_id")
                 run_type = event_params.get("run_type")
-
-                if check_is_caching():
-                    tags = event_params.get("tags", [])
-                    if "cached" not in tags:
-                        tags.append("cached")
-                        event_params["tags"] = tags
                 self._track_event(**event_params)
                 self._event_run_type_ids.append((run_type, run_id))
             except Exception as e:
@@ -82,6 +75,7 @@ class LlamaIndexLunaryCallbackHandler(BaseCallbackHandler):
         app_id: str,
         event_starts_to_ignore: List[CBEventType] = [],
         event_ends_to_ignore: List[CBEventType] = [],
+        queue: EventQueue = None,
     ):
         super(LlamaIndexLunaryCallbackHandler, self).__init__(
             event_starts_to_ignore=event_starts_to_ignore,
@@ -92,9 +86,12 @@ class LlamaIndexLunaryCallbackHandler(BaseCallbackHandler):
         self._track_event = track_event
         self._event_run_type_ids = []
 
-        self.queue = EventQueue()
-        self.consumer = Consumer(self.queue, self.__app_id)
-        self.consumer.start()
+        if queue is not None:
+            self.queue = EventQueue()
+            self.consumer = Consumer(self.queue, self.__app_id)
+            self.consumer.start()
+        else:
+            self.queue = queue
 
     def _get_initial_track_event_params(
         self, run_type: LunaryRunType, event_name: LunaryEventName, run_id: str = None

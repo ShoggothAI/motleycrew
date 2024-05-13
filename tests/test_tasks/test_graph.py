@@ -1,6 +1,6 @@
 import pytest
 
-from motleycrew import MotleyCrew, Task, TaskGraph
+from motleycrew import MotleyCrew, TaskRecipe
 
 
 @pytest.fixture
@@ -18,14 +18,14 @@ def test_empty_graph_has_no_tasks_remaining(graph):
 
 
 def test_registered_tasks_are_counted_as_pending(crew, graph):
-    _ = Task("", "", crew)
+    _ = TaskRecipe("", "", crew)
 
     assert crew, graph.num_tasks_pending() == 1
     assert crew, graph.num_tasks_remaining() == 1
 
 
 def test_registered_tasks_are_not_duplicated(crew, graph):
-    task = Task("", "", crew)
+    task = TaskRecipe("", "", crew)
     graph.add_task(task)
 
     assert graph.num_tasks_pending() == 1

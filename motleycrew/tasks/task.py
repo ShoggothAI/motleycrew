@@ -1,108 +1,49 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Sequence, Set
+from abc import ABC
+from typing import Optional, Any, TypeVar
 
-from motleycrew.agent.parent import MotleyAgentAbstractParent
-
-if TYPE_CHECKING:
-    from motleycrew import MotleyCrew
-
-PROMPT_TEMPLATE_WITH_DEPS = """
-{description}
-
-You must use the results of these upstream tasks:
-
-{upstream_results_section}
-"""
+from motleycrew.common import TaskStatus
+from motleycrew.storage import MotleyGraphNode
 
 
-class TaskDependencyCycleError(Exception):
-    """Raised when a task is set to depend on itself"""
+class Task(MotleyGraphNode, ABC):
+    status: str = TaskStatus.PENDING
+    output: Optional[Any] = None
+
+    def __repr__(self) -> str:
+        return f"Task(status={self.status})"
+
+    def __str__(self) -> str:
+        return self.__repr__()
+
+    def __eq__(self, other: Task):
+        return self.id is not None and self.get_label() == other.get_label and self.id == other.id
+
+    @property
+    def pending(self):
+        return self.status == TaskStatus.PENDING
+
+    @property
+    def running(self):
+        return self.status == TaskStatus.RUNNING
+
+    @property
+    def done(self):
+        return self.status == TaskStatus.DONE
+
+    def set_pending(self):
+        self.status = TaskStatus.PENDING
+
+    def set_running(self):
+        self.status = TaskStatus.RUNNING
+
+    def set_done(self):
+        self.status = TaskStatus.DONE
+
+    def as_dict(self):
+        """Represent the task as a dictionary for passing to invoke() methods of runnables."""
+        return dict(self)
 
 
-class Task:
-    def __init__(
-        self,
-        description: str,
-        name: str,
-        crew: MotleyCrew,
-        agent: MotleyAgentAbstractParent | None = None,
-        documents: Sequence[Any] | None = None,
-        creator_name: str | None = None,
-        return_to_creator: bool = False,
-    ):
-        self.name = name  # does it really need one? Where does it get used?
-        self.description = description
-        self.crew = crew
-        self.agent = agent  # to be auto-assigned at crew creation if missing?
-        # should tasks own agents or should agents own tasks?
-        self.documents = documents  # to be passed to an auto-init'd retrieval, later on
-        self.creator_name = creator_name or "Human"
-        self.return_to_creator = (
-            return_to_creator  # for orchestrator to know to send back to creator
-        )
-        self.message_history = []  # Useful when task is passed around between agents
-        self.outputs = []  # to be filled in by the agent(s) once the task is complete
-        self.used_tools = 0  # a hack for CrewAI compatibility
-
-        self.done: bool = False
-
-        self.upstream_tasks: list[Task] = list()
-        self.downstream_tasks: list[Task] = list()
-
-        self.crew.add_task(self)
-
-    def prompt(self) -> str:
-        """
-        For compatibility with crewai.Agent.execute_task
-        :return:
-        """
-        if not self.upstream_tasks:
-            return self.description
-
-        # TODO include the rest of the outputs list
-        upstream_results = [f"##{t.name}\n{t.outputs[-1]}" for t in self.upstream_tasks]
-        upstream_results_section = "\n\n".join(upstream_results)
-        return PROMPT_TEMPLATE_WITH_DEPS.format(
-            description=self.description,
-            upstream_results_section=upstream_results_section,
-        )
-
-    def increment_tools_errors(self) -> None:
-        """
-        For compatibility with crewai.Agent.execute_task
-        It is called when an exception is raised in the tool, so for now we just re-raise it here
-        TODO: do we want to handle tool errors in future like CrewAI handles them?
-        :return:
-        """
-        raise
-
-    def is_ready(self) -> bool:
-        return not self.done and all(t.done for t in self.upstream_tasks)
-
-    def set_upstream(self, task: Task) -> Task:
-        if task is self:
-            raise TaskDependencyCycleError(f"Task {task.name} can not depend on itself")
-
-        if task not in self.upstream_tasks:
-            self.upstream_tasks.append(task)
-        if self not in task.downstream_tasks:
-            task.downstream_tasks.append(self)
-
-        return self
-
-    def __rshift__(self, other: Task | Sequence[Task]) -> Task:
-        if isinstance(other, Task):
-            tasks = {other}
-        else:
-            tasks = other
-
-        for task in tasks:
-            task.set_upstream(self)
-
-        return self
-
-    def __rrshift__(self, other: Sequence[Task]) -> Sequence[Task]:
-        for task in other:
-            self.set_upstream(task)
-        return other
+TaskType = TypeVar("TaskType", bound=Task)

@@ -1,4 +1,4 @@
-motleycrew.common.exceptions
+﻿motleycrew.common.exceptions
 ============================
 
 .. automodule:: motleycrew.common.exceptions
@@ -23,6 +23,7 @@ motleycrew.common.exceptions
    
       AgentNotMaterialized
       CannotModifyMaterializedAgent
+      IntegrationTestException
       LLMFamilyNotSupported
       LLMFrameworkNotSupported
    

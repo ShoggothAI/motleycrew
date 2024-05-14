@@ -21,6 +21,7 @@ class MotleyCrew:
         self.thread_pool = ThreadPoolExecutor(max_workers=8)
         self.futures: Set[Future] = set()
         if graph_store is None:
+            # TODO: this is a hack, should be configurable
             WORKING_DIR = os.path.realpath(os.path.dirname(__file__))
             import kuzu
 
@@ -71,7 +72,13 @@ class MotleyCrew:
             if task_recipe not in self.task_recipes:
                 self.task_recipes.append(task_recipe)
                 task_recipe.crew = self
-                task_recipe.node_id = self.graph_store.insert_node(task_recipe.node)
+                self.graph_store.insert_node(task_recipe.node)
+
+                self.graph_store.ensure_relation_table(
+                    from_class=type(task_recipe.node),
+                    to_class=type(task_recipe.node),
+                    label=TaskRecipe.TASK_RECIPE_IS_UPSTREAM_LABEL,
+                )  # TODO: remove this workaround, https://github.com/kuzudb/kuzu/issues/3488
 
     def _run_sync(self, verbose: int = 0) -> list[Task]:
         # TODO: use the verbose arg

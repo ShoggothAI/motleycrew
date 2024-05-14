@@ -66,7 +66,7 @@ class TestMotleyKuzuGraphStore:
         MotleyKuzuGraphStore._set_node_id(node=entity, node_id=2)
         assert graph_store.check_node_exists(entity) is False
 
-        graph_store._ensure_node_table(entity)
+        graph_store.ensure_node_table(Entity)
         assert graph_store.check_node_exists(entity) is False
 
     def test_create_relation(self, database):

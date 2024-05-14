@@ -8,7 +8,12 @@ import logging
 import traceback
 import difflib
 import json
+from copy import copy
+from functools import partial
+
 from dotenv import load_dotenv
+import nbformat
+from nbconvert.preprocessors import ExecutePreprocessor
 
 from motleycrew.common.exceptions import IntegrationTestException
 from motleycrew.common.utils import configure_logging
@@ -27,6 +32,15 @@ INTEGRATION_TESTS = {
     "single_llama_index": single_llama_index_main,
     "delegation_crewai": delegation_crewai_main,
     # "single_openai_tools_react": single_openai_tools_react_main, TODO: enable this test
+}
+
+IPYNB_INTEGRATION_TESTS = {
+    "delegation_crewai_ipynb": "examples/delegation_crewai.ipynb",
+    "image_generation_crewai_ipynb": "examples/image_generation_crewai.ipynb",
+    "math_crewai_ipynb": "examples/math_crewai.ipynb",
+    "single_crewai_ipynb": "examples/single_crewai.ipynb",
+    "single_llama_index_ipynb": "examples/single_llama_index.ipynb",
+    "single_openai_tools_react_ipynb": "examples/single_openai_tools_react.ipynb"
 }
 
 DEFAULT_CACHE_DIR = Path(__file__).parent / "itest_cache"
@@ -97,6 +111,28 @@ def read_golden_data(golden_dir: str, test_name: str, extension: str = "json"):
         return json.load(fd)
 
 
+def run_ipynb(ipynb_path: str):
+    """Run jupiter notebook execution"""
+    with open(ipynb_path) as f:
+        nb = nbformat.read(f, as_version=4)
+
+    ep = ExecutePreprocessor()
+    ep.preprocess(nb)
+
+
+def build_ipynb_integration_tests() -> dict:
+    """Build and return dict of ipynb integration tests functions"""
+    test_functions = {}
+    for test_name, nb_path in IPYNB_INTEGRATION_TESTS.items():
+        if not os.path.exists(nb_path):
+            logging.info("Ipynb test notebook {} not found".format(test_name))
+            continue
+
+        test_functions[test_name] = partial(run_ipynb, nb_path)
+
+    return test_functions
+
+
 def run_integration_tests(
     cache_dir: str,
     golden_dir: str,
@@ -105,7 +141,10 @@ def run_integration_tests(
 ):
     failed_tests = {}
 
-    for current_test_name, test_fn in INTEGRATION_TESTS.items():
+    integration_tests = copy(INTEGRATION_TESTS)
+    integration_tests.update(build_ipynb_integration_tests())
+
+    for current_test_name, test_fn in integration_tests.items():
         if test_name is not None and test_name != current_test_name:
             continue
 
@@ -124,14 +163,15 @@ def run_integration_tests(
         set_cache_location(cache_sub_dir)
         try:
             test_result = test_fn()
-            if update_golden:
-                logging.info(
-                    "Skipping check and updating golden data for test: %s", current_test_name
-                )
-                write_content(golden_dir, current_test_name, test_result)
-            else:
-                excepted_result = read_golden_data(golden_dir, current_test_name)
-                compare_results(test_result, excepted_result)
+            if current_test_name in INTEGRATION_TESTS:
+                if update_golden:
+                    logging.info(
+                        "Skipping check and updating golden data for test: %s", current_test_name
+                    )
+                    write_content(golden_dir, current_test_name, test_result)
+                else:
+                    excepted_result = read_golden_data(golden_dir, current_test_name)
+                    compare_results(test_result, excepted_result)
 
         except Exception as e:
             logging.error("Test %s failed: %s", current_test_name, str(e))

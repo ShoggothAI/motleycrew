@@ -20,6 +20,10 @@ kuzu = "^0.3.0"
 cloudpickle = "^3.0.0"
 platformdirs = "^4.2.1"
 pydantic = "^2.7.1"
+# TODO: The following dependencies for caching package should be optional
+requests = "^2.31.0"
+curl-cffi = "^0.6.4"
+httpx = "^0.27.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.2.0"

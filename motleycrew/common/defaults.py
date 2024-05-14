@@ -1,5 +1,4 @@
 from motleycrew.common import LLMFamily
-from motleycrew.common import GraphStoreType
 
 
 class Defaults:
@@ -9,3 +8,8 @@ class Defaults:
     LLM_MAP = {}
 
     DEFAULT_GRAPH_STORE_TYPE = GraphStoreType.KUZU
+
+
+defaults_module_install_commands = {
+    "crewai": "pip install crewai"
+}

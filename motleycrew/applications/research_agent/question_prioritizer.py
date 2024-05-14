@@ -12,7 +12,7 @@ from motleycrew.tool import MotleyTool
 from motleycrew.tool import LLMTool
 from motleycrew.common.utils import print_passthrough
 
-from question_struct import Question
+from motleycrew.applications.research_agent.question import Question
 
 
 class QuestionPrioritizerTool(MotleyTool):
@@ -39,7 +39,7 @@ _default_prompt = PromptTemplate(
 )
 
 
-class QuestionPrioritizerInput(BaseModel):
+class QuestionPrioritizerInput(BaseModel, arbitrary_types_allowed=True):
     original_question: Question = Field(description="The original question.")
     unanswered_questions: list[Question] = Field(
         description="Questions to pick the most pertinent to the original question from.",
@@ -69,12 +69,17 @@ def create_question_prioritizer_langchain_tool(
     @chain
     def format_unanswered_questions(input_dict: dict):
         unanswered_questions: list[Question] = input_dict["unanswered_questions"]
-        return "\n".join("{}. {}".format(i + 1, question.question) for i, question in enumerate(unanswered_questions))
+        return "\n".join(
+            "{}. {}".format(i + 1, question.question)
+            for i, question in enumerate(unanswered_questions)
+        )
 
     @chain
     def get_most_pertinent_question(input_dict: dict):
         unanswered_questions: list[Question] = input_dict["unanswered_questions"]
-        most_pertinent_question_id = int(input_dict["most_pertinent_question_id_message"].content.strip(" \n.")) - 1
+        most_pertinent_question_id = (
+            int(input_dict["most_pertinent_question_id_message"].content.strip(" \n.")) - 1
+        )
         assert most_pertinent_question_id < len(unanswered_questions)
         return unanswered_questions[most_pertinent_question_id]
 
@@ -84,7 +89,9 @@ def create_question_prioritizer_langchain_tool(
             unanswered_questions_text=format_unanswered_questions,
         )
         | RunnableLambda(print_passthrough)
-        | RunnablePassthrough.assign(most_pertinent_question_id_message=question_prioritizer.to_langchain_tool())
+        | RunnablePassthrough.assign(
+            most_pertinent_question_id_message=question_prioritizer.to_langchain_tool()
+        )
         | RunnableLambda(print_passthrough)
         | get_most_pertinent_question
     )
@@ -103,8 +110,13 @@ def create_question_prioritizer_langchain_tool(
 
 if __name__ == "__main__":
     q = Question(question="What color is the sky?")
-    unanswered = [Question(question="What time of day is it?"), Question(question="Who was H.P.Lovecraft?")]
+    unanswered = [
+        Question(question="What time of day is it?"),
+        Question(question="Who was H.P.Lovecraft?"),
+    ]
 
-    out = QuestionPrioritizerTool().invoke({"unanswered_questions": unanswered, "original_question": q})
+    out = QuestionPrioritizerTool().invoke(
+        {"unanswered_questions": unanswered, "original_question": q}
+    )
     print(out)
     print("yay!")

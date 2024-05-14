@@ -40,11 +40,13 @@ IPYNB_INTEGRATION_TESTS = {
     "math_crewai_ipynb": "examples/math_crewai.ipynb",
     "single_crewai_ipynb": "examples/single_crewai.ipynb",
     "single_llama_index_ipynb": "examples/single_llama_index.ipynb",
-    "single_openai_tools_react_ipynb": "examples/single_openai_tools_react.ipynb"
+    "single_openai_tools_react_ipynb": "examples/single_openai_tools_react.ipynb",
 }
 
 DEFAULT_CACHE_DIR = Path(__file__).parent / "itest_cache"
 DEFAULT_GOLDEN_DIR = Path(__file__).parent / "itest_golden_data"
+TIKTOKEN_CACHE_DIR_NAME = "tiktoken_cache"
+TIKTOKEN_CACHE_DIR_ENV_VAR = "TIKTOKEN_CACHE_DIR"
 
 
 def get_args_parser():
@@ -120,6 +122,22 @@ def run_ipynb(ipynb_path: str):
     ep.preprocess(nb)
 
 
+def set_tiktoken_cache_dir(cache_dir: str) -> str:
+    """Set tiktoken cache directory to env, return its old value to set it back after the tests"""
+    old_value = os.environ.get(TIKTOKEN_CACHE_DIR_ENV_VAR)
+
+    tiktoken_cache_dir = os.path.join(cache_dir, "tiktoken_cache")
+    os.environ[TIKTOKEN_CACHE_DIR_ENV_VAR] = tiktoken_cache_dir
+    return old_value
+
+
+def unset_tiktoken_cache_dir(old_value: Optional[str] = None):
+    """Restore the tiktoken cache environment variable, so it is not used outside the tests"""
+    if old_value is not None:
+        os.environ[TIKTOKEN_CACHE_DIR_ENV_VAR] = old_value
+    os.environ.pop(TIKTOKEN_CACHE_DIR_ENV_VAR, None)
+
+
 def build_ipynb_integration_tests() -> dict:
     """Build and return dict of ipynb integration tests functions"""
     test_functions = {}
@@ -143,6 +161,8 @@ def run_integration_tests(
 
     integration_tests = copy(INTEGRATION_TESTS)
     integration_tests.update(build_ipynb_integration_tests())
+
+    old_tiktoken_cache_dir = set_tiktoken_cache_dir(cache_dir)
 
     for current_test_name, test_fn in integration_tests.items():
         if test_name is not None and test_name != current_test_name:
@@ -183,6 +203,9 @@ def run_integration_tests(
 
     if failed_tests:
         raise IntegrationTestException(test_names=list(failed_tests.keys()))
+
+    logging.info("All tests passed!")
+    unset_tiktoken_cache_dir(old_tiktoken_cache_dir)
 
 
 def main():

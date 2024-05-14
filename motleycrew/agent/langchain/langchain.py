@@ -33,35 +33,28 @@ class LangchainMotleyAgentParent(MotleyAgentParent):
             agent_factory=agent_factory,
             delegation=delegation,
             tools=tools,
-            verbose=verbose
+            verbose=verbose,
         )
 
     def invoke(
         self,
-        task: Task | str,
+        task_dict: dict,
         config: Optional[RunnableConfig] = None,
         **kwargs: Any,
     ) -> Task:
         self.materialize()
-        self.agent: AgentExecutor
+
+        prompt = task_dict.get("prompt")
+        if not prompt:
+            raise ValueError("Task must have a prompt")
 
         config = add_default_callbacks_to_langchain_config(config)
-        if isinstance(task, str):
-            assert self.crew, "can't create a task outside a crew"
-            # TODO: feed in context/task.message_history correctly
-            # TODO: attach the current task, if any, as a dependency of the new task
-            task = Task(
-                description=task,
-                name=task,
-                agent=self,
-                crew=self.crew
-            )
-        elif not isinstance(task, Task):
-            raise ValueError(f"`task` must be a string or a Task, not {type(task)}")
 
-        out = self.agent.invoke({"input": task.description}, config, **kwargs)
-        task.outputs = [out["output"]]
-        return task
+        result = self.agent.invoke({"input": prompt}, config, **kwargs)
+        output = result.get("output")
+        if output is None:
+            raise Exception("Agent {} result does not contain output: {}".format(self, result))
+        return output
 
     @staticmethod
     def from_function(
@@ -105,7 +98,7 @@ class LangchainMotleyAgentParent(MotleyAgentParent):
         goal: str,
         delegation: bool | Sequence[MotleyAgentAbstractParent] = False,
         tools: Sequence[MotleySupportedTool] | None = None,
-        verbose: bool = False
+        verbose: bool = False,
     ) -> "LangchainMotleyAgentParent":
         # TODO: do we really need to unite the tools implicitly like this?
         # TODO: confused users might pass tools both ways at the same time
@@ -115,10 +108,7 @@ class LangchainMotleyAgentParent(MotleyAgentParent):
             tools = list(tools or []) + list(agent.tools or [])
 
         wrapped_agent = LangchainMotleyAgentParent(
-            goal=goal,
-            delegation=delegation,
-            tools=tools,
-            verbose=verbose
+            goal=goal, delegation=delegation, tools=tools, verbose=verbose
         )
         wrapped_agent._agent = agent
         return wrapped_agent

@@ -4,6 +4,7 @@ from langchain.tools import BaseTool
 
 from llama_index.core.tools import BaseTool as LlamaIndex__BaseTool
 from llama_index.core.tools import FunctionTool as LlamaIndex__FunctionTool
+from motleycrew.agent.parent import MotleyAgentAbstractParent
 
 
 def normalize_input(args, kwargs):
@@ -18,12 +19,13 @@ class MotleyTool:
     Base tool class compatible with MotleyAgents.
     It is a wrapper for LangChain's BaseTool, containing all necessary adapters and converters.
     """
+
     def __init__(self, tool: BaseTool):
         self.tool = tool
 
     @property
     def name(self):
-        #TODO: do we really want to make a thin wrapper in this fashion?
+        # TODO: do we really want to make a thin wrapper in this fashion?
         return self.tool.name
 
     def invoke(self, *args, **kwargs):
@@ -46,8 +48,12 @@ class MotleyTool:
             return MotleyTool.from_langchain_tool(tool)
         elif isinstance(tool, LlamaIndex__BaseTool):
             return MotleyTool.from_llama_index_tool(tool)
+        elif isinstance(tool, MotleyAgentAbstractParent):
+            return tool.as_tool()
         else:
-            raise Exception(f"Tool type `{type(tool)}` is not supported, please convert to MotleyTool first")
+            raise Exception(
+                f"Tool type `{type(tool)}` is not supported, please convert to MotleyTool first"
+            )
 
     def to_langchain_tool(self) -> BaseTool:
         return self.tool
@@ -57,6 +63,6 @@ class MotleyTool:
             fn=self.tool._run,
             name=self.tool.name,
             description=self.tool.description,
-            fn_schema=self.tool.args_schema
+            fn_schema=self.tool.args_schema,
         )
         return llama_index_tool

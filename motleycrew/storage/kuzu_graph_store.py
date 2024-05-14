@@ -57,13 +57,16 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
         return label in self.connection._get_node_table_names()
 
     def _check_rel_table_exists(
-        self, from_label: str, to_label: str, rel_label: Optional[str] = None
+        self,
+        from_label: Optional[str] = None,
+        to_label: Optional[str] = None,
+        rel_label: Optional[str] = None,
     ):
         for row in self.connection._get_rel_table_names():
             if (
                 (rel_label is None or row["name"] == rel_label)
-                and row["src"] == from_label
-                and row["dst"] == to_label
+                and (from_label is None or row["src"] == from_label)
+                and (to_label is None or row["dst"] == to_label)
             ):
                 return True
         return False
@@ -309,14 +312,16 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
                 return
 
             # Undirected relation removal is not supported for some reason
-            self._execute_query(
-                "MATCH (n:{})-[r]->() WHERE n.id = $node_id DELETE r".format(node_label),
-                {"node_id": node_id},
-            )
-            self._execute_query(
-                "MATCH (n:{})<-[r]-() WHERE n.id = $node_id DELETE r".format(node_label),
-                {"node_id": node_id},
-            )
+            if self._check_rel_table_exists(from_label=node_label):
+                self._execute_query(
+                    "MATCH (n:{})-[r]->() WHERE n.id = $node_id DELETE r".format(node_label),
+                    {"node_id": node_id},
+                )
+            if self._check_rel_table_exists(to_label=node_label):
+                self._execute_query(
+                    "MATCH (n:{})<-[r]-() WHERE n.id = $node_id DELETE r".format(node_label),
+                    {"node_id": node_id},
+                )
 
         def inner_delete_node(node_label: str, node_id: int) -> None:
             self._execute_query(

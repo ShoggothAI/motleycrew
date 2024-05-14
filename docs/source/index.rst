@@ -9,6 +9,7 @@ Welcome to motleycrew's documentation!
 .. toctree::
    Home <self>
    usage
+   examples
    api
    :maxdepth: 3
    :caption: Contents:

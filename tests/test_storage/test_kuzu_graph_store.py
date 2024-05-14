@@ -2,7 +2,6 @@ import pytest
 
 from typing import Optional
 import kuzu
-from pydantic import ValidationError
 from motleycrew.storage import MotleyGraphNode
 from motleycrew.storage import MotleyKuzuGraphStore
 

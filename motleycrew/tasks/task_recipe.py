@@ -112,6 +112,28 @@ class TaskRecipe(ABC, Generic[TaskType]):
             recipe for recipe in self.crew.task_recipes if recipe.node in upstream_task_recipe_nodes
         ]
 
+    def get_downstream_task_recipes(self) -> List[TaskRecipe]:
+        assert (
+            self.crew is not None and self.node.is_inserted
+        ), "TaskRecipe must be registered with a crew for accessing upstream tasks"
+
+        query = (
+            "MATCH (upstream:{})-[:{}]->(downstream) "
+            "WHERE upstream.id = $self_id "
+            "RETURN downstream"
+        ).format(
+            self.NODE_CLASS.get_label(),
+            self.TASK_RECIPE_IS_UPSTREAM_LABEL,
+        )
+        downstream_task_recipe_nodes = self.crew.graph_store.run_cypher_query(
+            query, parameters={"self_id": self.node.id}, container=self.NODE_CLASS
+        )
+        return [
+            recipe
+            for recipe in self.crew.task_recipes
+            if recipe.node in downstream_task_recipe_nodes
+        ]
+
     def set_done(self, value: bool = True):
         self.done = value
         self.node.done = value

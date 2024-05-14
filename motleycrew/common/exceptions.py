@@ -48,3 +48,27 @@ class IntegrationTestException(Exception):
 
     def __str__(self):
         return "Some integration tests failed: {}".format(self.test_names)
+
+
+class NotInstallModuleException(Exception):
+    """Not install module exception"""
+
+    def __init__(
+        self, module_name: str, attr_name: str = None, install_command: str = None
+    ):
+        self.module_name = module_name
+        self.attr_name = attr_name
+        self.install_command = install_command
+
+    def __str__(self):
+        if self.attr_name is None:
+            msg = "{} is not installed".format(self.module_name)
+        else:
+            msg = "Attr {} not found in module {}".format(
+                self.attr_name, self.module_name
+            )
+
+        if self.install_command is not None:
+            msg = "{}, {}".format(msg, self.install_command)
+
+        return "{}.".format(msg)

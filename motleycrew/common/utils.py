@@ -1,8 +1,19 @@
-from typing import Optional, Sequence
+import sys
+import inspect
+from typing import Optional, Sequence, List, Union
 import logging
 import hashlib
 from urllib.parse import urlparse
 from langchain_core.messages import BaseMessage
+from collections import namedtuple
+
+from motleycrew.common.exceptions import NotInstallModuleException
+
+InstallCheckedModule = namedtuple(
+    "InstallCheckedModule",
+    ["module_name", "attr_name", "install_command"],
+    defaults=[None, None],
+)
 
 
 def configure_logging(verbose: bool = False, debug: bool = False):
@@ -47,3 +58,32 @@ def generate_hex_hash(data: str, length: Optional[int] = None):
 
 def print_passthrough(x):
     return x
+
+
+def check_install_module(
+    module: Union[InstallCheckedModule, List[InstallCheckedModule]]
+) -> None:
+    """Checking the installation of the module and the availability of the necessary argument
+    Raises:
+        NotInstallModuleException
+    """
+    if isinstance(module, InstallCheckedModule):
+        modules = [module]
+    else:
+        modules = module
+
+    for _module in modules:
+        module_path = sys.modules.get(_module.module_name, None)
+        if module_path is None:
+            raise NotInstallModuleException(
+                _module.module_name, install_command=_module.install_command
+            )
+
+        if _module.attr_name is not None:
+            attrs_names = [
+                attr_data[0] for attr_data in inspect.getmembers(_module.module_name)
+            ]
+            if _module.attr_name not in attrs_names:
+                raise NotInstallModuleException(
+                    _module.module_name, _module.attr_name, _module.install_command
+                )

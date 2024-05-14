@@ -37,8 +37,9 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
         self.database = database
         self.connection = kuzu.Connection(database)
         # Workaround for Kuzu requiring at least one relation table
-        self._ensure_node_table(MotleyGraphNode)
-        self._ensure_relation_table(MotleyGraphNode, MotleyGraphNode, "dummy")
+        # TODO: fix, https://github.com/kuzudb/kuzu/issues/3488
+        self.ensure_node_table(MotleyGraphNode)
+        self.ensure_relation_table(MotleyGraphNode, MotleyGraphNode, "dummy")
 
     def _execute_query(
         self, query: str | PreparedStatement, parameters: Optional[dict[str, Any]] = None
@@ -74,13 +75,13 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
     def _get_node_property_names(self, label: str):
         return self.connection._get_node_property_names(table_name=label)
 
-    def _ensure_node_table(self, node: MotleyGraphNode) -> str:
+    def ensure_node_table(self, node_class: Type[MotleyGraphNode]) -> str:
         """
         Create a table for storing nodes of that class if such does not already exist.
         If it does exist, create all missing columns.
         Return the table name.
         """
-        table_name = node.get_label()
+        table_name = node_class.get_label()
         if not self._check_node_table_exists(table_name):
             logging.info("Node table %s does not exist in the database, creating", table_name)
             self._execute_query(
@@ -88,13 +89,13 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
             )
 
         # Create missing property columns
-        existing_property_names = self._get_node_property_names(node.get_label())
-        for field_name, field in node.model_fields.items():
+        existing_property_names = self._get_node_property_names(node_class.get_label())
+        for field_name, field in node_class.model_fields.items():
             if field_name not in existing_property_names:
                 logging.info(
                     "Property %s not present in table for label %s, creating",
                     field_name,
-                    node.get_label(),
+                    node_class.get_label(),
                 )
                 cypher_type, is_json = (
                     MotleyKuzuGraphStore._get_cypher_type_and_is_json_by_python_type_annotation(
@@ -107,26 +108,26 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
                 )
         return table_name
 
-    def _ensure_relation_table(
-        self, from_node: Type[MotleyGraphNode], to_node: Type[MotleyGraphNode], label: str
+    def ensure_relation_table(
+        self, from_class: Type[MotleyGraphNode], to_class: Type[MotleyGraphNode], label: str
     ):
         """
         Create a table for storing relations from from_node-like nodes to to_node-like nodes,
         if such does not already exist.
         """
         if not self._check_rel_table_exists(
-            from_label=from_node.get_label(), to_label=to_node.get_label(), rel_label=label
+            from_label=from_class.get_label(), to_label=to_class.get_label(), rel_label=label
         ):
             logging.info(
                 "Relation table %s from %s to %s does not exist in the database, creating",
                 label,
-                from_node.get_label(),
-                to_node.get_label(),
+                from_class.get_label(),
+                to_class.get_label(),
             )
 
             self._execute_query(
                 "CREATE REL TABLE {} (FROM {} TO {})".format(
-                    label, from_node.get_label(), to_node.get_label()
+                    label, from_class.get_label(), to_class.get_label()
                 )
             )
 
@@ -219,7 +220,7 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
         """
         assert node.id is None, "Entity has its id set, looks like it is already in the DB"
 
-        self._ensure_node_table(node)
+        self.ensure_node_table(type(node))
         logging.info("Inserting new node with label %s: %s", node.get_label(), node)
 
         cypher_mapping, parameters = MotleyKuzuGraphStore._node_to_cypher_mapping_with_parameters(
@@ -258,7 +259,7 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
             "consider using upsert_triplet() for such cases"
         )
 
-        self._ensure_relation_table(from_node=type(from_node), to_node=type(to_node), label=label)
+        self.ensure_relation_table(from_class=type(from_node), to_class=type(to_node), label=label)
 
         logging.info(
             "Creating relation %s from %s:%s to %s:%s",

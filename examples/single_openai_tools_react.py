@@ -1,10 +1,11 @@
 from dotenv import load_dotenv
 from langchain_community.tools import DuckDuckGoSearchRun
 
-from motleycrew import MotleyCrew, Task
+from motleycrew import MotleyCrew
 from motleycrew.agent.langchain.openai_tools_react import ReactOpenAIToolsAgent
 from motleycrew.agent.langchain.react import ReactMotleyAgent
 from motleycrew.common.utils import configure_logging
+from motleycrew.caching import enable_cache
 
 
 def main():
@@ -19,33 +20,26 @@ def main():
 
     for r in [researcher, researcher2]:
         crew = MotleyCrew()
-        task = Task(
-            crew=crew,
+        task = crew.create_simple_task(
             name="produce comprehensive analysis report on AI advancements",
             description="""Conduct a comprehensive analysis of the latest advancements in AI in 2024.
           Identify key trends, breakthrough technologies, and potential industry impacts.
           Your final answer MUST be a full analysis report""",
             agent=r,
-            documents=["paper1.pdf", "paper2.pdf"],  # will be ignored for now
         )
         result = crew.run(
-            agents=[r],
             verbose=2,  # You can set it to 1 or 2 to different logging levels
         )
 
         # Get your crew to work!
-        print(task.outputs)
-        outputs += task.outputs
+        print(task.output)
+        outputs.append(task.output)
 
     return outputs
 
 
 if __name__ == "__main__":
-    from motleycrew.caching import enable_cache, set_cache_location, set_strong_cache
-
     configure_logging(verbose=True)
 
     load_dotenv()
-    enable_cache()
-    set_strong_cache(False)
     main()

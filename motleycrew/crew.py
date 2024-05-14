@@ -2,148 +2,188 @@ import logging
 import concurrent.futures
 import os
 from concurrent.futures import Future, ThreadPoolExecutor
-from typing import Iterable, Sequence, Set
+from typing import Collection, Sequence, Set, Optional
 from uuid import uuid4
 
+from langchain_core.runnables import Runnable
+
 from motleycrew.agent.shared import MotleyAgentParent
-from motleycrew.tasks import Task, TaskGraph
+from motleycrew.tasks import TaskRecipe, Task, SimpleTaskRecipe
 from motleycrew.tool.tool import BaseTool
+from motleycrew.storage import MotleyGraphStore, MotleyKuzuGraphStore
+from motleycrew.tool import MotleyTool
 
 
 class MotleyCrew:
-    def __init__(self):
+    def __init__(self, graph_store: Optional[MotleyGraphStore] = None):
         self.uuid = uuid4()
         # TODO: impute number of workers or allow configurable
         self.thread_pool = ThreadPoolExecutor(max_workers=8)
         self.futures: Set[Future] = set()
-        self.task_graph = TaskGraph()
+        if graph_store is None:
+            # TODO: this is a hack, should be configurable
+            WORKING_DIR = os.path.realpath(os.path.dirname(__file__))
+            import kuzu
+
+            DB_PATH = os.path.join(WORKING_DIR, "kuzu_db")
+            db = kuzu.Database(DB_PATH)
+            graph_store = MotleyKuzuGraphStore(db)
+        self.graph_store = graph_store
         self.single_thread = os.environ.get("MC_SINGLE_THREAD", False)
         self.tools = []
+        self.task_recipes = []
+
+    def create_simple_task(
+        self,
+        description: str,
+        agent: MotleyAgentParent,
+        name: Optional[str] = None,
+        generate_name: bool = False,
+        tools: Optional[Sequence[MotleyTool]] = None,
+    ) -> SimpleTaskRecipe:
+        """
+        Basic method for creating a simple task recipe
+        """
+        if name is None and generate_name:
+            # Call llm to generate a name
+            raise NotImplementedError("Name generation not yet implemented")
+        task_recipe = SimpleTaskRecipe(name=name, description=description, agent=agent, tools=tools)
+        self.register_task_recipes([task_recipe])
+        return task_recipe
 
     def run(
         self,
-        agents: Sequence[MotleyAgentParent] | None = None,
-        tools: Sequence[BaseTool] | None = None,
-        verbose: int = 0,
-    ) -> TaskGraph:
-        # TODO: propagate the `verbose` argument
+        verbose: int = 0,  # TODO: use!
+    ) -> list[Task]:
+        if not self.single_thread:
+            logging.warning("Multithreading is not implemented yet, will run in single thread")
 
-        self.task_graph.check_cyclical_dependencies()
+        return self._run_sync(verbose=verbose)
 
-        if isinstance(tools, Sequence):
-            self.tools = list(tools)
+    def add_dependency(self, upstream: TaskRecipe, downstream: TaskRecipe):
+        self.graph_store.create_relation(
+            upstream.node, downstream.node, label=TaskRecipe.TASK_RECIPE_IS_UPSTREAM_LABEL
+        )
+        # # TODO: rollback if bad?
+        # self.check_cyclical_dependencies()
 
-        # TODO: need to specify agents both to tasks and to crew, redundant?
-        self.agents = agents
-        for agent in self.agents:
-            agent.crew = self
+    def register_task_recipes(self, task_recipes: Collection[TaskRecipe]):
+        for task_recipe in task_recipes:
+            if task_recipe not in self.task_recipes:
+                self.task_recipes.append(task_recipe)
+                task_recipe.crew = self
+                self.graph_store.insert_node(task_recipe.node)
 
-        if self.single_thread:
-            logging.info("Running in single-thread mode")
-            return self._run_sync()
+                self.graph_store.ensure_relation_table(
+                    from_class=type(task_recipe.node),
+                    to_class=type(task_recipe.node),
+                    label=TaskRecipe.TASK_RECIPE_IS_UPSTREAM_LABEL,
+                )  # TODO: remove this workaround, https://github.com/kuzudb/kuzu/issues/3488
 
-        logging.info("Running in threaded mode")
-        return self._run_async()
+    def _run_sync(self, verbose: int = 0) -> list[Task]:
+        # TODO: use the verbose arg
+        done_tasks = []
+        while True:
+            did_something = False
 
-    def _run_sync(self):
-        tasks = self.task_graph
-        while tasks.num_tasks_remaining():
-            self.dispatch_next_batch()
-        return tasks
+            available_task_recipes = self.get_available_task_recipes()
+            logging.info("Available task recipes: %s", available_task_recipes)
 
-    def _run_async(self):
-        tasks = self.task_graph
-        self.adispatch_next_batch()
-        while self.futures:
-            # TODO handle errors
-            # TODO pass results to next task
-            done, _ = concurrent.futures.wait(
-                self.futures, return_when=concurrent.futures.FIRST_COMPLETED
-            )
+            for recipe in available_task_recipes:
+                logging.info("Processing recipe: %s", recipe)
 
-            for future in done:
-                exc = future.exception()
-                if exc:
-                    raise exc
+                matching_tasks = recipe.identify_candidates()
+                logging.info("Got %s matching tasks for recipe %s", len(matching_tasks), recipe)
+                if len(matching_tasks) > 0:
+                    current_task = matching_tasks[0]
+                    logging.info("Processing task: %s", current_task)
 
-                task = future.mc_task
-                logging.info(f"Finished task '{task.name}'")
-                self.futures.remove(future)
-                tasks.set_task_done(task)
-                self.adispatch_next_batch()
+                    extra_tools = self.get_extra_tools(recipe)
 
-        return tasks
+                    agent = recipe.get_worker(extra_tools)
+                    logging.info("Assigned task %s to agent %s, dispatching", current_task, agent)
+                    current_task.set_running()
+                    self.graph_store.insert_node(current_task)
 
-    def add_task(self, task: Task):
-        self.task_graph.add_task(task)
+                    # TODO: accept and handle some sort of return value? Or just the final state of the task?
+                    result = agent.invoke(current_task.as_dict())
+                    current_task.output = result
 
-    def dispatch_next_batch(self):
-        next_ = self.task_graph.get_ready_tasks()
-        for t in next_:
-            logging.info(f"Dispatching task '{t.name}'")
-            self.task_graph.set_task_running(t)
-            self.execute(t, True)
-            self.task_graph.set_task_done(t)
+                    logging.info("Task %s completed, marking as done", current_task)
+                    current_task.set_done()
+                    recipe.register_completed_task(current_task)
+                    done_tasks.append(current_task)
 
-    def adispatch_next_batch(self):
-        next_ = self.task_graph.get_ready_tasks()
-        for t in next_:
-            self.task_graph.set_task_running(t)
-            logging.info(f"Dispatching task '{t.name}'")
-            future = self.thread_pool.submit(
-                self.execute,
-                t,
-                True,
-            )
-            self.futures.add(future)
-            future.mc_task = t
+                    did_something = True
+                    continue
 
-    def execute(self, task: Task, return_result: bool = True):
-        agent = self.assign_agent(task)
-        if return_result:
-            return agent.invoke(task).outputs[-1]
-        else:
-            raise NotImplementedError("Async task spawning not yet implemented")
-            # return f"Subtask {task.name} spawned successfully"
+            if not did_something:
+                logging.info("Nothing left to do, exiting")
+                return done_tasks
 
-    def assign_agent(self, task: Task) -> MotleyAgentParent:
-        if isinstance(task.agent, MotleyAgentParent):
-            # TODO: make a deepcopy here, perhaps via cloudpickle?
-            # Agents are meant to be transient, so we don't want to modify the original
-            agent = task.agent
-        else:
-            agent = spawn_agent(task)
-            tools = self.get_agent_tools(agent, task)
-            agent.add_tools(tools)
+    def get_available_task_recipes(self) -> list[TaskRecipe]:
+        query = (
+            "MATCH (downstream:{}) "
+            "WHERE NOT downstream.done "
+            "AND NOT EXISTS {{MATCH (upstream:{})-[:{}]->(downstream) "
+            "WHERE NOT upstream.done}} "
+            "RETURN downstream"
+        ).format(
+            TaskRecipe.NODE_CLASS.get_label(),
+            TaskRecipe.NODE_CLASS.get_label(),
+            TaskRecipe.TASK_RECIPE_IS_UPSTREAM_LABEL,
+        )
+        available_task_recipe_nodes = self.graph_store.run_cypher_query(
+            query, container=TaskRecipe.NODE_CLASS
+        )
+        return [
+            recipe for recipe in self.task_recipes if recipe.node in available_task_recipe_nodes
+        ]
 
-        logging.info("Assigning task '%s' to agent '%s'", task.name, agent.name)
+    # def _run_async(self):
+    #     tasks = self.task_graph
+    #     self.adispatch_next_batch()
+    #     while self.futures:
+    #         # TODO handle errors
+    #         # TODO pass results to next task
+    #         done, _ = concurrent.futures.wait(
+    #             self.futures, return_when=concurrent.futures.FIRST_COMPLETED
+    #         )
+    #
+    #         for future in done:
+    #             exc = future.exception()
+    #             if exc:
+    #                 raise exc
+    #
+    #             task = future.mc_task
+    #             logging.info(f"Finished task '{task.name}'")
+    #             self.futures.remove(future)
+    #             tasks.set_task_done(task)
+    #             self.adispatch_next_batch()
+    #
+    #     return tasks
 
-        return agent
+    # def adispatch_next_batch(self):
+    #     # TODO: refactor and rename
+    #     next_ = self.task_graph.get_ready_tasks()
+    #     for t in next_:
+    #         self.task_graph.set_task_running(t)
+    #         logging.info(f"Dispatching task '{t.name}'")
+    #         future = self.thread_pool.submit(
+    #             self.execute,
+    #             t,
+    #             True,
+    #         )
+    #         self.futures.add(future)
+    #         future.mc_task = t
 
-    def get_agent_tools(self, agent: MotleyAgentParent, task: Task) -> Sequence[BaseTool]:
-        # Task is needed later when we do smart tool selection
+    def get_extra_tools(self, task_recipe: TaskRecipe) -> list[MotleyTool]:
         # TODO: Smart tool selection goes here
-        # Add the agents as tools to each other for delegation
-        # later might want to get a bit fancier here to prevent endlessly-deep delegation
-        # TODO: do we want to auto-include the agents from the tasks in this?
         tools = []
-        tools += self.tools
-
-        if agent.delegation is True:
-            tools += [aa.as_tool() for aa in self.agents if aa != agent]
-        elif isinstance(agent.delegation, Iterable):
-            for aa in agent.delegation:
-                tools.append(aa.as_tool())
-        elif agent.delegation is False:
-            pass
-        else:
-            raise ValueError(
-                f"Invalid delegation value: {agent.delegation}, must be bool or iterable of agents"
-            )
+        tools += self.tools or []
+        # tools += task_recipe.tools or []
 
         return tools
 
-
-def spawn_agent(task: Task) -> MotleyAgentParent:
-    # TODO: Code to select agent from library, or auto-spawn one, goes here
-    raise NotImplementedError("For now, must explicitly assign an agent to each task")
+    def check_cyclical_dependencies(self):
+        pass  # TODO

@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 from langchain_community.tools import DuckDuckGoSearchRun
 
-from motleycrew import MotleyCrew, Task
+from motleycrew import MotleyCrew
 from motleycrew.agent.crewai import CrewAIMotleyAgent
 from motleycrew.common.utils import configure_logging
 
@@ -31,18 +31,16 @@ def main():
 
     # Create tasks for your agents
     crew = MotleyCrew()
-    task1 = Task(
-        crew=crew,
+
+    analysis_report_task = crew.create_simple_task(
         name="produce comprehensive analysis report on AI advancements",
         description="""Conduct a comprehensive analysis of the latest advancements in AI in 2024.
     Identify key trends, breakthrough technologies, and potential industry impacts.
     Your final answer MUST be a full analysis report""",
         agent=researcher,
-        documents=["paper1.pdf", "paper2.pdf"],  # will be ignored for now
     )
 
-    task2 = Task(
-        crew=crew,
+    literature_summary_task = crew.create_simple_task(
         name="provide a literature summary of recent papers on AI",
         description="""Conduct a comprehensive literature review of the latest advancements in AI in 2024.
     Identify key papers, researchers, and companies in the space.
@@ -50,8 +48,7 @@ def main():
         agent=researcher,
     )
 
-    task3 = Task(
-        crew=crew,
+    blog_post_task = crew.create_simple_task(
         name="produce blog post on AI advancements",
         description="""Using the insights provided by a thorough web search, develop an engaging blog
     post that highlights the most significant AI advancements.
@@ -61,19 +58,16 @@ def main():
         agent=writer,
     )
 
-    [task1, task2] >> task3
+    [analysis_report_task, literature_summary_task] >> blog_post_task
 
     # Get your crew to work!
     result = crew.run(
-        agents=[researcher, writer],
         verbose=2,  # You can set it to 1 or 2 to different logging levels
     )
 
     # Get the outputs of the task
-    for output in task3.outputs:
-        print(output)
-
-    return task3.outputs
+    print(blog_post_task.output)
+    return blog_post_task.output
 
 
 if __name__ == "__main__":

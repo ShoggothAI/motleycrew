@@ -8,7 +8,6 @@ try:
 except ImportError:
     pass
 
-from motleycrew.agent.parent import MotleyAgentAbstractParent
 from motleycrew.common.utils import ensure_module_is_installed
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
 

@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 from langchain_community.tools import DuckDuckGoSearchRun
 
 from motleycrew import MotleyCrew
-from motleycrew.agent.crewai import CrewAIMotleyAgent
+from motleycrew.agents.crewai import CrewAIMotleyAgent
 from motleycrew.common.utils import configure_logging
 
 
@@ -34,9 +34,7 @@ def main():
     )
 
     # Get your crew to work!
-    result = crew.run(
-        verbose=2,  # You can set it to 1 or 2 to different logging levels
-    )
+    result = crew.run()
 
     print(task.output)
     return task.output

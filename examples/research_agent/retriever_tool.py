@@ -13,7 +13,7 @@ from llama_index.core import (
     load_index_from_storage,
 )
 
-from motleycrew.tool import MotleyTool
+from motleycrew.tools import MotleyTool
 from motleycrew.applications.research_agent.question import Question
 
 

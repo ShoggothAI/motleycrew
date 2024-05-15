@@ -4,7 +4,7 @@ from langchain.tools import BaseTool
 
 from llama_index.core.tools import BaseTool as LlamaIndex__BaseTool
 from llama_index.core.tools import FunctionTool as LlamaIndex__FunctionTool
-from motleycrew.agent.parent import MotleyAgentAbstractParent
+from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
 
 
 def normalize_input(args, kwargs):

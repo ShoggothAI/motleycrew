@@ -1,12 +1,12 @@
 from typing import Optional, Any, Sequence
 
-from motleycrew.tool import MotleyTool
+from motleycrew.tools import MotleyTool
 from motleycrew.common import MotleySupportedTool
 from motleycrew.common import LLMFramework
 from motleycrew.common.llms import init_llm
-from motleycrew.agent.parent import MotleyAgentAbstractParent
-from motleycrew.agent.crewai import CrewAIMotleyAgentParent
-from motleycrew.agent.crewai import CrewAIAgentWithConfig
+from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
+from motleycrew.agents.crewai import CrewAIMotleyAgentParent
+from motleycrew.agents.crewai import CrewAIAgentWithConfig
 
 
 class CrewAIMotleyAgent(CrewAIMotleyAgentParent):

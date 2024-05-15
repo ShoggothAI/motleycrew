@@ -1,12 +1,41 @@
+from pathlib import Path
+import os
+import sys
+import platform
+
 from dotenv import load_dotenv
 from langchain_community.tools import DuckDuckGoSearchRun
 
+import kuzu
+from motleycrew.storage import MotleyKuzuGraphStore
+
 from motleycrew import MotleyCrew
-from motleycrew.agent.crewai import CrewAIMotleyAgent
+from motleycrew.agents.crewai import CrewAIMotleyAgent
 from motleycrew.common.utils import configure_logging
+from motleycrew.tasks import SimpleTaskRecipe
+
+WORKING_DIR = Path(os.path.realpath("."))
+
+try:
+    from motleycrew import MotleyCrew
+except ImportError:
+    # if we are running this from source
+    motleycrew_location = os.path.realpath(WORKING_DIR / "..")
+    sys.path.append(motleycrew_location)
+
+if "Dropbox" in WORKING_DIR.parts and platform.system() == "Windows":
+    # On Windows, kuzu has file locking issues with Dropbox
+    DB_PATH = os.path.realpath(os.path.expanduser("~") + "/Documents/research_db")
+else:
+    DB_PATH = os.path.realpath(WORKING_DIR / "research_db")
 
 
 def main():
+
+    db = kuzu.Database(DB_PATH)
+    graph_store = MotleyKuzuGraphStore(db)
+    crew = MotleyCrew(graph_store=graph_store)
+
     search_tool = DuckDuckGoSearchRun()
 
     researcher = CrewAIMotleyAgent(
@@ -30,9 +59,9 @@ def main():
     )
 
     # Create tasks for your agents
-    crew = MotleyCrew()
 
-    analysis_report_task = crew.create_simple_task(
+    analysis_report_task = SimpleTaskRecipe(
+        crew=crew,
         name="produce comprehensive analysis report on AI advancements",
         description="""Conduct a comprehensive analysis of the latest advancements in AI in 2024.
     Identify key trends, breakthrough technologies, and potential industry impacts.
@@ -40,7 +69,8 @@ def main():
         agent=researcher,
     )
 
-    literature_summary_task = crew.create_simple_task(
+    literature_summary_task = SimpleTaskRecipe(
+        crew=crew,
         name="provide a literature summary of recent papers on AI",
         description="""Conduct a comprehensive literature review of the latest advancements in AI in 2024.
     Identify key papers, researchers, and companies in the space.
@@ -48,7 +78,8 @@ def main():
         agent=researcher,
     )
 
-    blog_post_task = crew.create_simple_task(
+    blog_post_task = SimpleTaskRecipe(
+        crew=crew,
         name="produce blog post on AI advancements",
         description="""Using the insights provided by a thorough web search, develop an engaging blog
     post that highlights the most significant AI advancements.
@@ -61,9 +92,7 @@ def main():
     [analysis_report_task, literature_summary_task] >> blog_post_task
 
     # Get your crew to work!
-    result = crew.run(
-        verbose=2,  # You can set it to 1 or 2 to different logging levels
-    )
+    result = crew.run()
 
     # Get the outputs of the task
     print(blog_post_task.output)

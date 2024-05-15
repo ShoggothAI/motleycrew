@@ -5,12 +5,11 @@ from typing import TYPE_CHECKING, Any, Sequence, List, Optional
 from motleycrew.tasks.task_recipe import TaskRecipe
 from motleycrew.tasks import Task
 
-
-from motleycrew.agent.parent import MotleyAgentAbstractParent
-from motleycrew.tool import MotleyTool
+from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
+from motleycrew.tools import MotleyTool
 
 if TYPE_CHECKING:
-    pass
+    from motleycrew.crew import MotleyCrew
 
 
 PROMPT_TEMPLATE_WITH_DEPS = """
@@ -52,6 +51,7 @@ class SimpleTask(Task):
 class SimpleTaskRecipe(TaskRecipe):
     def __init__(
         self,
+        crew: MotleyCrew,
         description: str,
         name: str | None = None,
         agent: MotleyAgentAbstractParent | None = None,
@@ -73,7 +73,8 @@ class SimpleTaskRecipe(TaskRecipe):
         self.output = None  # to be filled in by the agent(s) once the task is complete
 
         # This will be set by MotleyCrew.register_task
-        self.crew = None
+        self.crew = crew
+        self.crew.register_task_recipes([self])
 
     def register_completed_task(self, task: SimpleTask) -> None:
         assert isinstance(task, SimpleTask)
@@ -82,24 +83,20 @@ class SimpleTaskRecipe(TaskRecipe):
         self.output = task.output
         self.set_done()
 
-    def identify_candidates(self) -> List[SimpleTask]:
+    def get_next_task(self) -> SimpleTask | None:
         if self.done:
             logging.info("Task %s is already done", self)
-            return []
+            return None
 
         upstream_task_recipes = self.get_upstream_task_recipes()
         if not all(recipe.done for recipe in upstream_task_recipes):
-            return []
+            return None
 
         upstream_tasks = [task for recipe in upstream_task_recipes for task in recipe.get_tasks()]
-        return [
-            SimpleTask(
-                name=self.name,
-                prompt=compose_simple_task_prompt_with_dependencies(
-                    self.description, upstream_tasks
-                ),
-            )
-        ]
+        return SimpleTask(
+            name=self.name,
+            prompt=compose_simple_task_prompt_with_dependencies(self.description, upstream_tasks),
+        )
 
     def get_worker(self, tools: Optional[List[MotleyTool]]) -> MotleyAgentAbstractParent:
         if self.crew is None:

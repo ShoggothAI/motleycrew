@@ -2,9 +2,14 @@ from typing import Union
 
 from langchain.tools import BaseTool
 
-from llama_index.core.tools import BaseTool as LlamaIndex__BaseTool
-from llama_index.core.tools import FunctionTool as LlamaIndex__FunctionTool
+try:
+    from llama_index.core.tools import BaseTool as LlamaIndex__BaseTool
+    from llama_index.core.tools import FunctionTool as LlamaIndex__FunctionTool
+except ImportError:
+    pass
+
 from motleycrew.agent.parent import MotleyAgentAbstractParent
+from motleycrew.common.utils import ensure_module_is_installed
 
 
 def normalize_input(args, kwargs):
@@ -37,6 +42,7 @@ class MotleyTool:
 
     @staticmethod
     def from_llama_index_tool(llama_index_tool: LlamaIndex__BaseTool) -> "MotleyTool":
+        ensure_module_is_installed("llama_index")
         langchain_tool = llama_index_tool.to_langchain_tool()
         return MotleyTool.from_langchain_tool(langchain_tool=langchain_tool)
 
@@ -59,6 +65,7 @@ class MotleyTool:
         return self.tool
 
     def to_llama_index_tool(self) -> LlamaIndex__BaseTool:
+        ensure_module_is_installed("llama_index")
         llama_index_tool = LlamaIndex__FunctionTool.from_defaults(
             fn=self.tool._run,
             name=self.tool.name,

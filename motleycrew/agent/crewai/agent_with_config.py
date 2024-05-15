@@ -1,8 +1,14 @@
 from typing import Any, Optional, List
 
-from crewai import Agent
 from langchain_core.runnables import RunnableConfig
 from langchain.tools.render import render_text_description
+
+from motleycrew.common.utils import ensure_module_is_installed
+
+try:
+    from crewai import Agent
+except ImportError:
+    Agent = object
 
 
 class CrewAIAgentWithConfig(Agent):
@@ -10,6 +16,10 @@ class CrewAIAgentWithConfig(Agent):
     Subclass for CrewAI Agent that overrides the execute_task method to include a config parameter.
     TODO: get rid of this when https://github.com/joaomdmoura/crewAI/pull/483 is merged.
     """
+    
+    def __init__(self, *args, **kwargs):
+        ensure_module_is_installed("crewai")
+        super(CrewAIAgentWithConfig, self).__init__(*args, **kwargs)
 
     def execute_task(
         self,

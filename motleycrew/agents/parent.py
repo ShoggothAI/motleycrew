@@ -2,18 +2,15 @@ import logging
 from typing import TYPE_CHECKING, Optional, Sequence
 
 from langchain_core.tools import Tool
-from langchain_core.pydantic_v1 import BaseModel
+from pydantic import BaseModel
 
-from motleycrew.agent.parent import MotleyAgentAbstractParent
-from motleycrew.tool import MotleyTool
-
-from motleycrew.common import MotleySupportedTool
-from motleycrew.common import MotleyAgentFactory
-from motleycrew.common.exceptions import AgentNotMaterialized
-from motleycrew.common.exceptions import CannotModifyMaterializedAgent
+from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
+from motleycrew.tools import MotleyTool
+from motleycrew.common import MotleyAgentFactory, MotleySupportedTool
+from motleycrew.common.exceptions import AgentNotMaterialized, CannotModifyMaterializedAgent
 
 if TYPE_CHECKING:
-    from motleycrew.crew import MotleyCrew
+    from motleycrew import MotleyCrew
 
 
 class MotleyAgentParent(MotleyAgentAbstractParent):

@@ -2,9 +2,9 @@ from typing import Any, Optional, Sequence
 
 from langchain_core.runnables import RunnableConfig
 
-from motleycrew.agent.parent import MotleyAgentAbstractParent
-from motleycrew.agent.shared import MotleyAgentParent
-from motleycrew.agent.crewai import CrewAIAgentWithConfig
+from motleycrew.agents.parent import MotleyAgentParent
+from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
+from motleycrew.agents.crewai import CrewAIAgentWithConfig
 from motleycrew.common import MotleySupportedTool
 from motleycrew.common import MotleyAgentFactory
 from motleycrew.common.utils import to_str

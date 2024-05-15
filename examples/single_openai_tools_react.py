@@ -2,8 +2,8 @@ from dotenv import load_dotenv
 from langchain_community.tools import DuckDuckGoSearchRun
 
 from motleycrew import MotleyCrew
-from motleycrew.agent.langchain.openai_tools_react import ReactOpenAIToolsAgent
-from motleycrew.agent.langchain.react import ReactMotleyAgent
+from motleycrew.agents.langchain.openai_tools_react import ReactOpenAIToolsAgent
+from motleycrew.agents.langchain.react import ReactMotleyAgent
 from motleycrew.common.utils import configure_logging
 from motleycrew.caching import enable_cache
 
@@ -27,9 +27,7 @@ def main():
           Your final answer MUST be a full analysis report""",
             agent=r,
         )
-        result = crew.run(
-            verbose=2,  # You can set it to 1 or 2 to different logging levels
-        )
+        result = crew.run()
 
         # Get your crew to work!
         print(task.output)

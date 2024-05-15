@@ -3,7 +3,7 @@ from typing import List, Optional
 from langchain_core.runnables import Runnable
 
 from motleycrew.crew import MotleyCrew
-from motleycrew.tool import MotleyTool
+from motleycrew.tools import MotleyTool
 from motleycrew.tasks import TaskRecipe
 from motleycrew.tasks.task import TaskType
 from motleycrew.tasks import Task

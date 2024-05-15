@@ -8,7 +8,7 @@ from typing import Optional
 
 from langchain_core.pydantic_v1 import create_model, Field
 from langchain_core.tools import Tool
-from motleycrew.tool import MotleyTool
+from motleycrew.tools import MotleyTool
 
 
 class MermaidEvaluatorTool(MotleyTool):
@@ -34,9 +34,7 @@ def eval_mermaid(mermaid_code: str, format: Optional[str] = "svg") -> io.BytesIO
         temp_in.flush()  # Ensure all data is written to disk
 
         if format in ["md", "markdown"]:
-            raise NotImplementedError(
-                "Markdown format is not yet supported in this wrapper."
-            )
+            raise NotImplementedError("Markdown format is not yet supported in this wrapper.")
         assert format in [
             "svg",
             "png",

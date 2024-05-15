@@ -3,9 +3,9 @@ from llama_index.core.agent import ReActAgent
 from llama_index.core.llms import LLM
 from llama_index.core.callbacks import CallbackManager
 
-from motleycrew.agent.llama_index import LlamaIndexMotleyAgentParent
-from motleycrew.agent.parent import MotleyAgentAbstractParent
-from motleycrew.tool import MotleyTool
+from motleycrew.agents.llama_index import LlamaIndexMotleyAgentParent
+from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
+from motleycrew.tools import MotleyTool
 from motleycrew.common import MotleySupportedTool
 from motleycrew.common import LLMFramework
 from motleycrew.common.llms import init_llm

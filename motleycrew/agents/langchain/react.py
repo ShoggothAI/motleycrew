@@ -4,8 +4,8 @@ from langchain import hub
 from langchain_core.language_models import BaseLanguageModel
 from langchain.agents import create_react_agent
 
-from motleycrew.agent.parent import MotleyAgentAbstractParent
-from motleycrew.agent.langchain.langchain import LangchainMotleyAgentParent
+from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
+from motleycrew.agents.langchain.langchain import LangchainMotleyAgentParent
 from motleycrew.common import MotleySupportedTool
 
 

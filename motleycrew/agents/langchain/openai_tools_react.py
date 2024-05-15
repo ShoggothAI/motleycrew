@@ -14,8 +14,8 @@ from langchain.agents.format_scratchpad.openai_tools import (
 )
 from langchain.agents.output_parsers.openai_tools import OpenAIToolsAgentOutputParser
 
-from motleycrew.agent.parent import MotleyAgentAbstractParent
-from motleycrew.agent.langchain.langchain import LangchainMotleyAgentParent
+from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
+from motleycrew.agents.langchain.langchain import LangchainMotleyAgentParent
 from motleycrew.common import MotleySupportedTool
 from motleycrew.common.utils import print_passthrough
 
@@ -178,9 +178,7 @@ def create_openai_tools_react_agent(
     agent = (
         RunnableLambda(print_passthrough)
         | RunnablePassthrough.assign(
-            agent_scratchpad=lambda x: format_to_openai_tool_messages(
-                x["intermediate_steps"]
-            )
+            agent_scratchpad=lambda x: format_to_openai_tool_messages(x["intermediate_steps"])
         )
         | {"thought": think_prompt | llm, "background": RunnablePassthrough()}
         | RunnableLambda(print_passthrough)

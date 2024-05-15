@@ -7,7 +7,7 @@ from langchain_core.runnables import Runnable
 from motleycrew.common.exceptions import TaskDependencyCycleError
 from motleycrew.storage import MotleyGraphStore, MotleyGraphNode
 from motleycrew.tasks import Task, TaskType
-from motleycrew.tool import MotleyTool
+from motleycrew.tools import MotleyTool
 
 if TYPE_CHECKING:
     from motleycrew.crew import MotleyCrew

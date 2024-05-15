@@ -5,11 +5,10 @@ from langchain_core.runnables import RunnableConfig
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.prompts.chat import ChatPromptTemplate
 
-from motleycrew.agent.parent import MotleyAgentAbstractParent
-from motleycrew.agent.shared import MotleyAgentParent
-from motleycrew.tasks import Task
+from motleycrew.agents.parent import MotleyAgentParent
+from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
 
-from motleycrew.tool import MotleyTool
+from motleycrew.tools import MotleyTool
 from motleycrew.tracking import add_default_callbacks_to_langchain_config
 from motleycrew.common import MotleySupportedTool
 from motleycrew.common import MotleyAgentFactory
@@ -41,7 +40,7 @@ class LangchainMotleyAgentParent(MotleyAgentParent):
         task_dict: dict,
         config: Optional[RunnableConfig] = None,
         **kwargs: Any,
-    ) -> Task:
+    ) -> Any:
         self.materialize()
 
         prompt = task_dict.get("prompt")

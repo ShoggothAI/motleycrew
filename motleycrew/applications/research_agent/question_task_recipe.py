@@ -5,7 +5,7 @@ from langchain_core.runnables import Runnable
 
 from motleycrew.tasks import TaskRecipe
 from ...tasks.task import TaskType
-from motleycrew.tool import MotleyTool
+from motleycrew.tools import MotleyTool
 from motleycrew.crew import MotleyCrew
 from .question import Question, QuestionGenerationTask
 from .question_generator import QuestionGeneratorTool

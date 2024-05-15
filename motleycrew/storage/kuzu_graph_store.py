@@ -3,13 +3,10 @@ Code derived from: https://github.com/run-llama/llama_index/blob/802064aee72b03a
 Kùzu graph store index.
 """
 
-import logging
-from time import sleep
-
 from typing import Any, Dict, List, Optional, Type, TypeVar
+import logging
 
-import kuzu
-from kuzu import PreparedStatement, QueryResult
+from kuzu import Connection, PreparedStatement, QueryResult
 import json
 
 from motleycrew.storage import MotleyGraphStore
@@ -35,7 +32,7 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
 
     def __init__(self, database: Any) -> None:
         self.database = database
-        self.connection = kuzu.Connection(database)
+        self.connection = Connection(database)
         # Workaround for Kuzu requiring at least one relation table
         # TODO: fix, https://github.com/kuzudb/kuzu/issues/3488
         self.ensure_node_table(MotleyGraphNode)

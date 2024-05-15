@@ -2,12 +2,11 @@ from typing import Union, Sequence, List
 
 from dotenv import load_dotenv
 
-from llama_index.graph_stores.kuzu import KuzuGraphStore
 from langchain.schema import AIMessage, HumanMessage, SystemMessage, BaseMessage
 from langchain_core.prompts.chat import ChatPromptTemplate
-from motleycrew.agent.langchain.react import ReactMotleyAgent
+from motleycrew.agents.langchain.react import ReactMotleyAgent
 
-from motleycrew.tool.llm_tool import LLMTool
+from motleycrew.tools.llm_tool import LLMTool
 from motleycrew import MotleyCrew, TaskRecipe
 
 from .blog_post_input import text

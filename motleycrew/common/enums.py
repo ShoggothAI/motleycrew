@@ -7,6 +7,10 @@ class LLMFramework:
     LLAMA_INDEX = "llama_index"
 
 
+class GraphStoreType:
+    KUZU = "kuzu"
+
+
 class TaskStatus:
     PENDING = "pending"
     RUNNING = "running"

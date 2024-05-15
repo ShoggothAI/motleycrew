@@ -2,7 +2,8 @@ import pytest
 
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain.tools import BaseTool
-from motleycrew import MotleyTool
+from motleycrew.tools import MotleyTool
+
 
 @pytest.fixture
 def mock_tool_args_schema():
@@ -11,8 +12,10 @@ def mock_tool_args_schema():
 
     return MockToolInput
 
+
 def mock_tool_function(mock_input: str):
     return mock_input
+
 
 @pytest.fixture
 def mock_input():
@@ -22,19 +25,25 @@ def mock_input():
 @pytest.fixture
 def langchain_tool(mock_tool_args_schema):
     from langchain.tools import Tool
-    return Tool.from_function(func=mock_tool_function,
-                              name="mock_tool",
-                              description="mock_description",
-                              args_schema=mock_tool_args_schema)
+
+    return Tool.from_function(
+        func=mock_tool_function,
+        name="mock_tool",
+        description="mock_description",
+        args_schema=mock_tool_args_schema,
+    )
 
 
 @pytest.fixture
 def llama_index_tool(mock_tool_args_schema):
     from llama_index.core.tools import FunctionTool
-    return FunctionTool.from_defaults(fn=mock_tool_function,
-                                      name="mock_tool",
-                                      description="mock_description",
-                                      fn_schema=mock_tool_args_schema)
+
+    return FunctionTool.from_defaults(
+        fn=mock_tool_function,
+        name="mock_tool",
+        description="mock_description",
+        fn_schema=mock_tool_args_schema,
+    )
 
 
 class TestMotleyTool:
@@ -60,7 +69,9 @@ class TestMotleyTool:
 
         assert motley_tool.name == llama_index_tool.metadata.name
         assert llama_index_tool.metadata.name == converted_llama_index_tool.metadata.name
-        assert llama_index_tool.metadata.description == converted_llama_index_tool.metadata.description
+        assert (
+            llama_index_tool.metadata.description == converted_llama_index_tool.metadata.description
+        )
         assert llama_index_tool.metadata.fn_schema == converted_llama_index_tool.metadata.fn_schema
 
         assert llama_index_tool(mock_input) == converted_llama_index_tool(mock_input)

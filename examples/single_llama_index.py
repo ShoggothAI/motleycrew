@@ -3,7 +3,7 @@ from langchain_community.tools import DuckDuckGoSearchRun
 
 
 from motleycrew import MotleyCrew
-from motleycrew.agent.llama_index import ReActLlamaIndexMotleyAgent
+from motleycrew.agents.llama_index import ReActLlamaIndexMotleyAgent
 from motleycrew.common.utils import configure_logging
 
 
@@ -30,9 +30,7 @@ def main():
     )
 
     # Get your crew to work!
-    crew.run(
-        verbose=2,  # You can set it to 1 or 2 to different logging levels
-    )
+    crew.run()
 
     print(task.output)
     return task.output

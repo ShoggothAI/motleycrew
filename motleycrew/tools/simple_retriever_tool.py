@@ -13,11 +13,19 @@ from llama_index.core import (
     load_index_from_storage,
 )
 
-from motleycrew.tool import MotleyTool
+from motleycrew.tools import MotleyTool
 from motleycrew.applications.research_agent.question import Question
 
 
-def make_retriever_tool(DATA_DIR, PERSIST_DIR, return_strings_only: bool = False):
+class SimpleRetrieverTool(MotleyTool):
+    def __init__(self, DATA_DIR, PERSIST_DIR, return_strings_only: bool = False):
+        tool = make_retriever_langchain_tool(
+            DATA_DIR, PERSIST_DIR, return_strings_only=return_strings_only
+        )
+        super().__init__(tool)
+
+
+def make_retriever_langchain_tool(DATA_DIR, PERSIST_DIR, return_strings_only: bool = False):
     text_embedding_model = "text-embedding-ada-002"
     embeddings = OpenAIEmbedding(model=text_embedding_model)
 
@@ -59,7 +67,7 @@ def make_retriever_tool(DATA_DIR, PERSIST_DIR, return_strings_only: bool = False
         " knowledge base and retrieving a set of relevant documents.",
         args_schema=RetrieverToolInput,
     )
-    return MotleyTool.from_langchain_tool(retriever_tool)
+    return retriever_tool
 
 
 if __name__ == "__main__":
@@ -68,9 +76,9 @@ if __name__ == "__main__":
     here = os.path.dirname(os.path.abspath(__file__))
     DATA_DIR = os.path.join(here, "mahabharata/text/TinyTales")
 
-    PERSIST_DIR = "./storage"
+    PERSIST_DIR = "../../examples/research_agent/storage"
 
-    retriever_tool = make_retriever_tool(DATA_DIR, PERSIST_DIR)
+    retriever_tool = SimpleRetrieverTool(DATA_DIR, PERSIST_DIR)
     response2 = retriever_tool.invoke(
         {"question": Question(question="What are the most interesting facts about Arjuna?")}
     )

@@ -4,7 +4,7 @@ from langchain.tools import BaseTool
 
 from llama_index.core.tools import BaseTool as LlamaIndex__BaseTool
 from llama_index.core.tools import FunctionTool as LlamaIndex__FunctionTool
-from motleycrew.agent.parent import MotleyAgentAbstractParent
+from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
 
 
 def normalize_input(args, kwargs):
@@ -41,7 +41,9 @@ class MotleyTool:
         return MotleyTool.from_langchain_tool(langchain_tool=langchain_tool)
 
     @staticmethod
-    def from_supported_tool(tool: Union["MotleyTool", BaseTool, LlamaIndex__BaseTool]):
+    def from_supported_tool(
+        tool: Union["MotleyTool", BaseTool, LlamaIndex__BaseTool, MotleyAgentAbstractParent]
+    ):
         if isinstance(tool, MotleyTool):
             return tool
         elif isinstance(tool, BaseTool):

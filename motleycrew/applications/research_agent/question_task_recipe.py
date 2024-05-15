@@ -5,7 +5,7 @@ from langchain_core.runnables import Runnable
 
 from motleycrew.tasks import TaskRecipe
 from ...tasks.task import TaskType
-from motleycrew.tool import MotleyTool
+from motleycrew.tools import MotleyTool
 from motleycrew.crew import MotleyCrew
 from .question import Question, QuestionGenerationTask
 from .question_generator import QuestionGeneratorTool
@@ -34,12 +34,15 @@ class QuestionTaskRecipe(TaskRecipe):
             query_tool=query_tool, graph=self.graph_store
         )
 
-    def identify_candidates(self) -> list[QuestionGenerationTask]:
+    def get_next_task(self) -> QuestionGenerationTask | None:
         if self.done:
-            return []
+            return None
 
         unanswered_questions = self.get_unanswered_questions(only_without_children=True)
         logging.info("Loaded unanswered questions: %s", unanswered_questions)
+
+        if not len(unanswered_questions):
+            return None
 
         most_pertinent_question = self.question_prioritization_tool.invoke(
             {
@@ -48,7 +51,7 @@ class QuestionTaskRecipe(TaskRecipe):
             }
         )
         logging.info("Most pertinent question according to the tool: %s", most_pertinent_question)
-        return [QuestionGenerationTask(question=most_pertinent_question)]
+        return QuestionGenerationTask(question=most_pertinent_question)
 
     def register_completed_task(self, task: TaskType) -> None:
         logging.info("==== Completed iteration %s of %s ====", self.n_iter + 1, self.max_iter)

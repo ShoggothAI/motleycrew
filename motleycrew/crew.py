@@ -1,34 +1,20 @@
+from typing import Collection, Sequence, Optional
 import logging
-import concurrent.futures
 import os
-from concurrent.futures import Future, ThreadPoolExecutor
-from typing import Collection, Sequence, Set, Optional
-from uuid import uuid4
 
-from langchain_core.runnables import Runnable
-
-from motleycrew.agent.shared import MotleyAgentParent
+from motleycrew.agents.parent import MotleyAgentParent
 from motleycrew.tasks import TaskRecipe, Task, SimpleTaskRecipe
-from motleycrew.tool.tool import BaseTool
-from motleycrew.storage import MotleyGraphStore, MotleyKuzuGraphStore
-from motleycrew.tool import MotleyTool
+from motleycrew.storage import MotleyGraphStore
+from motleycrew.storage.graph_store_utils import init_graph_store
+from motleycrew.tools import MotleyTool
 
 
 class MotleyCrew:
     def __init__(self, graph_store: Optional[MotleyGraphStore] = None):
-        self.uuid = uuid4()
-        # TODO: impute number of workers or allow configurable
-        self.thread_pool = ThreadPoolExecutor(max_workers=8)
-        self.futures: Set[Future] = set()
         if graph_store is None:
-            # TODO: this is a hack, should be configurable
-            WORKING_DIR = os.path.realpath(os.path.dirname(__file__))
-            import kuzu
-
-            DB_PATH = os.path.join(WORKING_DIR, "kuzu_db")
-            db = kuzu.Database(DB_PATH)
-            graph_store = MotleyKuzuGraphStore(db)
+            graph_store = init_graph_store()
         self.graph_store = graph_store
+
         self.single_thread = os.environ.get("MC_SINGLE_THREAD", False)
         self.tools = []
         self.task_recipes = []
@@ -51,14 +37,11 @@ class MotleyCrew:
         self.register_task_recipes([task_recipe])
         return task_recipe
 
-    def run(
-        self,
-        verbose: int = 0,  # TODO: use!
-    ) -> list[Task]:
+    def run(self) -> list[Task]:
         if not self.single_thread:
             logging.warning("Multithreading is not implemented yet, will run in single thread")
 
-        return self._run_sync(verbose=verbose)
+        return self._run_sync()
 
     def add_dependency(self, upstream: TaskRecipe, downstream: TaskRecipe):
         self.graph_store.create_relation(
@@ -80,8 +63,7 @@ class MotleyCrew:
                     label=TaskRecipe.TASK_RECIPE_IS_UPSTREAM_LABEL,
                 )  # TODO: remove this workaround, https://github.com/kuzudb/kuzu/issues/3488
 
-    def _run_sync(self, verbose: int = 0) -> list[Task]:
-        # TODO: use the verbose arg
+    def _run_sync(self) -> list[Task]:
         done_tasks = []
         while True:
             did_something = False
@@ -92,10 +74,13 @@ class MotleyCrew:
             for recipe in available_task_recipes:
                 logging.info("Processing recipe: %s", recipe)
 
-                matching_tasks = recipe.identify_candidates()
-                logging.info("Got %s matching tasks for recipe %s", len(matching_tasks), recipe)
-                if len(matching_tasks) > 0:
-                    current_task = matching_tasks[0]
+                next_task = recipe.get_next_task()
+
+                if next_task is None:
+                    logging.info("Got no matching tasks for recipe %s", recipe)
+                else:
+                    logging.info("Got a matching task for recipe %s", recipe)
+                    current_task = next_task
                     logging.info("Processing task: %s", current_task)
 
                     extra_tools = self.get_extra_tools(recipe)

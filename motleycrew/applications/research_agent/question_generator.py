@@ -13,7 +13,7 @@ from langchain_core.prompts import PromptTemplate
 
 from langchain_core.pydantic_v1 import BaseModel, Field
 
-from motleycrew.tool import MotleyTool
+from motleycrew.tools import MotleyTool
 from motleycrew.common import LLMFramework
 from motleycrew.common.llms import init_llm
 from motleycrew.common.utils import print_passthrough
@@ -77,9 +77,7 @@ class QuestionGeneratorTool(MotleyTool):
 class QuestionGeneratorToolInput(BaseModel, arbitrary_types_allowed=True):
     """Input for the Question Generator Tool."""
 
-    task: QuestionGenerationTask = Field(
-        description="Task with the input question for which to generate subquestions."
-    )
+    question: Question = Field(description="The input question for which to generate subquestions.")
 
 
 def create_question_generator_langchain_tool(
@@ -129,7 +127,7 @@ def create_question_generator_langchain_tool(
     )
 
     return Tool.from_function(
-        func=lambda task: pipeline.invoke({"question": task.question}),
+        func=lambda q: pipeline.invoke({"question": q}),
         name="Question Generator Tool",
         description="""Generate a list of questions based on the input question, 
     and insert them into the knowledge graph.""",

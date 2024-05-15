@@ -3,7 +3,7 @@ from typing import List, Optional
 from langchain_core.runnables import Runnable
 
 from motleycrew.crew import MotleyCrew
-from motleycrew.tool import MotleyTool
+from motleycrew.tools import MotleyTool
 from motleycrew.tasks import TaskRecipe
 from motleycrew.tasks.task import TaskType
 from motleycrew.tasks import Task
@@ -24,7 +24,7 @@ class AnswerTaskRecipe(TaskRecipe):
             graph=self.graph_store, answer_length=self.answer_length
         )
 
-    def identify_candidates(self) -> list[QuestionAnsweringTask]:
+    def get_next_task(self) -> QuestionAnsweringTask | None:
         query = (
             "MATCH (n1:{}) "
             "WHERE n1.answer IS NULL AND n1.context IS NOT NULL "
@@ -35,7 +35,10 @@ class AnswerTaskRecipe(TaskRecipe):
 
         query_result = self.graph_store.run_cypher_query(query, container=Question)
         logging.info("Available questions: %s", query_result)
-        return [QuestionAnsweringTask(question=q) for q in query_result]
+        if not query_result:
+            return None
+        else:
+            return QuestionAnsweringTask(question=query_result[0])
 
     def get_worker(self, tools: Optional[List[MotleyTool]]) -> Runnable:
         return self.answerer

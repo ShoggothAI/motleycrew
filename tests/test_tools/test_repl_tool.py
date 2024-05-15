@@ -1,4 +1,4 @@
-from motleycrew.tool.python_repl import create_repl_tool
+from motleycrew.tools.python_repl import create_repl_tool
 
 
 class TestREPLTool:

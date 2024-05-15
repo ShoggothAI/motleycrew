@@ -1,21 +1,20 @@
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Optional, Any, Union
+from typing import Optional, Any, TYPE_CHECKING
 
 from langchain_core.runnables import RunnableConfig
 
 if TYPE_CHECKING:
-    from motleycrew.tasks import TaskRecipe
-    from motleycrew.tool import MotleyTool
+    from motleycrew.tools import MotleyTool
 
 
 class MotleyAgentAbstractParent(ABC):
     @abstractmethod
     def invoke(
         self,
-        task: Union["SimpleTaskRecipe", str],
+        task_dict: dict,
         config: Optional[RunnableConfig] = None,
         **kwargs: Any,
-    ) -> "SimpleTaskRecipe":
+    ) -> Any:
         pass
 
     @abstractmethod

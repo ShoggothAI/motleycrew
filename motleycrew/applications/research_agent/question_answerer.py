@@ -8,7 +8,7 @@ from langchain_core.runnables import (
     chain,
 )
 
-from motleycrew.tool import MotleyTool, LLMTool
+from motleycrew.tools import MotleyTool, LLMTool
 from motleycrew.storage import MotleyGraphStore
 from motleycrew.common.utils import print_passthrough
 

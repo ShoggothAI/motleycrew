@@ -6,7 +6,7 @@ from langchain_core.prompts.base import BasePromptTemplate
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.pydantic_v1 import BaseModel, Field, create_model
 
-from motleycrew.tool import MotleyTool
+from motleycrew.tools import MotleyTool
 from motleycrew.common import LLMFramework
 from motleycrew.common.llms import init_llm
 

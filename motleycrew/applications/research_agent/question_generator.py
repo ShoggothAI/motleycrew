@@ -13,7 +13,7 @@ from langchain_core.prompts import PromptTemplate
 
 from langchain_core.pydantic_v1 import BaseModel, Field
 
-from motleycrew.tool import MotleyTool
+from motleycrew.tools import MotleyTool
 from motleycrew.common import LLMFramework
 from motleycrew.common.llms import init_llm
 from motleycrew.common.utils import print_passthrough

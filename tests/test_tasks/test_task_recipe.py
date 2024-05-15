@@ -5,7 +5,8 @@ import pytest
 import kuzu
 from langchain_core.runnables import Runnable
 
-from motleycrew import MotleyCrew, MotleyTool
+from motleycrew import MotleyCrew
+from motleycrew.tools import MotleyTool
 from motleycrew.tasks import TaskRecipe, TaskType
 from motleycrew.storage import MotleyKuzuGraphStore
 from motleycrew.common.exceptions import TaskDependencyCycleError

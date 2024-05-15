@@ -11,5 +11,6 @@ class Defaults:
 
 
 defaults_module_install_commands = {
-    "crewai": "pip install crewai"
+    "crewai": "pip install crewai",
+    "llama_index": "pip install llama-index"
 }

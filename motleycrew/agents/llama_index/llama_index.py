@@ -3,7 +3,8 @@ from typing import Any, Optional, Sequence
 try:
     from llama_index.core.agent import AgentRunner
 except ImportError:
-    pass
+    AgentRunner = None
+
 from langchain_core.runnables import RunnableConfig
 
 from motleycrew.agents.parent import MotleyAgentParent

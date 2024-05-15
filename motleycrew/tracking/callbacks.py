@@ -8,6 +8,9 @@ try:
     from llama_index.core.base.llms.types import ChatMessage
 except ImportError:
     BaseCallbackHandler = object
+    CBEventType = None
+    ChatMessage = None
+
 from lunary import track_event
 from lunary.event_queue import EventQueue
 from lunary.consumer import Consumer

@@ -6,14 +6,7 @@ try:
     from llama_index.core.tools import BaseTool as LlamaIndex__BaseTool
     from llama_index.core.tools import FunctionTool as LlamaIndex__FunctionTool
 except ImportError:
-    pass
-
-from motleycrew.common.utils import ensure_module_is_installed
-try:
-    from llama_index.core.tools import BaseTool as LlamaIndex__BaseTool
-    from llama_index.core.tools import FunctionTool as LlamaIndex__FunctionTool
-except ImportError:
-    pass
+    LlamaIndex__BaseTool = None
 
 from motleycrew.common.utils import ensure_module_is_installed
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
@@ -33,6 +26,7 @@ class MotleyTool:
     """
 
     def __init__(self, tool: BaseTool):
+        ensure_module_is_installed("llama_index")
         self.tool = tool
 
     @property
@@ -72,7 +66,6 @@ class MotleyTool:
         return self.tool
 
     def to_llama_index_tool(self) -> LlamaIndex__BaseTool:
-        ensure_module_is_installed("llama_index")
         llama_index_tool = LlamaIndex__FunctionTool.from_defaults(
             fn=self.tool._run,
             name=self.tool.name,

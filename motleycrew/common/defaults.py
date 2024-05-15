@@ -1,4 +1,5 @@
 from motleycrew.common import LLMFamily
+from motleycrew.common import GraphStoreType
 
 
 class Defaults:

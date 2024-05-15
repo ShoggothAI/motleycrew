@@ -5,7 +5,7 @@ try:
     from llama_index.core.llms import LLM
     from llama_index.core.callbacks import CallbackManager
 except ImportError:
-    LLM = None
+    LLM = object
 
 from motleycrew.agents.llama_index import LlamaIndexMotleyAgentParent
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent

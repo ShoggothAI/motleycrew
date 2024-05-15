@@ -45,7 +45,7 @@ jobs:
       run: poetry install --no-interaction --no-root
 
     - name: Install project
-      run: poetry install --no-interaction
+      run: poetry install --no-interaction --extras "crewai llama-index"
 
     - name: Run integration tests
       env:

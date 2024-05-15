@@ -9,6 +9,13 @@ except ImportError:
     pass
 
 from motleycrew.common.utils import ensure_module_is_installed
+try:
+    from llama_index.core.tools import BaseTool as LlamaIndex__BaseTool
+    from llama_index.core.tools import FunctionTool as LlamaIndex__FunctionTool
+except ImportError:
+    pass
+
+from motleycrew.common.utils import ensure_module_is_installed
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
 
 

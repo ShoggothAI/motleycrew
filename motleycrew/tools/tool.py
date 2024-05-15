@@ -10,6 +10,7 @@ except ImportError:
 
 from motleycrew.agent.parent import MotleyAgentAbstractParent
 from motleycrew.common.utils import ensure_module_is_installed
+from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
 
 
 def normalize_input(args, kwargs):

@@ -5,9 +5,8 @@ from typing import TYPE_CHECKING, Any, Sequence, List, Optional
 from motleycrew.tasks.task_recipe import TaskRecipe
 from motleycrew.tasks import Task
 
-
-from motleycrew.agent.parent import MotleyAgentAbstractParent
-from motleycrew.tool import MotleyTool
+from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
+from motleycrew.tools import MotleyTool
 
 if TYPE_CHECKING:
     pass

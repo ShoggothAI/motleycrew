@@ -1,8 +1,8 @@
 from dotenv import load_dotenv
 
 from motleycrew import MotleyCrew, TaskRecipe
-from motleycrew.agent.crewai import CrewAIMotleyAgent
-from motleycrew.tool.image_generation import DallEImageGeneratorTool
+from motleycrew.agents.crewai import CrewAIMotleyAgent
+from motleycrew.tools.image_generation import DallEImageGeneratorTool
 from motleycrew.common.utils import configure_logging
 
 
@@ -47,9 +47,7 @@ def main():
     )
 
     # Get your crew to work!
-    crew.run(
-        verbose=2,  # You can set it to 1 or 2 to different logging levels
-    )
+    crew.run()
 
     print(write_task.output)
     return write_task.output

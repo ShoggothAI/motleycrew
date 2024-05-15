@@ -6,8 +6,8 @@ except ImportError:
     pass
 from langchain_core.runnables import RunnableConfig
 
-from motleycrew.agent.parent import MotleyAgentAbstractParent
-from motleycrew.agent.shared import MotleyAgentParent
+from motleycrew.agents.parent import MotleyAgentParent
+from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
 from motleycrew.tasks import Task
 from motleycrew.common import MotleySupportedTool
 from motleycrew.common import MotleyAgentFactory

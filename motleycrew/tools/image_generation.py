@@ -76,9 +76,7 @@ def run_dalle_and_save_images(
 
 def create_dalle_image_generator_langchain_tool(images_directory: Optional[str] = None):
     def run_dalle_and_save_images_partial(description: str):
-        return run_dalle_and_save_images(
-            description=description, images_directory=images_directory
-        )
+        return run_dalle_and_save_images(description=description, images_directory=images_directory)
 
     return Tool(
         name="Dall-E-Image-Generator",

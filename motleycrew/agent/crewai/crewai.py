@@ -9,12 +9,12 @@ from motleycrew.common import MotleySupportedTool
 from motleycrew.common import MotleyAgentFactory
 from motleycrew.common.utils import to_str
 from motleycrew.tracking import add_default_callbacks_to_langchain_config
-
+from motleycrew.common.utils import ensure_module_is_installed
 
 try:
     from crewai import Task as CrewAI__Task
 except ImportError:
-    CrewAI__Task = None
+    pass
 
 
 class CrewAIMotleyAgentParent(MotleyAgentParent):
@@ -27,6 +27,7 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
         tools: Sequence[MotleySupportedTool] | None = None,
         verbose: bool = False,
     ):
+        ensure_module_is_installed("crewai")
         super().__init__(
             goal=goal,
             name=name,
@@ -42,11 +43,6 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
         config: Optional[RunnableConfig] = None,
         **kwargs: Any,
     ) -> Any:
-        if CrewAI__Task is None:
-            raise ImportError(
-                "crewai is not installed, you should install it with `pip install crewai`"
-            )
-
         self.materialize()
 
         prompt = task_dict.get("prompt")

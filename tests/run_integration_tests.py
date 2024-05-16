@@ -174,16 +174,22 @@ def run_integration_tests(
     golden_dir: str,
     update_golden: bool = False,
     test_name: Optional[str] = None,
-    is_minimal: bool = False
+    minimal_only: bool = False
 ):
     failed_tests = {}
 
-    if is_minimal:
-        integration_tests = copy(MINIMAL_INTEGRATION_TESTS)
+    if minimal_only:
+        integration_tests = {}
     else:
         integration_tests = copy(INTEGRATION_TESTS)
+        integration_tests.update(build_ipynb_integration_tests())
 
-    integration_tests.update(build_ipynb_integration_tests(is_minimal))
+    minimal_integration_tests = copy(MINIMAL_INTEGRATION_TESTS)
+    minimal_integration_tests.update(build_ipynb_integration_tests(is_minimal=True))
+
+    for test_key, test_value in minimal_integration_tests.items():
+        integration_test_key = "minimal_{}".format(test_key)
+        integration_tests[integration_test_key] = test_value
 
     old_tiktoken_cache_dir = set_tiktoken_cache_dir(cache_dir)
 
@@ -244,7 +250,7 @@ def main():
         golden_dir=args.golden_dir,
         update_golden=args.update_golden,
         test_name=args.test_name,
-        is_minimal=args.minimal
+        minimal_only=args.minimal
     )
 
 

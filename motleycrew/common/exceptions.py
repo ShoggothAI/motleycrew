@@ -1,4 +1,4 @@
-from __future__ import annotations
+from motleycrew.common.defaults import defaults_module_install_commands
 
 
 class LLMFamilyNotSupported(Exception):
@@ -48,3 +48,21 @@ class IntegrationTestException(Exception):
 
     def __str__(self):
         return "Some integration tests failed: {}".format(self.test_names)
+
+
+class ModuleNotInstalledException(Exception):
+    """Not install module exception"""
+
+    def __init__(self, module_name: str, install_command: str = None):
+        self.module_name = module_name
+        self.install_command = install_command or defaults_module_install_commands.get(
+            module_name, None
+        )
+
+    def __str__(self):
+        msg = "{} is not installed".format(self.module_name)
+
+        if self.install_command is not None:
+            msg = "{}, {}".format(msg, self.install_command)
+
+        return "{}.".format(msg)

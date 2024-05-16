@@ -1,4 +1,4 @@
-name: Test
+name: Integration test
 
 on:
   push:
@@ -45,7 +45,10 @@ jobs:
       run: poetry install --no-interaction --no-root
 
     - name: Install project
-      run: poetry install --no-interaction --extras "crewai llama-index"
+      run: poetry install --no-interaction --all-extras
 
-    - name: Run tests
-      run: poetry run pytest
+    - name: Run integration tests
+      env:
+        OPENAI_API_KEY: fake_key_1337
+        TIKTOKEN_CACHE_DIR: tests/itest_cache/tiktoken_cache
+      run: poetry run python tests/run_integration_tests.py

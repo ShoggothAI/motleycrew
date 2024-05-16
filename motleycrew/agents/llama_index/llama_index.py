@@ -1,6 +1,10 @@
 from typing import Any, Optional, Sequence
 
-from llama_index.core.agent import AgentRunner
+try:
+    from llama_index.core.agent import AgentRunner
+except ImportError:
+    AgentRunner = None
+
 from langchain_core.runnables import RunnableConfig
 
 from motleycrew.agents.parent import MotleyAgentParent
@@ -8,6 +12,7 @@ from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
 from motleycrew.tasks import Task
 from motleycrew.common import MotleySupportedTool
 from motleycrew.common import MotleyAgentFactory
+from motleycrew.common.utils import ensure_module_is_installed
 
 
 class LlamaIndexMotleyAgentParent(MotleyAgentParent):
@@ -52,6 +57,7 @@ class LlamaIndexMotleyAgentParent(MotleyAgentParent):
         tools: Sequence[MotleySupportedTool] | None = None,
         verbose: bool = False,
     ) -> "LlamaIndexMotleyAgentParent":
+        ensure_module_is_installed("llama_index")
         wrapped_agent = LlamaIndexMotleyAgentParent(
             goal=goal, delegation=delegation, tools=tools, verbose=verbose
         )

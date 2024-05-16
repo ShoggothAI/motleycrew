@@ -82,7 +82,7 @@ def get_args_parser():
         help="Update reference data together with the cache",
     )
     parser.add_argument(
-        "--minimal",
+        "--minimal_only",
         default=False,
         action="store_true",
         help="Run minimal tests"
@@ -250,7 +250,7 @@ def main():
         golden_dir=args.golden_dir,
         update_golden=args.update_golden,
         test_name=args.test_name,
-        minimal_only=args.minimal
+        minimal_only=args.minimal_only
     )
 
 

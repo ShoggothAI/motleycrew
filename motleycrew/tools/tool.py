@@ -2,8 +2,13 @@ from typing import Union
 
 from langchain.tools import BaseTool
 
-from llama_index.core.tools import BaseTool as LlamaIndex__BaseTool
-from llama_index.core.tools import FunctionTool as LlamaIndex__FunctionTool
+try:
+    from llama_index.core.tools import BaseTool as LlamaIndex__BaseTool
+    from llama_index.core.tools import FunctionTool as LlamaIndex__FunctionTool
+except ImportError:
+    LlamaIndex__BaseTool = None
+
+from motleycrew.common.utils import ensure_module_is_installed
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
 
 
@@ -21,6 +26,7 @@ class MotleyTool:
     """
 
     def __init__(self, tool: BaseTool):
+        ensure_module_is_installed("llama_index")
         self.tool = tool
 
     @property
@@ -37,6 +43,7 @@ class MotleyTool:
 
     @staticmethod
     def from_llama_index_tool(llama_index_tool: LlamaIndex__BaseTool) -> "MotleyTool":
+        ensure_module_is_installed("llama_index")
         langchain_tool = llama_index_tool.to_langchain_tool()
         return MotleyTool.from_langchain_tool(langchain_tool=langchain_tool)
 

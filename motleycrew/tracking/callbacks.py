@@ -2,18 +2,26 @@ from typing import List, Dict, Optional, Any, Union
 import logging
 import traceback
 
-from llama_index.core.callbacks.base_handler import BaseCallbackHandler
-from llama_index.core.callbacks.schema import CBEventType, EventPayload
-from llama_index.core.base.llms.types import ChatMessage
+try:
+    from llama_index.core.callbacks.base_handler import BaseCallbackHandler
+    from llama_index.core.callbacks.schema import CBEventType, EventPayload
+    from llama_index.core.base.llms.types import ChatMessage
+except ImportError:
+    BaseCallbackHandler = object
+    CBEventType = None
+    ChatMessage = None
+
 from lunary import track_event
 from lunary.event_queue import EventQueue
 from lunary.consumer import Consumer
 
 from motleycrew.common.enums import LunaryRunType, LunaryEventName
+from motleycrew.common.utils import ensure_module_is_installed
 
 
 def event_delegate_decorator(f):
     def wrapper(self, *args, **kwargs):
+        ensure_module_is_installed("llama_index")
         run_type = "start" if "start" in f.__name__ else "end"
 
         # find event type
@@ -76,6 +84,7 @@ class LlamaIndexLunaryCallbackHandler(BaseCallbackHandler):
         event_starts_to_ignore: List[CBEventType] = [],
         event_ends_to_ignore: List[CBEventType] = [],
     ):
+        ensure_module_is_installed("llama_index")
         super(LlamaIndexLunaryCallbackHandler, self).__init__(
             event_starts_to_ignore=event_starts_to_ignore,
             event_ends_to_ignore=event_ends_to_ignore,

@@ -25,6 +25,14 @@ class SimpleRetrieverTool(MotleyTool):
         super().__init__(tool)
 
 
+class RetrieverToolInput(BaseModel, arbitrary_types_allowed=True):
+    """Input for the Retriever Tool."""
+
+    question: Question = Field(
+        description="The input question for which to retrieve relevant data."
+    )
+
+
 def make_retriever_langchain_tool(DATA_DIR, PERSIST_DIR, return_strings_only: bool = False):
     text_embedding_model = "text-embedding-ada-002"
     embeddings = OpenAIEmbedding(model=text_embedding_model)
@@ -46,13 +54,6 @@ def make_retriever_langchain_tool(DATA_DIR, PERSIST_DIR, return_strings_only: bo
         similarity_top_k=10,
         embed_model=embeddings,
     )
-
-    class RetrieverToolInput(BaseModel, arbitrary_types_allowed=True):
-        """Input for the Retriever Tool."""
-
-        question: Question = Field(
-            description="The input question for which to retrieve relevant data."
-        )
 
     def call_retriever(question: Question) -> list:
         out = retriever.retrieve(question.question)

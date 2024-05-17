@@ -9,3 +9,9 @@ class Defaults:
     LLM_MAP = {}
 
     DEFAULT_GRAPH_STORE_TYPE = GraphStoreType.KUZU
+
+
+defaults_module_install_commands = {
+    "crewai": "pip install crewai",
+    "llama_index": "pip install llama-index"
+}

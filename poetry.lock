@@ -316,7 +316,7 @@ css = ["tinycss2 (>=1.1.0,<1.3)"]
 name = "blis"
 version = "0.7.11"
 description = "The Blis BLAS-like linear algebra library, as a self-contained C-extension."
-optional = false
+optional = true
 python-versions = "*"
 files = [
     {file = "blis-0.7.11-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:cd5fba34c5775e4c440d80e4dea8acb40e2d3855b546e07c4e21fad8f972404c"},
@@ -493,7 +493,7 @@ cffi = ">=1.0.0"
 name = "catalogue"
 version = "2.0.10"
 description = "Super lightweight function registries for your library"
-optional = false
+optional = true
 python-versions = ">=3.6"
 files = [
     {file = "catalogue-2.0.10-py3-none-any.whl", hash = "sha256:58c2de0020aa90f4a2da7dfad161bf7b3b054c86a5f09fcedc0b2b740c109a9f"},
@@ -703,7 +703,7 @@ colorama = {version = "*", markers = "platform_system == \"Windows\""}
 name = "cloudpathlib"
 version = "0.16.0"
 description = "pathlib-style classes for cloud storage services."
-optional = false
+optional = true
 python-versions = ">=3.7"
 files = [
     {file = "cloudpathlib-0.16.0-py3-none-any.whl", hash = "sha256:f46267556bf91f03db52b5df7a152548596a15aabca1c8731ef32b0b25a1a6a3"},
@@ -762,7 +762,7 @@ test = ["pytest"]
 name = "confection"
 version = "0.1.4"
 description = "The sweetest config system for Python"
-optional = false
+optional = true
 python-versions = ">=3.6"
 files = [
     {file = "confection-0.1.4-py3-none-any.whl", hash = "sha256:a658818d004939069c3e2b3db74a2cb9d956a5e61a1c9ad61788e0ee09a7090f"},
@@ -844,7 +844,7 @@ toml = ["tomli"]
 name = "crewai"
 version = "0.16.3"
 description = "Cutting-edge framework for orchestrating role-playing, autonomous AI agents. By fostering collaborative intelligence, CrewAI empowers agents to work together seamlessly, tackling complex tasks."
-optional = false
+optional = true
 python-versions = ">=3.10,<=3.13"
 files = [
     {file = "crewai-0.16.3-py3-none-any.whl", hash = "sha256:db57727e4c8801f75e9f6d30071a0085191e98f8cff805e875f67cf07b4015c3"},
@@ -898,7 +898,7 @@ test = ["charset-normalizer (>=3.3.2,<4)", "cryptography (==38.0.3)", "fastapi (
 name = "cymem"
 version = "2.0.8"
 description = "Manage calls to calloc/free through Cython"
-optional = false
+optional = true
 python-versions = "*"
 files = [
     {file = "cymem-2.0.8-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:77b5d3a73c41a394efd5913ab7e48512054cd2dabb9582d489535456641c7666"},
@@ -1025,7 +1025,7 @@ dev = ["PyTest", "PyTest-Cov", "bump2version (<1)", "sphinx (<2)", "tox"]
 name = "dirtyjson"
 version = "1.0.8"
 description = "JSON decoder for Python that can extract data from the muck"
-optional = false
+optional = true
 python-versions = "*"
 files = [
     {file = "dirtyjson-1.0.8-py3-none-any.whl", hash = "sha256:125e27248435a58acace26d5c2c4c11a1c0de0a9c5124c5a94ba78e517d74f53"},
@@ -1036,7 +1036,7 @@ files = [
 name = "distro"
 version = "1.9.0"
 description = "Distro - an OS platform information API"
-optional = false
+optional = true
 python-versions = ">=3.6"
 files = [
     {file = "distro-1.9.0-py3-none-any.whl", hash = "sha256:7bffd925d65168f85027d8da9af6bddab658135b840670a223589bc0c8ef02b2"},
@@ -1047,7 +1047,7 @@ files = [
 name = "docstring-parser"
 version = "0.15"
 description = "Parse Python docstrings in reST, Google and Numpydoc format"
-optional = false
+optional = true
 python-versions = ">=3.6,<4.0"
 files = [
     {file = "docstring_parser-0.15-py3-none-any.whl", hash = "sha256:d1679b86250d269d06a99670924d6bce45adc00b08069dae8c47d98e89b667a9"},
@@ -1233,7 +1233,7 @@ files = [
 name = "fsspec"
 version = "2024.3.1"
 description = "File-system specification"
-optional = false
+optional = true
 python-versions = ">=3.8"
 files = [
     {file = "fsspec-2024.3.1-py3-none-any.whl", hash = "sha256:918d18d41bf73f0e2b261824baeb1b124bcf771767e3a26425cd7dec3332f512"},
@@ -1268,7 +1268,7 @@ tqdm = ["tqdm"]
 name = "googleapis-common-protos"
 version = "1.63.0"
 description = "Common protobufs used in Google APIs"
-optional = false
+optional = true
 python-versions = ">=3.7"
 files = [
     {file = "googleapis-common-protos-1.63.0.tar.gz", hash = "sha256:17ad01b11d5f1d0171c06d3ba5c04c54474e883b66b949722b4938ee2694ef4e"},
@@ -1505,7 +1505,7 @@ files = [
 name = "instructor"
 version = "0.5.2"
 description = "structured outputs for llm"
-optional = false
+optional = true
 python-versions = ">=3.10,<4.0"
 files = [
     {file = "instructor-0.5.2-py3-none-any.whl", hash = "sha256:8c7c927f3cbf6cd863eeebceae3f021e27eaca2ceaf9e9f3c8204540a1126160"},
@@ -1646,7 +1646,7 @@ i18n = ["Babel (>=2.7)"]
 name = "joblib"
 version = "1.4.2"
 description = "Lightweight pipelining with Python functions"
-optional = false
+optional = true
 python-versions = ">=3.8"
 files = [
     {file = "joblib-1.4.2-py3-none-any.whl", hash = "sha256:06d478d5674cbc267e7496a410ee875abd68e4340feff4490bcb7afb88060ae6"},
@@ -1671,7 +1671,7 @@ jsonpointer = ">=1.9"
 name = "jsonpath-ng"
 version = "1.6.1"
 description = "A final implementation of JSONPath for Python that aims to be standard compliant, including arithmetic and binary comparison operators and providing clear AST for metaprogramming."
-optional = false
+optional = true
 python-versions = "*"
 files = [
     {file = "jsonpath-ng-1.6.1.tar.gz", hash = "sha256:086c37ba4917304850bd837aeab806670224d3f038fe2833ff593a672ef0a5fa"},
@@ -1945,7 +1945,7 @@ extended-testing = ["faker (>=19.3.1,<20.0.0)", "jinja2 (>=3,<4)", "pandas (>=2.
 name = "langchain-openai"
 version = "0.0.5"
 description = "An integration package connecting OpenAI and LangChain"
-optional = false
+optional = true
 python-versions = ">=3.8.1,<4.0"
 files = [
     {file = "langchain_openai-0.0.5-py3-none-any.whl", hash = "sha256:93b37dfac274adad65e46d5d6e71411e00c6984bcc5e10f1d6bb58e7944dc01b"},
@@ -1994,7 +1994,7 @@ types-requests = ">=2.31.0.2,<3.0.0.0"
 name = "langcodes"
 version = "3.4.0"
 description = "Tools for labeling human languages with IETF language tags"
-optional = false
+optional = true
 python-versions = ">=3.8"
 files = [
     {file = "langcodes-3.4.0-py3-none-any.whl", hash = "sha256:10a4cc078b8e8937d8485d3352312a0a89a3125190db9f2bb2074250eef654e9"},
@@ -2028,7 +2028,7 @@ requests = ">=2,<3"
 name = "language-data"
 version = "1.2.0"
 description = "Supplementary data about languages used by the langcodes module"
-optional = false
+optional = true
 python-versions = "*"
 files = [
     {file = "language_data-1.2.0-py3-none-any.whl", hash = "sha256:77d5cab917f91ee0b2f1aa7018443e911cf8985ef734ca2ba3940770f6a3816b"},
@@ -2046,7 +2046,7 @@ test = ["pytest", "pytest-cov"]
 name = "llama-index"
 version = "0.10.37"
 description = "Interface between LLMs and your data"
-optional = false
+optional = true
 python-versions = "<4.0,>=3.8.1"
 files = [
     {file = "llama_index-0.10.37-py3-none-any.whl", hash = "sha256:da8871c5c8e5d038e56c0e5cb8c18a81ddc4117bf403bace95b4cec212f88fb9"},
@@ -2071,7 +2071,7 @@ llama-index-readers-llama-parse = ">=0.1.2,<0.2.0"
 name = "llama-index-agent-openai"
 version = "0.2.5"
 description = "llama-index agent openai integration"
-optional = false
+optional = true
 python-versions = "<4.0,>=3.8.1"
 files = [
     {file = "llama_index_agent_openai-0.2.5-py3-none-any.whl", hash = "sha256:67536bb104b24734f79324207034d948a2ca7e4cc20dd60cf05d6eeb4b12a586"},
@@ -2087,7 +2087,7 @@ openai = ">=1.14.0"
 name = "llama-index-cli"
 version = "0.1.12"
 description = "llama-index cli"
-optional = false
+optional = true
 python-versions = "<4.0,>=3.8.1"
 files = [
     {file = "llama_index_cli-0.1.12-py3-none-any.whl", hash = "sha256:d80d546786f02d3f16f6183b8e86b22b8b5c33a1500923659f2ccbff8d5df634"},
@@ -2103,7 +2103,7 @@ llama-index-llms-openai = ">=0.1.1,<0.2.0"
 name = "llama-index-core"
 version = "0.10.37"
 description = "Interface between LLMs and your data"
-optional = false
+optional = true
 python-versions = "<4.0,>=3.8.1"
 files = [
     {file = "llama_index_core-0.10.37-py3-none-any.whl", hash = "sha256:1302ccbd267627199115cd68eee7f3a726611cc92b4a8e1a43dc679f67213664"},
@@ -2141,7 +2141,7 @@ wrapt = "*"
 name = "llama-index-embeddings-openai"
 version = "0.1.9"
 description = "llama-index embeddings openai integration"
-optional = false
+optional = true
 python-versions = "<4.0,>=3.8.1"
 files = [
     {file = "llama_index_embeddings_openai-0.1.9-py3-none-any.whl", hash = "sha256:fbd16d6197b91f4dbdc6d0707e573cc224ac2b0a48d5b370c6232dd8a2282473"},
@@ -2155,7 +2155,7 @@ llama-index-core = ">=0.10.1,<0.11.0"
 name = "llama-index-indices-managed-llama-cloud"
 version = "0.1.6"
 description = "llama-index indices llama-cloud integration"
-optional = false
+optional = true
 python-versions = "<4.0,>=3.8.1"
 files = [
     {file = "llama_index_indices_managed_llama_cloud-0.1.6-py3-none-any.whl", hash = "sha256:cba33e1a3677b2a2ae7f239119acbf6dc3818f105edc92315729842b56fbc949"},
@@ -2170,7 +2170,7 @@ llamaindex-py-client = ">=0.1.19,<0.2.0"
 name = "llama-index-legacy"
 version = "0.9.48"
 description = "Interface between LLMs and your data"
-optional = false
+optional = true
 python-versions = ">=3.8.1,<4.0"
 files = [
     {file = "llama_index_legacy-0.9.48-py3-none-any.whl", hash = "sha256:714ada95beac179b4acefa4d2deff74bb7b2f22b0f699ac247d4cb67738d16d4"},
@@ -2209,7 +2209,7 @@ query-tools = ["guidance (>=0.0.64,<0.0.65)", "jsonpath-ng (>=1.6.0,<2.0.0)", "l
 name = "llama-index-llms-openai"
 version = "0.1.19"
 description = "llama-index llms openai integration"
-optional = false
+optional = true
 python-versions = "<4.0,>=3.8.1"
 files = [
     {file = "llama_index_llms_openai-0.1.19-py3-none-any.whl", hash = "sha256:2bd98ff3abbb4aa0daed1fbe01d8b69f8270ab86c53f8da51fc9f148a672264c"},
@@ -2223,7 +2223,7 @@ llama-index-core = ">=0.10.24,<0.11.0"
 name = "llama-index-multi-modal-llms-openai"
 version = "0.1.6"
 description = "llama-index multi-modal-llms openai integration"
-optional = false
+optional = true
 python-versions = "<4.0,>=3.8.1"
 files = [
     {file = "llama_index_multi_modal_llms_openai-0.1.6-py3-none-any.whl", hash = "sha256:0b6950a6cf98d16ade7d3b9dd0821ecfe457ca103819ae6c3e66cfc9634ca646"},
@@ -2238,7 +2238,7 @@ llama-index-llms-openai = ">=0.1.1,<0.2.0"
 name = "llama-index-program-openai"
 version = "0.1.6"
 description = "llama-index program openai integration"
-optional = false
+optional = true
 python-versions = "<4.0,>=3.8.1"
 files = [
     {file = "llama_index_program_openai-0.1.6-py3-none-any.whl", hash = "sha256:4660b338503537c5edca1e0dab606af6ce372b4f1b597e2833c6b602447c5d8d"},
@@ -2254,7 +2254,7 @@ llama-index-llms-openai = ">=0.1.1,<0.2.0"
 name = "llama-index-question-gen-openai"
 version = "0.1.3"
 description = "llama-index question_gen openai integration"
-optional = false
+optional = true
 python-versions = ">=3.8.1,<4.0"
 files = [
     {file = "llama_index_question_gen_openai-0.1.3-py3-none-any.whl", hash = "sha256:1f83b49e8b2e665030d1ec8c54687d6985d9fa8426147b64e46628a9e489b302"},
@@ -2270,7 +2270,7 @@ llama-index-program-openai = ">=0.1.1,<0.2.0"
 name = "llama-index-readers-file"
 version = "0.1.22"
 description = "llama-index readers file integration"
-optional = false
+optional = true
 python-versions = "<4.0,>=3.8.1"
 files = [
     {file = "llama_index_readers_file-0.1.22-py3-none-any.whl", hash = "sha256:a8d4a69a9ea659c14ebb22ca9a5560b9c7ec6f501e7f68f6c52f591374165376"},
@@ -2290,7 +2290,7 @@ pymupdf = ["pymupdf (>=1.23.21,<2.0.0)"]
 name = "llama-index-readers-llama-parse"
 version = "0.1.4"
 description = "llama-index readers llama-parse integration"
-optional = false
+optional = true
 python-versions = "<4.0,>=3.8.1"
 files = [
     {file = "llama_index_readers_llama_parse-0.1.4-py3-none-any.whl", hash = "sha256:c4914b37d12cceee56fbd185cca80f87d60acbf8ea7a73f9719610180be1fcdd"},
@@ -2305,7 +2305,7 @@ llama-parse = ">=0.4.0,<0.5.0"
 name = "llama-parse"
 version = "0.4.3"
 description = "Parse files into RAG-Optimized formats."
-optional = false
+optional = true
 python-versions = "<4.0,>=3.8.1"
 files = [
     {file = "llama_parse-0.4.3-py3-none-any.whl", hash = "sha256:c48c53a3080daeede293df620dddb1f381e084c31ee2dd44dce3f8615df723e8"},
@@ -2319,7 +2319,7 @@ llama-index-core = ">=0.10.29"
 name = "llamaindex-py-client"
 version = "0.1.19"
 description = ""
-optional = false
+optional = true
 python-versions = "<4,>=3.8"
 files = [
     {file = "llamaindex_py_client-0.1.19-py3-none-any.whl", hash = "sha256:fd9416fd78b97209bf323bc3c7fab314499778563e7274f10853ad560563d10e"},
@@ -2357,7 +2357,7 @@ tenacity = ">=8.2.3,<9.0.0"
 name = "marisa-trie"
 version = "1.1.1"
 description = "Static memory-efficient and fast Trie-like structures for Python."
-optional = false
+optional = true
 python-versions = ">=3.7"
 files = [
     {file = "marisa_trie-1.1.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:68e48a547b9a1fd64c648684cd375402ba521c2c4a724756a944ef4b88c3047c"},
@@ -2460,7 +2460,7 @@ test = ["hypothesis", "pytest", "readme-renderer"]
 name = "markdown-it-py"
 version = "3.0.0"
 description = "Python port of markdown-it. Markdown parsing, done right!"
-optional = false
+optional = true
 python-versions = ">=3.8"
 files = [
     {file = "markdown-it-py-3.0.0.tar.gz", hash = "sha256:e3f60a94fa066dc52ec76661e37c851cb232d92f9886b15cb560aaada2df8feb"},
@@ -2597,7 +2597,7 @@ files = [
 name = "mdurl"
 version = "0.1.2"
 description = "Markdown URL utilities"
-optional = false
+optional = true
 python-versions = ">=3.7"
 files = [
     {file = "mdurl-0.1.2-py3-none-any.whl", hash = "sha256:84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8"},
@@ -2718,7 +2718,7 @@ files = [
 name = "murmurhash"
 version = "1.0.10"
 description = "Cython bindings for MurmurHash"
-optional = false
+optional = true
 python-versions = ">=3.6"
 files = [
     {file = "murmurhash-1.0.10-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:3e90eef568adca5e17a91f96975e9a782ace3a617bbb3f8c8c2d917096e9bfeb"},
@@ -2943,7 +2943,7 @@ files = [
 name = "networkx"
 version = "3.3"
 description = "Python package for creating and manipulating graphs and networks"
-optional = false
+optional = true
 python-versions = ">=3.10"
 files = [
     {file = "networkx-3.3-py3-none-any.whl", hash = "sha256:28575580c6ebdaf4505b22c6256a2b9de86b316dc63ba9e93abde3d78dfdbcf2"},
@@ -2961,7 +2961,7 @@ test = ["pytest (>=7.2)", "pytest-cov (>=4.0)"]
 name = "nltk"
 version = "3.8.1"
 description = "Natural Language Toolkit"
-optional = false
+optional = true
 python-versions = ">=3.7"
 files = [
     {file = "nltk-3.8.1-py3-none-any.whl", hash = "sha256:fd5c9109f976fa86bcadba8f91e47f5e9293bd034474752e92a520f81c93dda5"},
@@ -3031,7 +3031,7 @@ files = [
 name = "openai"
 version = "1.30.1"
 description = "The official Python library for the openai API"
-optional = false
+optional = true
 python-versions = ">=3.7.1"
 files = [
     {file = "openai-1.30.1-py3-none-any.whl", hash = "sha256:c9fb3c3545c118bbce8deb824397b9433a66d0d0ede6a96f7009c95b76de4a46"},
@@ -3069,7 +3069,7 @@ importlib-metadata = ">=6.0,<=7.0"
 name = "opentelemetry-exporter-otlp-proto-common"
 version = "1.24.0"
 description = "OpenTelemetry Protobuf encoding"
-optional = false
+optional = true
 python-versions = ">=3.8"
 files = [
     {file = "opentelemetry_exporter_otlp_proto_common-1.24.0-py3-none-any.whl", hash = "sha256:e51f2c9735054d598ad2df5d3eca830fecfb5b0bda0a2fa742c9c7718e12f641"},
@@ -3083,7 +3083,7 @@ opentelemetry-proto = "1.24.0"
 name = "opentelemetry-exporter-otlp-proto-http"
 version = "1.24.0"
 description = "OpenTelemetry Collector Protobuf over HTTP Exporter"
-optional = false
+optional = true
 python-versions = ">=3.8"
 files = [
     {file = "opentelemetry_exporter_otlp_proto_http-1.24.0-py3-none-any.whl", hash = "sha256:25af10e46fdf4cd3833175e42f4879a1255fc01655fe14c876183a2903949836"},
@@ -3103,7 +3103,7 @@ requests = ">=2.7,<3.0"
 name = "opentelemetry-proto"
 version = "1.24.0"
 description = "OpenTelemetry Python Proto"
-optional = false
+optional = true
 python-versions = ">=3.8"
 files = [
     {file = "opentelemetry_proto-1.24.0-py3-none-any.whl", hash = "sha256:bcb80e1e78a003040db71ccf83f2ad2019273d1e0828089d183b18a1476527ce"},
@@ -3210,7 +3210,7 @@ files = [
 name = "pandas"
 version = "2.2.2"
 description = "Powerful data structures for data analysis, time series, and statistics"
-optional = false
+optional = true
 python-versions = ">=3.9"
 files = [
     {file = "pandas-2.2.2-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:90c6fca2acf139569e74e8781709dccb6fe25940488755716d1d354d6bc58bce"},
@@ -3334,7 +3334,7 @@ ptyprocess = ">=0.5"
 name = "pillow"
 version = "10.3.0"
 description = "Python Imaging Library (Fork)"
-optional = false
+optional = true
 python-versions = ">=3.8"
 files = [
     {file = "pillow-10.3.0-cp310-cp310-macosx_10_10_x86_64.whl", hash = "sha256:90b9e29824800e90c84e4022dd5cc16eb2d9605ee13f05d47641eb183cd73d45"},
@@ -3451,7 +3451,7 @@ testing = ["pytest", "pytest-benchmark"]
 name = "ply"
 version = "3.11"
 description = "Python Lex & Yacc"
-optional = false
+optional = true
 python-versions = "*"
 files = [
     {file = "ply-3.11-py2.py3-none-any.whl", hash = "sha256:096f9b8350b65ebd2fd1346b12452efe5b9607f7482813ffca50c22722a807ce"},
@@ -3462,7 +3462,7 @@ files = [
 name = "preshed"
 version = "3.0.9"
 description = "Cython hash table that trusts the keys are pre-hashed"
-optional = false
+optional = true
 python-versions = ">=3.6"
 files = [
     {file = "preshed-3.0.9-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:4f96ef4caf9847b2bb9868574dcbe2496f974e41c2b83d6621c24fb4c3fc57e3"},
@@ -3522,7 +3522,7 @@ wcwidth = "*"
 name = "protobuf"
 version = "4.25.3"
 description = ""
-optional = false
+optional = true
 python-versions = ">=3.8"
 files = [
     {file = "protobuf-4.25.3-cp310-abi3-win32.whl", hash = "sha256:d4198877797a83cbfe9bffa3803602bbe1625dc30d8a097365dbc762e5790faa"},
@@ -3763,7 +3763,7 @@ files = [
 name = "pypdf"
 version = "4.2.0"
 description = "A pure-python PDF library capable of splitting, merging, cropping, and transforming PDF files"
-optional = false
+optional = true
 python-versions = ">=3.6"
 files = [
     {file = "pypdf-4.2.0-py3-none-any.whl", hash = "sha256:dc035581664e0ad717e3492acebc1a5fc23dba759e788e3d4a9fc9b1a32e72c1"},
@@ -3852,7 +3852,7 @@ cli = ["click (>=5.0)"]
 name = "pytz"
 version = "2024.1"
 description = "World timezone definitions, modern and historical"
-optional = false
+optional = true
 python-versions = "*"
 files = [
     {file = "pytz-2024.1-py2.py3-none-any.whl", hash = "sha256:328171f4e3623139da4983451950b28e95ac706e13f3f2630a879749e7a8b319"},
@@ -4061,7 +4061,7 @@ rpds-py = ">=0.7.0"
 name = "regex"
 version = "2023.12.25"
 description = "Alternative regular expression module, to replace re."
-optional = false
+optional = true
 python-versions = ">=3.7"
 files = [
     {file = "regex-2023.12.25-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:0694219a1d54336fd0445ea382d49d36882415c0134ee1e8332afd1529f0baa5"},
@@ -4184,7 +4184,7 @@ use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 name = "rich"
 version = "13.7.1"
 description = "Render rich text, tables, progress bars, syntax highlighting, markdown and more to the terminal"
-optional = false
+optional = true
 python-versions = ">=3.7.0"
 files = [
     {file = "rich-13.7.1-py3-none-any.whl", hash = "sha256:4edbae314f59eb482f54e9e30bf00d33350aaa94f4bfcd4e9e3110e64d0d7222"},
@@ -4337,7 +4337,7 @@ files = [
 name = "smart-open"
 version = "6.4.0"
 description = "Utils for streaming large files (S3, HDFS, GCS, Azure Blob Storage, gzip, bz2...)"
-optional = false
+optional = true
 python-versions = ">=3.6,<4.0"
 files = [
     {file = "smart_open-6.4.0-py3-none-any.whl", hash = "sha256:8d3ef7e6997e8e42dd55c74166ed21e6ac70664caa32dd940b26d54a8f6b4142"},
@@ -4402,7 +4402,7 @@ files = [
 name = "spacy"
 version = "3.7.4"
 description = "Industrial-strength Natural Language Processing (NLP) in Python"
-optional = false
+optional = true
 python-versions = ">=3.7"
 files = [
     {file = "spacy-3.7.4-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:0f748625192f573c07ddea5fcd324919dbfbf4f4a2f7a1fc731e6dcba7321ea1"},
@@ -4490,7 +4490,7 @@ transformers = ["spacy-transformers (>=1.1.2,<1.4.0)"]
 name = "spacy-legacy"
 version = "3.0.12"
 description = "Legacy registered functions for spaCy backwards compatibility"
-optional = false
+optional = true
 python-versions = ">=3.6"
 files = [
     {file = "spacy-legacy-3.0.12.tar.gz", hash = "sha256:b37d6e0c9b6e1d7ca1cf5bc7152ab64a4c4671f59c85adaf7a3fcb870357a774"},
@@ -4501,7 +4501,7 @@ files = [
 name = "spacy-loggers"
 version = "1.0.5"
 description = "Logging utilities for SpaCy"
-optional = false
+optional = true
 python-versions = ">=3.6"
 files = [
     {file = "spacy-loggers-1.0.5.tar.gz", hash = "sha256:d60b0bdbf915a60e516cc2e653baeff946f0cfc461b452d11a4d5458c6fe5f24"},
@@ -4761,7 +4761,7 @@ sqlcipher = ["sqlcipher3_binary"]
 name = "srsly"
 version = "2.4.8"
 description = "Modern high-performance serialization utilities for Python"
-optional = false
+optional = true
 python-versions = ">=3.6"
 files = [
     {file = "srsly-2.4.8-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:17f3bcb418bb4cf443ed3d4dcb210e491bd9c1b7b0185e6ab10b6af3271e63b2"},
@@ -4826,7 +4826,7 @@ tests = ["cython", "littleutils", "pygments", "pytest", "typeguard"]
 name = "striprtf"
 version = "0.0.26"
 description = "A simple library to convert rtf to text"
-optional = false
+optional = true
 python-versions = "*"
 files = [
     {file = "striprtf-0.0.26-py3-none-any.whl", hash = "sha256:8c8f9d32083cdc2e8bfb149455aa1cc5a4e0a035893bedc75db8b73becb3a1bb"},
@@ -4852,7 +4852,7 @@ test = ["pytest", "tornado (>=4.5)", "typeguard"]
 name = "thinc"
 version = "8.2.3"
 description = "A refreshing functional take on deep learning, compatible with your favorite libraries"
-optional = false
+optional = true
 python-versions = ">=3.6"
 files = [
     {file = "thinc-8.2.3-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:27950dc8a14e1ead09dec329ad98edf1b8f7cc71ec9d5ce5f301073de9d7dadf"},
@@ -4934,7 +4934,7 @@ torch = ["torch (>=1.6.0)"]
 name = "tiktoken"
 version = "0.5.2"
 description = "tiktoken is a fast BPE tokeniser for use with OpenAI's models"
-optional = false
+optional = true
 python-versions = ">=3.8"
 files = [
     {file = "tiktoken-0.5.2-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:8c4e654282ef05ec1bd06ead22141a9a1687991cef2c6a81bdd1284301abc71d"},
@@ -5035,7 +5035,7 @@ files = [
 name = "tqdm"
 version = "4.66.4"
 description = "Fast, Extensible Progress Meter"
-optional = false
+optional = true
 python-versions = ">=3.7"
 files = [
     {file = "tqdm-4.66.4-py3-none-any.whl", hash = "sha256:b75ca56b413b030bc3f00af51fd2c1a1a5eac6a0c1cca83cbb37a5c52abce644"},
@@ -5070,7 +5070,7 @@ test = ["argcomplete (>=3.0.3)", "mypy (>=1.7.0)", "pre-commit", "pytest (>=7.0,
 name = "typer"
 version = "0.9.4"
 description = "Typer, build great CLIs. Easy to code. Based on Python type hints."
-optional = false
+optional = true
 python-versions = ">=3.6"
 files = [
     {file = "typer-0.9.4-py3-none-any.whl", hash = "sha256:aa6c4a4e2329d868b80ecbaf16f807f2b54e192209d7ac9dd42691d63f7a54eb"},
@@ -5131,7 +5131,7 @@ typing-extensions = ">=3.7.4"
 name = "tzdata"
 version = "2024.1"
 description = "Provider of IANA time zone data"
-optional = false
+optional = true
 python-versions = ">=2"
 files = [
     {file = "tzdata-2024.1-py2.py3-none-any.whl", hash = "sha256:9068bc196136463f5245e51efda838afa15aaeca9903f49050dfa2679db4d252"},
@@ -5159,7 +5159,7 @@ zstd = ["zstandard (>=0.18.0)"]
 name = "wasabi"
 version = "1.1.2"
 description = "A lightweight console printing and formatting toolkit"
-optional = false
+optional = true
 python-versions = ">=3.6"
 files = [
     {file = "wasabi-1.1.2-py3-none-any.whl", hash = "sha256:0a3f933c4bf0ed3f93071132c1b87549733256d6c8de6473c5f7ed2e171b5cf9"},
@@ -5184,7 +5184,7 @@ files = [
 name = "weasel"
 version = "0.3.4"
 description = "Weasel: A small and easy workflow system"
-optional = false
+optional = true
 python-versions = ">=3.6"
 files = [
     {file = "weasel-0.3.4-py3-none-any.whl", hash = "sha256:ee48a944f051d007201c2ea1661d0c41035028c5d5a8bcb29a0b10f1100206ae"},
@@ -5410,7 +5410,11 @@ files = [
 docs = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-lint"]
 testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-ignore-flaky", "pytest-mypy", "pytest-ruff (>=0.2.1)"]
 
+[extras]
+crewai = ["crewai"]
+llama-index = ["llama-index"]
+
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<=3.13"
-content-hash = "815e9a52d18d4caf4b0d6eb99d31f272fb0f38d688b40684602f9c72e7855276"
+content-hash = "30394a5e863416ab3a523f060cba1a605606c8cb068a8291a5d7f0e7c1a62c54"

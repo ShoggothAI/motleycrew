@@ -1,8 +1,11 @@
+import sys
 from typing import Optional, Sequence
 import logging
 import hashlib
 from urllib.parse import urlparse
 from langchain_core.messages import BaseMessage
+
+from motleycrew.common.exceptions import ModuleNotInstalledException
 
 
 def configure_logging(verbose: bool = False, debug: bool = False):
@@ -47,3 +50,13 @@ def generate_hex_hash(data: str, length: Optional[int] = None):
 
 def print_passthrough(x):
     return x
+
+
+def ensure_module_is_installed(module_name: str, install_command: str = None) -> None:
+    """Checking the installation of the module
+    Raises:
+        ModuleNotInstalledException
+    """
+    module_path = sys.modules.get(module_name, None)
+    if module_path is None:
+        raise ModuleNotInstalledException(module_name, install_command)

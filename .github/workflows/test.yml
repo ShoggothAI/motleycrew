@@ -49,3 +49,6 @@ jobs:
 
     - name: Run tests
       run: poetry run pytest
+
+    - name: Tests coverage
+      run: poetry run pytest --cov=motleycrew tests/

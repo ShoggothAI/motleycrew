@@ -2,7 +2,6 @@ from dotenv import load_dotenv
 from langchain_community.tools import DuckDuckGoSearchRun
 
 
-from llama_index.core.composability import QASummaryQueryEngineBuilder
 from motleycrew import MotleyCrew
 from motleycrew.agents.llama_index import ReActLlamaIndexMotleyAgent
 from motleycrew.common.utils import configure_logging

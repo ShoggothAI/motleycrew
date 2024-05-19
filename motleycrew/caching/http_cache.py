@@ -19,12 +19,14 @@ from httpx import (
 from curl_cffi.requests import AsyncSession as CurlCFFI__AsyncSession
 from curl_cffi.requests import Headers as CurlCFFI__Headers
 
-from .utils import recursive_hash, hash_code, FakeRLock
+from .utils import recursive_hash, shorten_filename, FakeRLock
 
 CACHE_WHITELIST = []
 CACHE_BLACKLIST = [
     "*//api.lunary.ai/*",
 ]
+
+CACHE_FILENAME_LENGTH_LIMIT = 120
 
 
 class CacheException(Exception):
@@ -128,7 +130,14 @@ class BaseHttpCache(ABC):
 
         # check or create cache dirs
         root_dir = Path(self.root_cache_dir)
-        cache_dir = root_dir / url_parsed.hostname / url_parsed.path.strip("/").replace("/", "_")
+
+        cache_dir = (
+            root_dir
+            / shorten_filename(url_parsed.hostname, length=CACHE_FILENAME_LENGTH_LIMIT)
+            / shorten_filename(
+                url_parsed.path.strip("/").replace("/", "_"), length=CACHE_FILENAME_LENGTH_LIMIT
+            )
+        )
         cache_dir.mkdir(parents=True, exist_ok=True)
 
         # Convert args to a dictionary based on the function's signature
@@ -142,14 +151,14 @@ class BaseHttpCache(ABC):
             kwargs_clone.pop(param, None)
 
         # Create hash based on argument names, argument values, and function source code
-        func_source_code_hash = hash_code(inspect.getsource(func))
-        arg_hash = (
-            recursive_hash(args_dict, ignore_params=self.ignore_params)
-            + recursive_hash(kwargs_clone, ignore_params=self.ignore_params)
-            + func_source_code_hash
-        )
+        hashing_base = {
+            "args": args_dict,
+            "kwargs": kwargs_clone,
+            "func_source_code": inspect.getsource(func),
+        }
+        call_hash = recursive_hash(hashing_base)
 
-        cache_file = cache_dir / "{}.pkl".format(arg_hash)
+        cache_file = cache_dir / "{}.pkl".format(call_hash)
         return cache_file, url
 
     def get_response(self, func: Callable, *args, **kwargs) -> Any:

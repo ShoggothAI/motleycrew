@@ -97,6 +97,7 @@ def main():
 
     # Get the outputs of the task
     print(blog_post_task.output)
+    print(illustration_task.output)
     return illustration_task.output
 
 
@@ -105,3 +106,4 @@ if __name__ == "__main__":
 
     load_dotenv()
     main()
+    print("yay!")

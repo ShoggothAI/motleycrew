@@ -74,11 +74,14 @@ class MotleyCrew:
             for task in available_tasks:
                 logging.info("Processing task: %s", task)
 
-                matching_units = task.identify_candidates()
-                logging.info("Got %s matching units for task %s", len(matching_units), task)
-                if len(matching_units) > 0:
-                    current_unit = matching_units[0]
-                    logging.info("Processing unit: %s", current_unit)
+                next_unit = task.get_next_unit()
+
+                if next_unit is None:
+                    logging.info("Got no matching units for task %s", task)
+                else:
+                    logging.info("Got a matching unit for task %s", task)
+                    current_unit = next_unit
+                    logging.info("Processing task: %s", current_unit)
 
                     extra_tools = self.get_extra_tools(task)
 

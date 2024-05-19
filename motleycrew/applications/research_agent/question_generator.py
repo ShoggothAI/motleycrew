@@ -77,9 +77,7 @@ class QuestionGeneratorTool(MotleyTool):
 class QuestionGeneratorToolInput(BaseModel, arbitrary_types_allowed=True):
     """Input for the Question Generator Tool."""
 
-    task: QuestionGenerationTaskUnit = Field(
-        description="Task with the input question for which to generate subquestions."
-    )
+    question: Question = Field(description="The input question for which to generate subquestions.")
 
 
 def create_question_generator_langchain_tool(
@@ -129,7 +127,7 @@ def create_question_generator_langchain_tool(
     )
 
     return Tool.from_function(
-        func=lambda task: pipeline.invoke({"question": task.question}),
+        func=lambda q: pipeline.invoke({"question": q}),
         name="Question Generator Tool",
         description="""Generate a list of questions based on the input question, 
     and insert them into the knowledge graph.""",

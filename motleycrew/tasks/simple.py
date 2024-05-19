@@ -9,7 +9,7 @@ from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
 from motleycrew.tools import MotleyTool
 
 if TYPE_CHECKING:
-    pass
+    from motleycrew.crew import MotleyCrew
 
 
 PROMPT_TEMPLATE_WITH_DEPS = """
@@ -22,15 +22,15 @@ You must use the results of these upstream tasks:
 
 
 def compose_simple_task_prompt_with_dependencies(
-    description: str, upstream_tasks: List[TaskUnit], default_task_name: str = "Unnamed task"
+    description: str, upstream_task_units: List[TaskUnit], default_task_name: str = "Unnamed task"
 ) -> str:
     upstream_results = []
-    for task in upstream_tasks:
-        if not task.output:
+    for unit in upstream_task_units:
+        if not unit.output:
             continue
 
-        task_name = getattr(task, "name", default_task_name)
-        upstream_results.append(f"##{task_name}\n" + "\n".join(str(out) for out in task.output))
+        unit_name = getattr(unit, "name", default_task_name)
+        upstream_results.append(f"##{unit_name}\n" + "\n".join(str(out) for out in unit.output))
 
     if not upstream_results:
         return description
@@ -51,6 +51,7 @@ class SimpleTaskUnit(TaskUnit):
 class SimpleTask(Task):
     def __init__(
         self,
+        crew: MotleyCrew,
         description: str,
         name: str | None = None,
         agent: MotleyAgentAbstractParent | None = None,
@@ -72,7 +73,8 @@ class SimpleTask(Task):
         self.output = None  # to be filled in by the agent(s) once the task is complete
 
         # This will be set by MotleyCrew.register_task
-        self.crew = None
+        self.crew = crew
+        self.crew.register_tasks([self])
 
     def register_completed_unit(self, task: SimpleTaskUnit) -> None:
         assert isinstance(task, SimpleTaskUnit)
@@ -81,24 +83,23 @@ class SimpleTask(Task):
         self.output = task.output
         self.set_done()
 
-    def identify_candidates(self) -> List[SimpleTaskUnit]:
+    def get_next_unit(self) -> SimpleTaskUnit | None:
         if self.done:
             logging.info("Task %s is already done", self)
-            return []
+            return None
 
         upstream_tasks = self.get_upstream_tasks()
         if not all(task.done for task in upstream_tasks):
-            return []
+            return None
 
         upstream_task_units = [unit for task in upstream_tasks for unit in task.get_units()]
-        return [
-            SimpleTaskUnit(
-                name=self.name,
-                prompt=compose_simple_task_prompt_with_dependencies(
-                    self.description, upstream_task_units
-                ),
-            )
-        ]
+        # print(upstream_tasks)
+        prompt = compose_simple_task_prompt_with_dependencies(self.description, upstream_task_units)
+        # print(prompt)
+        return SimpleTaskUnit(
+            name=self.name,
+            prompt=prompt,
+        )
 
     def get_worker(self, tools: Optional[List[MotleyTool]]) -> MotleyAgentAbstractParent:
         if self.crew is None:

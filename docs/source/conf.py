@@ -12,17 +12,17 @@ import sys
 sys.path.append(os.path.abspath("../.."))
 
 
-project = 'motleycrew'
-copyright = '2024, motleycrew'
-author = 'motleycrew'
-release = '1.0'
+project = "motleycrew"
+copyright = "2024, motleycrew"
+author = "motleycrew"
+release = "1.0"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.autosummary',
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
     "sphinx.ext.coverage",
     "sphinx.ext.napoleon",
     "sphinx_rtd_theme",
@@ -30,7 +30,7 @@ extensions = [
     "nbsphinx_link",
 ]
 
-templates_path = ['_templates', '_templates/autosummary']
+templates_path = ["_templates", "_templates/autosummary"]
 exclude_patterns = []
 autosummary_generate = True
 autodoc_default_options = {
@@ -42,9 +42,10 @@ napoleon_google_docstring = True
 napoleon_numpy_docstring = True
 
 
-
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = 'sphinx_rtd_theme'
-html_static_path = ['_static']
+html_theme = "sphinx_rtd_theme"
+html_static_path = ["_static"]
+
+nbsphinx_allow_errors = True

@@ -5,27 +5,27 @@ from langchain_core.language_models import BaseLanguageModel
 from langchain.agents import create_react_agent
 
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
-from motleycrew.agents.langchain.langchain import LangchainMotleyAgentParent
+from motleycrew.agents.langchain.langchain import LangchainMotleyAgent
 from motleycrew.common import MotleySupportedTool
 
 
-class ReactMotleyAgent(LangchainMotleyAgentParent):
+class ReactMotleyAgent(LangchainMotleyAgent):
     def __new__(
         cls,
         tools: Sequence[MotleySupportedTool],
-        goal: str = "",  # gets ignored at the moment
+        description: str = "",  # gets ignored at the moment
+        name: str | None = None,
         prompt: str | None = None,
         llm: BaseLanguageModel | None = None,
-        delegation: bool | Sequence[MotleyAgentAbstractParent] = False,
         verbose: bool = False,
     ):
         if prompt is None:
-            # TODO: feed goal into the agent's prompt
+            # TODO: feed description into the agent's prompt
             prompt = hub.pull("hwchase17/react")
         return cls.from_function(
-            goal=goal,
+            description=description,
+            name=name,
             llm=llm,
-            delegation=delegation,
             tools=tools,
             prompt=prompt,
             function=create_react_agent,

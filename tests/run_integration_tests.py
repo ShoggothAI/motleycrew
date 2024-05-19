@@ -25,7 +25,7 @@ from motleycrew.caching import (
 )
 
 from examples.delegation_crewai import main as delegation_crewai_main
-from examples.single_llama_index import main as single_llama_index_main
+from examples._test_single_llama_index import main as single_llama_index_main
 
 
 INTEGRATION_TESTS = {
@@ -82,10 +82,7 @@ def get_args_parser():
         help="Update reference data together with the cache",
     )
     parser.add_argument(
-        "--minimal_only",
-        default=False,
-        action="store_true",
-        help="Run minimal tests"
+        "--minimal_only", default=False, action="store_true", help="Run minimal tests"
     )
 
     return parser
@@ -174,7 +171,7 @@ def run_integration_tests(
     golden_dir: str,
     update_golden: bool = False,
     test_name: Optional[str] = None,
-    minimal_only: bool = False
+    minimal_only: bool = False,
 ):
     failed_tests = {}
 
@@ -250,7 +247,7 @@ def main():
         golden_dir=args.golden_dir,
         update_golden=args.update_golden,
         test_name=args.test_name,
-        minimal_only=args.minimal_only
+        minimal_only=args.minimal_only,
     )
 
 

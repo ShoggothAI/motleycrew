@@ -24,7 +24,7 @@ class AnswerTask(Task):
             graph=self.graph_store, answer_length=self.answer_length
         )
 
-    def identify_candidates(self) -> list[QuestionAnsweringTaskUnit]:
+    def get_next_unit(self) -> QuestionAnsweringTaskUnit | None:
         query = (
             "MATCH (n1:{}) "
             "WHERE n1.answer IS NULL AND n1.context IS NOT NULL "
@@ -35,7 +35,10 @@ class AnswerTask(Task):
 
         query_result = self.graph_store.run_cypher_query(query, container=Question)
         logging.info("Available questions: %s", query_result)
-        return [QuestionAnsweringTaskUnit(question=q) for q in query_result]
+        if not query_result:
+            return None
+        else:
+            return QuestionAnsweringTaskUnit(question=query_result[0])
 
     def get_worker(self, tools: Optional[List[MotleyTool]]) -> Runnable:
         return self.answerer

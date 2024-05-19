@@ -12,6 +12,8 @@ from motleycrew.storage import MotleyKuzuGraphStore
 from motleycrew import MotleyCrew
 from motleycrew.agents.crewai import CrewAIMotleyAgent
 from motleycrew.agents.langchain.react import ReactMotleyAgent
+from motleycrew.agents.llama_index import ReActLlamaIndexMotleyAgent
+from motleycrew.tools.image_generation import DallEImageGeneratorTool
 from motleycrew.common.utils import configure_logging
 from motleycrew.tasks import SimpleTask
 
@@ -24,9 +26,18 @@ except ImportError:
     motleycrew_location = os.path.realpath(WORKING_DIR / "..")
     sys.path.append(motleycrew_location)
 
+if "Dropbox" in WORKING_DIR.parts and platform.system() == "Windows":
+    # On Windows, kuzu has file locking issues with Dropbox
+    DB_PATH = os.path.realpath(os.path.expanduser("~") + "/Documents/research_db")
+else:
+    DB_PATH = os.path.realpath(WORKING_DIR / "research_db")
+
 
 def main():
-    crew = MotleyCrew()
+
+    db = kuzu.Database(DB_PATH)
+    graph_store = MotleyKuzuGraphStore(db)
+    crew = MotleyCrew(graph_store=graph_store)
 
     search_tool = DuckDuckGoSearchRun()
 
@@ -36,7 +47,6 @@ def main():
         backstory="""You work at a leading tech think tank.
     Your expertise lies in identifying emerging trends.
     You have a knack for dissecting complex data and presenting actionable insights.""",
-        delegation=False,
         verbose=True,
         tools=[search_tool],
     )
@@ -52,25 +62,10 @@ def main():
     )
 
     # Illustrator
-
-    # Create tasks for your agents
-
-    analysis_report_task = SimpleTask(
-        crew=crew,
-        name="produce comprehensive analysis report on AI advancements",
-        description="""Conduct a comprehensive analysis of the latest advancements in AI in 2024.
-    Identify key trends, breakthrough technologies, and potential industry impacts.
-    Your final answer MUST be a full analysis report""",
-        agent=researcher,
-    )
-
-    literature_summary_task = SimpleTask(
-        crew=crew,
-        name="provide a literature summary of recent papers on AI",
-        description="""Conduct a comprehensive literature review of the latest advancements in AI in 2024.
-    Identify key papers, researchers, and companies in the space.
-    Your final answer MUST be a full literature review with citations""",
-        agent=researcher,
+    illustrator = ReActLlamaIndexMotleyAgent(
+        name="Illustrator",
+        description="Create beautiful and insightful illustrations for a blog post",
+        tools=[DallEImageGeneratorTool(os.path.realpath("./images"))],
     )
 
     blog_post_task = SimpleTask(
@@ -80,18 +75,30 @@ def main():
     post that highlights the most significant AI advancements.
     Your post should be informative yet accessible, catering to a tech-savvy audience.
     Make it sound cool, avoid complex words so it doesn't sound like AI.
-    Create a blog post of at least 4 paragraphs.""",
+    Create a blog post of at least 4 paragraphs, in markdown format.""",
         agent=writer,
     )
 
-    [analysis_report_task, literature_summary_task] >> blog_post_task
+    illustration_task = SimpleTask(
+        crew=crew,
+        name="create an illustration for the blog post",
+        description="""Create beautiful and insightful illustrations to accompany the blog post on AI advancements.
+        The blog post will be provided to you in markdown format.
+        Make sure to use the illustration tool provided to you, once per illustration, and embed the URL provided by
+        the tool into the blog post.""",
+        agent=illustrator,
+    )
+
+    # Make sure the illustration task runs only once the blog post task is complete, and gets its input
+    blog_post_task >> illustration_task
 
     # Get your crew to work!
     result = crew.run()
 
     # Get the outputs of the task
     print(blog_post_task.output)
-    return blog_post_task.output
+    print(illustration_task.output)
+    return illustration_task.output
 
 
 if __name__ == "__main__":
@@ -99,3 +106,4 @@ if __name__ == "__main__":
 
     load_dotenv()
     main()
+    print("yay!")

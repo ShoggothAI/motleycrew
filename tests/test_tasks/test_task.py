@@ -13,7 +13,7 @@ from motleycrew.common.exceptions import TaskDependencyCycleError
 
 
 class TaskMock(Task):
-    def identify_candidates(self) -> List[TaskUnitType]:
+    def get_next_unit(self) -> List[TaskUnitType]:
         pass
 
     def get_worker(self, tools: Optional[List[MotleyTool]]) -> Runnable:

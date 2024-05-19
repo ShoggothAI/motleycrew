@@ -13,7 +13,7 @@ from motleycrew import MotleyCrew
 from motleycrew.agents.crewai import CrewAIMotleyAgent
 from motleycrew.agents.langchain.react import ReactMotleyAgent
 from motleycrew.common.utils import configure_logging
-from motleycrew.tasks import SimpleTaskRecipe
+from motleycrew.tasks import SimpleTask
 
 WORKING_DIR = Path(os.path.realpath("."))
 
@@ -55,7 +55,7 @@ def main():
 
     # Create tasks for your agents
 
-    analysis_report_task = SimpleTaskRecipe(
+    analysis_report_task = SimpleTask(
         crew=crew,
         name="produce comprehensive analysis report on AI advancements",
         description="""Conduct a comprehensive analysis of the latest advancements in AI in 2024.
@@ -64,7 +64,7 @@ def main():
         agent=researcher,
     )
 
-    literature_summary_task = SimpleTaskRecipe(
+    literature_summary_task = SimpleTask(
         crew=crew,
         name="provide a literature summary of recent papers on AI",
         description="""Conduct a comprehensive literature review of the latest advancements in AI in 2024.
@@ -73,7 +73,7 @@ def main():
         agent=researcher,
     )
 
-    blog_post_task = SimpleTaskRecipe(
+    blog_post_task = SimpleTask(
         crew=crew,
         name="produce blog post on AI advancements",
         description="""Using the insights provided by a thorough web search, develop an engaging blog

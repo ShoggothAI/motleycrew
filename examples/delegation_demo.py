@@ -15,7 +15,7 @@ from motleycrew.agents.langchain.react import ReactMotleyAgent
 from motleycrew.agents.llama_index import ReActLlamaIndexMotleyAgent
 from motleycrew.tools.image_generation import DallEImageGeneratorTool
 from motleycrew.common.utils import configure_logging
-from motleycrew.tasks import SimpleTaskRecipe
+from motleycrew.tasks import SimpleTask
 
 WORKING_DIR = Path(os.path.realpath("."))
 
@@ -68,7 +68,7 @@ def main():
         tools=[DallEImageGeneratorTool(os.path.realpath("./images"))],
     )
 
-    blog_post_task = SimpleTaskRecipe(
+    blog_post_task = SimpleTask(
         crew=crew,
         name="produce blog post on AI advancements",
         description="""Using the insights provided by a thorough web search, develop an engaging blog
@@ -79,7 +79,7 @@ def main():
         agent=writer,
     )
 
-    illustration_task = SimpleTaskRecipe(
+    illustration_task = SimpleTask(
         crew=crew,
         name="create an illustration for the blog post",
         description="""Create beautiful and insightful illustrations to accompany the blog post on AI advancements.

@@ -4,27 +4,27 @@ from langchain_core.runnables import Runnable
 
 from motleycrew.crew import MotleyCrew
 from motleycrew.tools import MotleyTool
-from motleycrew.tasks import TaskRecipe
-from motleycrew.tasks.task import TaskType
 from motleycrew.tasks import Task
-from motleycrew.applications.research_agent.question import Question, QuestionAnsweringTask
+from motleycrew.tasks.task_unit import TaskUnitType
+from motleycrew.tasks import TaskUnit
+from motleycrew.applications.research_agent.question import Question, QuestionAnsweringTaskUnit
 from motleycrew.applications.research_agent.question_answerer import AnswerSubQuestionTool
 from motleycrew.storage import MotleyGraphStore
 
 
-class AnswerTaskRecipe(TaskRecipe):
+class AnswerTask(Task):
     def __init__(
         self,
         crew: MotleyCrew,
         answer_length: int = 1000,
     ):
-        super().__init__("AnswerTaskRecipe", crew)
+        super().__init__("AnswerTask", crew)
         self.answer_length = answer_length
         self.answerer = AnswerSubQuestionTool(
             graph=self.graph_store, answer_length=self.answer_length
         )
 
-    def get_next_task(self) -> QuestionAnsweringTask | None:
+    def get_next_unit(self) -> QuestionAnsweringTaskUnit | None:
         query = (
             "MATCH (n1:{}) "
             "WHERE n1.answer IS NULL AND n1.context IS NOT NULL "
@@ -38,7 +38,7 @@ class AnswerTaskRecipe(TaskRecipe):
         if not query_result:
             return None
         else:
-            return QuestionAnsweringTask(question=query_result[0])
+            return QuestionAnsweringTaskUnit(question=query_result[0])
 
     def get_worker(self, tools: Optional[List[MotleyTool]]) -> Runnable:
         return self.answerer

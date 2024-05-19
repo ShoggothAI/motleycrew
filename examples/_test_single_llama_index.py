@@ -6,7 +6,7 @@ from llama_index.core.composability import QASummaryQueryEngineBuilder
 from motleycrew import MotleyCrew
 from motleycrew.agents.llama_index import ReActLlamaIndexMotleyAgent
 from motleycrew.common.utils import configure_logging
-from motleycrew.tasks import SimpleTaskRecipe
+from motleycrew.tasks import SimpleTask
 
 
 def main():
@@ -23,7 +23,7 @@ def main():
     crew = MotleyCrew()
 
     # Create tasks for your agents
-    task = SimpleTaskRecipe(
+    task = SimpleTask(
         crew=crew,
         name="produce comprehensive analysis report on AI advancements",
         description="""Conduct a comprehensive analysis of the latest advancements in AI in 2024.

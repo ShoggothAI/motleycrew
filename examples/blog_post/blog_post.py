@@ -7,7 +7,7 @@ from langchain_core.prompts.chat import ChatPromptTemplate
 from motleycrew.agents.langchain.react import ReactMotleyAgent
 
 from motleycrew.tools.llm_tool import LLMTool
-from motleycrew import MotleyCrew, TaskRecipe
+from motleycrew import MotleyCrew, Task
 
 from .blog_post_input import text
 
@@ -110,7 +110,7 @@ writer = ReactMotleyAgent(
 
 # Create tasks for your agents
 crew = MotleyCrew()
-task1 = TaskRecipe(
+task1 = Task(
     crew=crew,
     name="Write a blog post from the provided information",
     description=f"""Write a blog post of at most {max_words} words and at least {min_words}

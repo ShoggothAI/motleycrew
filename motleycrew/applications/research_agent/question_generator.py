@@ -20,7 +20,7 @@ from motleycrew.common.utils import print_passthrough
 from motleycrew.storage import MotleyGraphStore
 
 
-from motleycrew.applications.research_agent.question import Question, QuestionGenerationTask
+from motleycrew.applications.research_agent.question import Question, QuestionGenerationTaskUnit
 
 IS_SUBQUESTION_PREDICATE = "is_subquestion"
 

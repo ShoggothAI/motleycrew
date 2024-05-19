@@ -12,6 +12,8 @@ from motleycrew.storage import MotleyKuzuGraphStore
 from motleycrew import MotleyCrew
 from motleycrew.agents.crewai import CrewAIMotleyAgent
 from motleycrew.agents.langchain.react import ReactMotleyAgent
+from motleycrew.agents.llama_index import ReActLlamaIndexMotleyAgent
+from motleycrew.tools.image_generation import DallEImageGeneratorTool
 from motleycrew.common.utils import configure_logging
 from motleycrew.tasks import SimpleTaskRecipe
 
@@ -46,27 +48,25 @@ def main():
     Your expertise lies in identifying emerging trends.
     You have a knack for dissecting complex data and presenting actionable insights.""",
         verbose=True,
-        delegation=False,
         tools=[search_tool],
     )
 
     # You can give agents as tools to other agents
     writer = ReactMotleyAgent(
         name="AI writer agent",
-        goal="""Conduct a comprehensive analysis of the latest advancements in AI in 2024.
+        description="""Conduct a comprehensive analysis of the latest advancements in AI in 2024.
                   Identify key trends, breakthrough technologies, and potential industry impacts.
                   Your final answer MUST be a full analysis report""",
         tools=[researcher],
         verbose=True,
-        delegation=True,
     )
 
     # Illustrator
-    illustrator = LlamaIndexMotleyAgent(
-        role="Illustrator",
-        goal="Create an engaging blog post on AI advancements",
-
-
+    illustrator = ReActLlamaIndexMotleyAgent(
+        name="Illustrator",
+        description="Create beautiful and insightful illustrations for a blog post",
+        tools=[DallEImageGeneratorTool(os.path.realpath("./images"))],
+    )
 
     blog_post_task = SimpleTaskRecipe(
         crew=crew,
@@ -75,18 +75,29 @@ def main():
     post that highlights the most significant AI advancements.
     Your post should be informative yet accessible, catering to a tech-savvy audience.
     Make it sound cool, avoid complex words so it doesn't sound like AI.
-    Create a blog post of at least 4 paragraphs.""",
+    Create a blog post of at least 4 paragraphs, in markdown format.""",
         agent=writer,
     )
 
-    [analysis_report_task, literature_summary_task] >> blog_post_task
+    illustration_task = SimpleTaskRecipe(
+        crew=crew,
+        name="create an illustration for the blog post",
+        description="""Create beautiful and insightful illustrations to accompany the blog post on AI advancements.
+        The blog post will be provided to you in markdown format.
+        Make sure to use the illustration tool provided to you, once per illustration, and embed the URL provided by
+        the tool into the blog post.""",
+        agent=illustrator,
+    )
+
+    # Make sure the illustration task runs only once the blog post task is complete, and gets its input
+    blog_post_task >> illustration_task
 
     # Get your crew to work!
     result = crew.run()
 
     # Get the outputs of the task
     print(blog_post_task.output)
-    return blog_post_task.output
+    return illustration_task.output
 
 
 if __name__ == "__main__":

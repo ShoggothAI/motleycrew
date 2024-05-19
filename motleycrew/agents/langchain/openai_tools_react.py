@@ -210,7 +210,7 @@ class ReactOpenAIToolsAgent(LangchainMotleyAgent):
         verbose: bool = False,
     ):
         return cls.from_function(
-            goal=goal,
+            description=goal,
             name=name,
             llm=llm,
             tools=tools,

@@ -24,18 +24,9 @@ except ImportError:
     motleycrew_location = os.path.realpath(WORKING_DIR / "..")
     sys.path.append(motleycrew_location)
 
-if "Dropbox" in WORKING_DIR.parts and platform.system() == "Windows":
-    # On Windows, kuzu has file locking issues with Dropbox
-    DB_PATH = os.path.realpath(os.path.expanduser("~") + "/Documents/research_db")
-else:
-    DB_PATH = os.path.realpath(WORKING_DIR / "research_db")
-
 
 def main():
-
-    db = kuzu.Database(DB_PATH)
-    graph_store = MotleyKuzuGraphStore(db)
-    crew = MotleyCrew(graph_store=graph_store)
+    crew = MotleyCrew()
 
     search_tool = DuckDuckGoSearchRun()
 
@@ -53,7 +44,7 @@ def main():
     # You can give agents as tools to other agents
     writer = ReactMotleyAgent(
         name="AI writer agent",
-        goal="""Conduct a comprehensive analysis of the latest advancements in AI in 2024.
+        description="""Conduct a comprehensive analysis of the latest advancements in AI in 2024.
                   Identify key trends, breakthrough technologies, and potential industry impacts.
                   Your final answer MUST be a full analysis report""",
         tools=[researcher],

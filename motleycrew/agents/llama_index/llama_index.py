@@ -9,7 +9,7 @@ from langchain_core.runnables import RunnableConfig
 
 from motleycrew.agents.parent import MotleyAgentParent
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
-from motleycrew.tasks import Task
+from motleycrew.tasks import TaskUnit
 from motleycrew.common import MotleySupportedTool
 from motleycrew.common import MotleyAgentFactory
 from motleycrew.common.utils import ensure_module_is_installed

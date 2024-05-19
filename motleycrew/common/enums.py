@@ -11,7 +11,7 @@ class GraphStoreType:
     KUZU = "kuzu"
 
 
-class TaskStatus:
+class TaskUnitStatus:
     PENDING = "pending"
     RUNNING = "running"
     DONE = "done"

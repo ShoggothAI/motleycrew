@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 
-from motleycrew import MotleyCrew, TaskRecipe
+from motleycrew import MotleyCrew, Task
 from motleycrew.agents.crewai import CrewAIMotleyAgent
 from motleycrew.tools.python_repl import create_repl_tool
 from motleycrew.common.utils import configure_logging

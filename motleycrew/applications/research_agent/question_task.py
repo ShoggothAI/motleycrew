@@ -3,23 +3,23 @@ from typing import List, Optional
 
 from langchain_core.runnables import Runnable
 
-from motleycrew.tasks import TaskRecipe
-from ...tasks.task import TaskType
+from motleycrew.tasks import Task
+from ...tasks.task_unit import TaskUnitType
 from motleycrew.tools import MotleyTool
 from motleycrew.crew import MotleyCrew
-from .question import Question, QuestionGenerationTask
+from .question import Question, QuestionGenerationTaskUnit
 from .question_generator import QuestionGeneratorTool
 from .question_prioritizer import QuestionPrioritizerTool
 
 
-class QuestionTaskRecipe(TaskRecipe):
+class QuestionTask(Task):
     def __init__(
         self,
         question: str,
         query_tool: MotleyTool,
         crew: MotleyCrew,
         max_iter: int = 10,
-        name: str = "QuestionTaskRecipe",
+        name: str = "QuestionTask",
     ):
         # Need to supply the crew already at this stage
         # because need to use the graph store in constructor
@@ -34,7 +34,7 @@ class QuestionTaskRecipe(TaskRecipe):
             query_tool=query_tool, graph=self.graph_store
         )
 
-    def get_next_task(self) -> QuestionGenerationTask | None:
+    def get_next_unit(self) -> QuestionGenerationTaskUnit | None:
         if self.done:
             return None
 
@@ -51,9 +51,9 @@ class QuestionTaskRecipe(TaskRecipe):
             }
         )
         logging.info("Most pertinent question according to the tool: %s", most_pertinent_question)
-        return QuestionGenerationTask(question=most_pertinent_question)
+        return QuestionGenerationTaskUnit(question=most_pertinent_question)
 
-    def register_completed_task(self, task: TaskType) -> None:
+    def register_completed_unit(self, task: TaskUnitType) -> None:
         logging.info("==== Completed iteration %s of %s ====", self.n_iter + 1, self.max_iter)
         self.n_iter += 1
         if self.n_iter >= self.max_iter:

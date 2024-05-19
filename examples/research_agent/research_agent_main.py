@@ -9,8 +9,8 @@ from dotenv import load_dotenv
 from motleycrew import MotleyCrew
 from motleycrew.storage import MotleyKuzuGraphStore
 from motleycrew.common.utils import configure_logging
-from motleycrew.applications.research_agent.question_task_recipe import QuestionTaskRecipe
-from motleycrew.applications.research_agent.answer_task_recipe import AnswerTaskRecipe
+from motleycrew.applications.research_agent.question_task import QuestionTask
+from motleycrew.applications.research_agent.answer_task import AnswerTask
 
 from motleycrew.tools.simple_retriever_tool import SimpleRetrieverTool
 
@@ -42,12 +42,12 @@ def main():
     graph_store = MotleyKuzuGraphStore(db)
     crew = MotleyCrew(graph_store=graph_store)
 
-    question_recipe = QuestionTaskRecipe(
+    question_task = QuestionTask(
         crew=crew, question=QUESTION, query_tool=query_tool, max_iter=MAX_ITER
     )
-    answer_recipe = AnswerTaskRecipe(answer_length=ANSWER_LENGTH, crew=crew)
+    answer_task = AnswerTask(answer_length=ANSWER_LENGTH, crew=crew)
 
-    question_recipe >> answer_recipe
+    question_task >> answer_task
 
     done_tasks = crew.run()
 

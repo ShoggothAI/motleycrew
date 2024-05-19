@@ -2,8 +2,8 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any, Sequence, List, Optional
 
-from motleycrew.tasks.task_recipe import TaskRecipe
-from motleycrew.tasks import Task
+from motleycrew.tasks.task import Task
+from motleycrew.tasks import TaskUnit
 
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
 from motleycrew.tools import MotleyTool
@@ -22,15 +22,15 @@ You must use the results of these upstream tasks:
 
 
 def compose_simple_task_prompt_with_dependencies(
-    description: str, upstream_tasks: List[Task], default_task_name: str = "Unnamed task"
+    description: str, upstream_task_units: List[TaskUnit], default_task_name: str = "Unnamed task"
 ) -> str:
     upstream_results = []
-    for task in upstream_tasks:
-        if not task.output:
+    for unit in upstream_task_units:
+        if not unit.output:
             continue
 
-        task_name = getattr(task, "name", default_task_name)
-        upstream_results.append(f"##{task_name}\n" + "\n".join(str(out) for out in task.output))
+        unit_name = getattr(unit, "name", default_task_name)
+        upstream_results.append(f"##{unit_name}\n" + "\n".join(str(out) for out in unit.output))
 
     if not upstream_results:
         return description
@@ -42,13 +42,13 @@ def compose_simple_task_prompt_with_dependencies(
     )
 
 
-class SimpleTask(Task):
+class SimpleTaskUnit(TaskUnit):
     name: str
     prompt: str
     message_history: List[str] = []
 
 
-class SimpleTaskRecipe(TaskRecipe):
+class SimpleTask(Task):
     def __init__(
         self,
         crew: MotleyCrew,
@@ -74,29 +74,29 @@ class SimpleTaskRecipe(TaskRecipe):
 
         # This will be set by MotleyCrew.register_task
         self.crew = crew
-        self.crew.register_task_recipes([self])
+        self.crew.register_tasks([self])
 
-    def register_completed_task(self, task: SimpleTask) -> None:
-        assert isinstance(task, SimpleTask)
+    def register_completed_unit(self, task: SimpleTaskUnit) -> None:
+        assert isinstance(task, SimpleTaskUnit)
         assert task.done
 
         self.output = task.output
         self.set_done()
 
-    def get_next_task(self) -> SimpleTask | None:
+    def get_next_unit(self) -> SimpleTaskUnit | None:
         if self.done:
             logging.info("Task %s is already done", self)
             return None
 
-        upstream_task_recipes = self.get_upstream_task_recipes()
-        if not all(recipe.done for recipe in upstream_task_recipes):
+        upstream_tasks = self.get_upstream_tasks()
+        if not all(task.done for task in upstream_tasks):
             return None
 
-        upstream_tasks = [task for recipe in upstream_task_recipes for task in recipe.get_tasks()]
+        upstream_task_units = [unit for task in upstream_tasks for unit in task.get_units()]
         # print(upstream_tasks)
-        prompt = compose_simple_task_prompt_with_dependencies(self.description, upstream_tasks)
+        prompt = compose_simple_task_prompt_with_dependencies(self.description, upstream_task_units)
         # print(prompt)
-        return SimpleTask(
+        return SimpleTaskUnit(
             name=self.name,
             prompt=prompt,
         )

@@ -12,7 +12,7 @@ from motleycrew.tools import MotleyTool, LLMTool
 from motleycrew.storage import MotleyGraphStore
 from motleycrew.common.utils import print_passthrough
 
-from motleycrew.applications.research_agent.question import Question, QuestionAnsweringTask
+from motleycrew.applications.research_agent.question import Question, QuestionAnsweringTaskUnit
 
 
 _default_prompt = PromptTemplate.from_template(

@@ -1,6 +1,6 @@
+from motleycrew.tasks.task_unit import TaskUnit
+from motleycrew.tasks.task_unit import TaskUnitType
 from motleycrew.tasks.task import Task
-from motleycrew.tasks.task import TaskType
-from motleycrew.tasks.task_recipe import TaskRecipe
-from motleycrew.tasks.simple import SimpleTaskRecipe
+from motleycrew.tasks.simple import SimpleTask
 
-__all__ = ["Task", "TaskType", "TaskRecipe", "SimpleTaskRecipe"]
+__all__ = ["TaskUnit", "TaskUnitType", "Task", "SimpleTask"]

@@ -37,7 +37,7 @@ def recursive_hash(value, depth=0, ignore_params=[]):
             ).encode()
         ).hexdigest()
     elif hasattr(value, "__dict__") and value.__class__.__name__ not in ignore_params:
-        return recursive_hash(value.__dict__, depth + 1, ignore_params)
+        return recursive_hash(value.__dict__, depth, ignore_params)
     else:
         return hashlib.sha256("unknown".encode()).hexdigest()
 

@@ -15,7 +15,7 @@ from langchain.agents.format_scratchpad.openai_tools import (
 from langchain.agents.output_parsers.openai_tools import OpenAIToolsAgentOutputParser
 
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
-from motleycrew.agents.langchain.langchain import LangchainMotleyAgentParent
+from motleycrew.agents.langchain.langchain import LangchainMotleyAgent
 from motleycrew.common import MotleySupportedTool
 from motleycrew.common.utils import print_passthrough
 
@@ -199,7 +199,7 @@ def add_messages_to_action(
     return actions
 
 
-class ReactOpenAIToolsAgent(LangchainMotleyAgentParent):
+class ReactOpenAIToolsAgent(LangchainMotleyAgent):
     def __new__(
         cls,
         tools: Sequence[MotleySupportedTool],

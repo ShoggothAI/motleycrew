@@ -5,6 +5,7 @@ from motleycrew import MotleyCrew
 from motleycrew.agents.langchain.openai_tools_react import ReactOpenAIToolsAgent
 from motleycrew.agents.langchain.react import ReactMotleyAgent
 from motleycrew.common.utils import configure_logging
+from motleycrew.tasks import SimpleTaskRecipe
 from motleycrew.caching import enable_cache
 
 
@@ -20,7 +21,8 @@ def main():
 
     for r in [researcher, researcher2]:
         crew = MotleyCrew()
-        task = crew.create_simple_task(
+        task = SimpleTaskRecipe(
+            crew=crew,
             name="produce comprehensive analysis report on AI advancements",
             description="""Conduct a comprehensive analysis of the latest advancements in AI in 2024.
           Identify key trends, breakthrough technologies, and potential industry impacts.

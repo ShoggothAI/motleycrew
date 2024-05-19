@@ -27,12 +27,13 @@ motleycrew
    :toctree:
    :recursive:
 
-   motleycrew.agent
+   motleycrew.agents
+   motleycrew.applications
    motleycrew.caching
    motleycrew.common
    motleycrew.crew
    motleycrew.storage
    motleycrew.tasks
-   motleycrew.tool
+   motleycrew.tools
    motleycrew.tracking
 

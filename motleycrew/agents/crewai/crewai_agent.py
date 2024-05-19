@@ -15,7 +15,7 @@ class CrewAIMotleyAgent(CrewAIMotleyAgentParent):
         role: str,
         goal: str,
         backstory: str,
-        delegation: bool | Sequence[MotleyAgentAbstractParent] = False,
+        delegation: bool = False,
         tools: Sequence[MotleySupportedTool] | None = None,
         llm: Optional[Any] = None,
         verbose: bool = False,
@@ -27,6 +27,11 @@ class CrewAIMotleyAgent(CrewAIMotleyAgentParent):
             # CrewAI uses Langchain LLMs by default
             llm = init_llm(llm_framework=LLMFramework.LANGCHAIN)
 
+        if delegation:
+            raise ValueError(
+                "'delegation' is not supported, pass the agents you want to delegate to as tools instead."
+            )
+
         def agent_factory(tools: dict[str, MotleyTool]):
             langchain_tools = [t.to_langchain_tool() for t in tools.values()]
             agent = CrewAIAgentWithConfig(
@@ -34,7 +39,7 @@ class CrewAIMotleyAgent(CrewAIMotleyAgentParent):
                 goal=goal,
                 backstory=backstory,
                 verbose=verbose,
-                allow_delegation=False,  # Delegation handled by MotleyAgentParent
+                allow_delegation=False,
                 tools=langchain_tools,
                 llm=llm,
             )
@@ -44,7 +49,6 @@ class CrewAIMotleyAgent(CrewAIMotleyAgentParent):
             goal=goal,
             name=role,
             agent_factory=agent_factory,
-            delegation=delegation,
             tools=tools,
             verbose=verbose,
         )

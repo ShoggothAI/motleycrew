@@ -1,7 +1,6 @@
 from pathlib import Path
 import shutil
 import os
-import logging
 import platform
 
 import kuzu
@@ -13,7 +12,7 @@ from motleycrew.common.utils import configure_logging
 from motleycrew.applications.research_agent.question_task import QuestionTask
 from motleycrew.applications.research_agent.answer_task import AnswerTask
 
-from retriever_tool import make_retriever_tool
+from motleycrew.tools.simple_retriever_tool import SimpleRetrieverTool
 
 
 WORKING_DIR = Path(__file__).parent
@@ -37,11 +36,10 @@ def main():
 
     shutil.rmtree(DB_PATH)
 
-    query_tool = make_retriever_tool(DATA_DIR, PERSIST_DIR, return_strings_only=True)
+    query_tool = SimpleRetrieverTool(DATA_DIR, PERSIST_DIR, return_strings_only=True)
 
     db = kuzu.Database(DB_PATH)
     graph_store = MotleyKuzuGraphStore(db)
-
     crew = MotleyCrew(graph_store=graph_store)
 
     question_task = QuestionTask(

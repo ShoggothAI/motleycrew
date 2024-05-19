@@ -16,21 +16,19 @@ from motleycrew.common import LLMFramework
 from motleycrew.common.llms import init_llm
 
 
-class LangchainMotleyAgentParent(MotleyAgentParent):
+class LangchainMotleyAgent(MotleyAgentParent):
     def __init__(
         self,
-        goal: str,
+        description: str,
         name: str | None = None,
         agent_factory: MotleyAgentFactory | None = None,
-        delegation: bool | Sequence[MotleyAgentAbstractParent] = False,
         tools: Sequence[MotleySupportedTool] | None = None,
         verbose: bool = False,
     ):
         super().__init__(
-            goal=goal,
+            description=description,
             name=name,
             agent_factory=agent_factory,
-            delegation=delegation,
             tools=tools,
             verbose=verbose,
         )
@@ -58,14 +56,15 @@ class LangchainMotleyAgentParent(MotleyAgentParent):
     @staticmethod
     def from_function(
         function: Callable[..., Any],
-        goal: str,
+        description: str,
+        name: str | None = None,
         llm: BaseLanguageModel | None = None,
         delegation: bool | Sequence[MotleyAgentAbstractParent] = False,
         tools: Sequence[MotleySupportedTool] | None = None,
         prompt: ChatPromptTemplate | Sequence[ChatPromptTemplate] | None = None,
         require_tools: bool = False,
         verbose: bool = False,
-    ) -> "LangchainMotleyAgentParent":
+    ) -> "LangchainMotleyAgent":
         if llm is None:
             llm = init_llm(llm_framework=LLMFramework.LANGCHAIN)
 
@@ -74,7 +73,7 @@ class LangchainMotleyAgentParent(MotleyAgentParent):
 
         def agent_factory(tools: dict[str, MotleyTool]):
             langchain_tools = [t.to_langchain_tool() for t in tools.values()]
-            # TODO: feed goal into the agent's prompt
+            # TODO: feed description into the agent's prompt
             agent = function(llm=llm, tools=langchain_tools, prompt=prompt)
             agent_executor = AgentExecutor(
                 agent=agent,
@@ -83,10 +82,10 @@ class LangchainMotleyAgentParent(MotleyAgentParent):
             )
             return agent_executor
 
-        return LangchainMotleyAgentParent(
-            goal=goal,
+        return LangchainMotleyAgent(
+            description=description,
+            name=name,
             agent_factory=agent_factory,
-            delegation=delegation,
             tools=tools,
             verbose=verbose,
         )
@@ -95,10 +94,9 @@ class LangchainMotleyAgentParent(MotleyAgentParent):
     def from_agent(
         agent: AgentExecutor,
         goal: str,
-        delegation: bool | Sequence[MotleyAgentAbstractParent] = False,
         tools: Sequence[MotleySupportedTool] | None = None,
         verbose: bool = False,
-    ) -> "LangchainMotleyAgentParent":
+    ) -> "LangchainMotleyAgent":
         # TODO: do we really need to unite the tools implicitly like this?
         # TODO: confused users might pass tools both ways at the same time
         # TODO: and we will silently unite them, which can have side effects (e.g. doubled tools)
@@ -106,8 +104,6 @@ class LangchainMotleyAgentParent(MotleyAgentParent):
         if tools or agent.tools:
             tools = list(tools or []) + list(agent.tools or [])
 
-        wrapped_agent = LangchainMotleyAgentParent(
-            goal=goal, delegation=delegation, tools=tools, verbose=verbose
-        )
+        wrapped_agent = LangchainMotleyAgent(description=goal, tools=tools, verbose=verbose)
         wrapped_agent._agent = agent
         return wrapped_agent

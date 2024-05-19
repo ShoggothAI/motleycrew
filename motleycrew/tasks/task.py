@@ -134,7 +134,7 @@ class Task(ABC, Generic[TaskUnitType]):
         pass
 
     @abstractmethod
-    def identify_candidates(self) -> List[TaskUnitType]:
+    def get_next_unit(self) -> TaskUnitType | None:
         pass
 
     @abstractmethod

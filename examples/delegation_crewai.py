@@ -1,38 +1,62 @@
+from pathlib import Path
+import os
+import sys
+import platform
+
 from dotenv import load_dotenv
 from langchain_community.tools import DuckDuckGoSearchRun
 
+import kuzu
+from motleycrew.storage import MotleyKuzuGraphStore
+
 from motleycrew import MotleyCrew
 from motleycrew.agents.crewai import CrewAIMotleyAgent
+from motleycrew.agents.langchain.react import ReactMotleyAgent
 from motleycrew.common.utils import configure_logging
+from motleycrew.tasks import SimpleTask
+
+WORKING_DIR = Path(os.path.realpath("."))
+
+try:
+    from motleycrew import MotleyCrew
+except ImportError:
+    # if we are running this from source
+    motleycrew_location = os.path.realpath(WORKING_DIR / "..")
+    sys.path.append(motleycrew_location)
 
 
 def main():
+    crew = MotleyCrew()
+
     search_tool = DuckDuckGoSearchRun()
 
     researcher = CrewAIMotleyAgent(
         role="Senior Research Analyst",
-        goal="Uncover cutting-edge developments in AI and data science",
+        goal="Uncover cutting-edge developments in AI and data science, doing web search if necessary",
         backstory="""You work at a leading tech think tank.
     Your expertise lies in identifying emerging trends.
     You have a knack for dissecting complex data and presenting actionable insights.""",
-        verbose=True,
         delegation=False,
+        verbose=True,
         tools=[search_tool],
     )
 
-    writer = CrewAIMotleyAgent(
-        role="Tech Content Strategist",
-        goal="Craft compelling content on tech advancements",
-        backstory="""You are a renowned Content Strategist, known for your insightful and engaging articles.
-    You transform complex concepts into compelling narratives.""",
+    # You can give agents as tools to other agents
+    writer = ReactMotleyAgent(
+        name="AI writer agent",
+        description="""Conduct a comprehensive analysis of the latest advancements in AI in 2024.
+                  Identify key trends, breakthrough technologies, and potential industry impacts.
+                  Your final answer MUST be a full analysis report""",
+        tools=[researcher],
         verbose=True,
-        delegation=True,
     )
 
-    # Create tasks for your agents
-    crew = MotleyCrew()
+    # Illustrator
 
-    analysis_report_task = crew.create_simple_task(
+    # Create tasks for your agents
+
+    analysis_report_task = SimpleTask(
+        crew=crew,
         name="produce comprehensive analysis report on AI advancements",
         description="""Conduct a comprehensive analysis of the latest advancements in AI in 2024.
     Identify key trends, breakthrough technologies, and potential industry impacts.
@@ -40,7 +64,8 @@ def main():
         agent=researcher,
     )
 
-    literature_summary_task = crew.create_simple_task(
+    literature_summary_task = SimpleTask(
+        crew=crew,
         name="provide a literature summary of recent papers on AI",
         description="""Conduct a comprehensive literature review of the latest advancements in AI in 2024.
     Identify key papers, researchers, and companies in the space.
@@ -48,7 +73,8 @@ def main():
         agent=researcher,
     )
 
-    blog_post_task = crew.create_simple_task(
+    blog_post_task = SimpleTask(
+        crew=crew,
         name="produce blog post on AI advancements",
         description="""Using the insights provided by a thorough web search, develop an engaging blog
     post that highlights the most significant AI advancements.

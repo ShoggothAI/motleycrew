@@ -151,12 +151,8 @@ class BaseHttpCache(ABC):
             kwargs_clone.pop(param, None)
 
         # Create hash based on argument names, argument values, and function source code
-        hashing_base = {
-            "args": args_dict,
-            "kwargs": kwargs_clone,
-            "func_source_code": inspect.getsource(func),
-        }
-        call_hash = recursive_hash(hashing_base)
+        hashing_base = [args_dict, kwargs_clone, inspect.getsource(func)]
+        call_hash = recursive_hash(hashing_base, ignore_params=self.ignore_params)
 
         cache_file = cache_dir / "{}.pkl".format(call_hash)
         return cache_file, url

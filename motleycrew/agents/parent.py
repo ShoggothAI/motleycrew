@@ -19,14 +19,12 @@ class MotleyAgentParent(MotleyAgentAbstractParent):
         goal: str,
         name: str | None = None,
         agent_factory: MotleyAgentFactory | None = None,
-        delegation: bool | Sequence[MotleyAgentAbstractParent] = False,
         tools: Sequence[MotleySupportedTool] | None = None,
         verbose: bool = False,
     ):
         self.name = name or goal
         self.description = goal  # becomes tool description
         self.agent_factory = agent_factory
-        self.delegation = delegation  # will be init'd at crew creation
         self.tools: dict[str, MotleyTool] = {}
         self.verbose = verbose
         self.crew: MotleyCrew | None = None

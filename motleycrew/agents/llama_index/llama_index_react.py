@@ -22,7 +22,6 @@ class ReActLlamaIndexMotleyAgent(LlamaIndexMotleyAgentParent):
         self,
         goal: str,
         name: str | None = None,
-        delegation: bool | Sequence[MotleyAgentAbstractParent] = False,
         tools: Sequence[MotleySupportedTool] | None = None,
         llm: LLM | None = None,
         verbose: bool = False,
@@ -47,7 +46,6 @@ class ReActLlamaIndexMotleyAgent(LlamaIndexMotleyAgentParent):
             goal=goal,
             name=name,
             agent_factory=agent_factory,
-            delegation=delegation,
             tools=tools,
             verbose=verbose,
         )

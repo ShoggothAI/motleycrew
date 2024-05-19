@@ -14,9 +14,9 @@ class ReactMotleyAgent(LangchainMotleyAgentParent):
         cls,
         tools: Sequence[MotleySupportedTool],
         goal: str = "",  # gets ignored at the moment
+        name: str | None = None,
         prompt: str | None = None,
         llm: BaseLanguageModel | None = None,
-        delegation: bool | Sequence[MotleyAgentAbstractParent] = False,
         verbose: bool = False,
     ):
         if prompt is None:
@@ -24,8 +24,8 @@ class ReactMotleyAgent(LangchainMotleyAgentParent):
             prompt = hub.pull("hwchase17/react")
         return cls.from_function(
             goal=goal,
+            name=name,
             llm=llm,
-            delegation=delegation,
             tools=tools,
             prompt=prompt,
             function=create_react_agent,

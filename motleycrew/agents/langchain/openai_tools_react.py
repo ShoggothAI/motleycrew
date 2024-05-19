@@ -204,15 +204,15 @@ class ReactOpenAIToolsAgent(LangchainMotleyAgentParent):
         cls,
         tools: Sequence[MotleySupportedTool],
         goal: str = "",  # gets ignored at the moment
+        name: str | None = None,
         prompt: ChatPromptTemplate | Sequence[ChatPromptTemplate] | None = None,
         llm: BaseLanguageModel | None = None,
-        delegation: bool | Sequence[MotleyAgentAbstractParent] = False,
         verbose: bool = False,
     ):
         return cls.from_function(
             goal=goal,
+            name=name,
             llm=llm,
-            delegation=delegation,
             tools=tools,
             prompt=prompt,
             function=create_openai_tools_react_agent,

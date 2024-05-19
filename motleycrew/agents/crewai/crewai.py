@@ -28,7 +28,7 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
     ):
         ensure_module_is_installed("crewai")
         super().__init__(
-            goal=goal,
+            description=goal,
             name=name,
             agent_factory=agent_factory,
             tools=tools,

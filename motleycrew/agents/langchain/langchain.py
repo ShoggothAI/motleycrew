@@ -56,7 +56,7 @@ class LangchainMotleyAgent(MotleyAgentParent):
     @staticmethod
     def from_function(
         function: Callable[..., Any],
-        goal: str,
+        description: str,
         name: str | None = None,
         llm: BaseLanguageModel | None = None,
         delegation: bool | Sequence[MotleyAgentAbstractParent] = False,
@@ -83,7 +83,7 @@ class LangchainMotleyAgent(MotleyAgentParent):
             return agent_executor
 
         return LangchainMotleyAgent(
-            description=goal,
+            description=description,
             name=name,
             agent_factory=agent_factory,
             tools=tools,

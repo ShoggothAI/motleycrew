@@ -13,7 +13,7 @@ class ReactMotleyAgent(LangchainMotleyAgent):
     def __new__(
         cls,
         tools: Sequence[MotleySupportedTool],
-        goal: str = "",  # gets ignored at the moment
+        description: str = "",  # gets ignored at the moment
         name: str | None = None,
         prompt: str | None = None,
         llm: BaseLanguageModel | None = None,
@@ -23,7 +23,7 @@ class ReactMotleyAgent(LangchainMotleyAgent):
             # TODO: feed description into the agent's prompt
             prompt = hub.pull("hwchase17/react")
         return cls.from_function(
-            goal=goal,
+            description=description,
             name=name,
             llm=llm,
             tools=tools,

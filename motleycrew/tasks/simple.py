@@ -93,9 +93,12 @@ class SimpleTaskRecipe(TaskRecipe):
             return None
 
         upstream_tasks = [task for recipe in upstream_task_recipes for task in recipe.get_tasks()]
+        # print(upstream_tasks)
+        prompt = compose_simple_task_prompt_with_dependencies(self.description, upstream_tasks)
+        # print(prompt)
         return SimpleTask(
             name=self.name,
-            prompt=compose_simple_task_prompt_with_dependencies(self.description, upstream_tasks),
+            prompt=prompt,
         )
 
     def get_worker(self, tools: Optional[List[MotleyTool]]) -> MotleyAgentAbstractParent:

@@ -45,8 +45,8 @@ def main():
         backstory="""You work at a leading tech think tank.
     Your expertise lies in identifying emerging trends.
     You have a knack for dissecting complex data and presenting actionable insights.""",
-        delegation=False,
         verbose=True,
+        delegation=False,
         tools=[search_tool],
     )
 
@@ -58,29 +58,15 @@ def main():
                   Your final answer MUST be a full analysis report""",
         tools=[researcher],
         verbose=True,
+        delegation=True,
     )
 
     # Illustrator
+    illustrator = LlamaIndexMotleyAgent(
+        role="Illustrator",
+        goal="Create an engaging blog post on AI advancements",
 
-    # Create tasks for your agents
 
-    analysis_report_task = SimpleTaskRecipe(
-        crew=crew,
-        name="produce comprehensive analysis report on AI advancements",
-        description="""Conduct a comprehensive analysis of the latest advancements in AI in 2024.
-    Identify key trends, breakthrough technologies, and potential industry impacts.
-    Your final answer MUST be a full analysis report""",
-        agent=researcher,
-    )
-
-    literature_summary_task = SimpleTaskRecipe(
-        crew=crew,
-        name="provide a literature summary of recent papers on AI",
-        description="""Conduct a comprehensive literature review of the latest advancements in AI in 2024.
-    Identify key papers, researchers, and companies in the space.
-    Your final answer MUST be a full literature review with citations""",
-        agent=researcher,
-    )
 
     blog_post_task = SimpleTaskRecipe(
         crew=crew,

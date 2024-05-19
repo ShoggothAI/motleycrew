@@ -22,7 +22,6 @@ class LangchainMotleyAgentParent(MotleyAgentParent):
         goal: str,
         name: str | None = None,
         agent_factory: MotleyAgentFactory | None = None,
-        delegation: bool | Sequence[MotleyAgentAbstractParent] = False,
         tools: Sequence[MotleySupportedTool] | None = None,
         verbose: bool = False,
     ):
@@ -30,7 +29,6 @@ class LangchainMotleyAgentParent(MotleyAgentParent):
             goal=goal,
             name=name,
             agent_factory=agent_factory,
-            delegation=delegation,
             tools=tools,
             verbose=verbose,
         )
@@ -59,6 +57,7 @@ class LangchainMotleyAgentParent(MotleyAgentParent):
     def from_function(
         function: Callable[..., Any],
         goal: str,
+        name: str | None = None,
         llm: BaseLanguageModel | None = None,
         delegation: bool | Sequence[MotleyAgentAbstractParent] = False,
         tools: Sequence[MotleySupportedTool] | None = None,
@@ -85,8 +84,8 @@ class LangchainMotleyAgentParent(MotleyAgentParent):
 
         return LangchainMotleyAgentParent(
             goal=goal,
+            name=name,
             agent_factory=agent_factory,
-            delegation=delegation,
             tools=tools,
             verbose=verbose,
         )
@@ -95,7 +94,6 @@ class LangchainMotleyAgentParent(MotleyAgentParent):
     def from_agent(
         agent: AgentExecutor,
         goal: str,
-        delegation: bool | Sequence[MotleyAgentAbstractParent] = False,
         tools: Sequence[MotleySupportedTool] | None = None,
         verbose: bool = False,
     ) -> "LangchainMotleyAgentParent":
@@ -106,8 +104,6 @@ class LangchainMotleyAgentParent(MotleyAgentParent):
         if tools or agent.tools:
             tools = list(tools or []) + list(agent.tools or [])
 
-        wrapped_agent = LangchainMotleyAgentParent(
-            goal=goal, delegation=delegation, tools=tools, verbose=verbose
-        )
+        wrapped_agent = LangchainMotleyAgentParent(goal=goal, tools=tools, verbose=verbose)
         wrapped_agent._agent = agent
         return wrapped_agent

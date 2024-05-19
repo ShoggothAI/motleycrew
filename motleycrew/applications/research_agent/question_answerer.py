@@ -12,7 +12,7 @@ from motleycrew.tools import MotleyTool, LLMTool
 from motleycrew.storage import MotleyGraphStore
 from motleycrew.common.utils import print_passthrough
 
-from motleycrew.applications.research_agent.question import Question, QuestionAnsweringTask
+from motleycrew.applications.research_agent.question import Question, QuestionAnsweringTaskUnit
 
 
 _default_prompt = PromptTemplate.from_template(
@@ -50,7 +50,7 @@ class AnswerSubQuestionTool(MotleyTool):
 class QuestionAnswererInput(BaseModel, arbitrary_types_allowed=True):
     """Data on the question to answer."""
 
-    task: QuestionAnsweringTask = Field(
+    task: QuestionAnsweringTaskUnit = Field(
         description="Question node to process.",
     )
 

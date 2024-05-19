@@ -20,7 +20,7 @@ from motleycrew.common.utils import print_passthrough
 from motleycrew.storage import MotleyGraphStore
 
 
-from motleycrew.applications.research_agent.question import Question, QuestionGenerationTask
+from motleycrew.applications.research_agent.question import Question, QuestionGenerationTaskUnit
 
 IS_SUBQUESTION_PREDICATE = "is_subquestion"
 
@@ -77,7 +77,7 @@ class QuestionGeneratorTool(MotleyTool):
 class QuestionGeneratorToolInput(BaseModel, arbitrary_types_allowed=True):
     """Input for the Question Generator Tool."""
 
-    task: QuestionGenerationTask = Field(
+    task: QuestionGenerationTaskUnit = Field(
         description="Task with the input question for which to generate subquestions."
     )
 

@@ -24,12 +24,12 @@ from curl_cffi.requests import Headers as CurlCFFI__Headers
 try:
     from lunary import track_event, run_ctx, event_queue_ctx
 
-    is_update_lunary_event = True
+    do_update_lunary_event = True
 except ImportError:
     track_event = None
     run_ctx = None
     event_queue_ctx = None
-    is_update_lunary_event = False
+    do_update_lunary_event = False
 
 
 from motleycrew.common.enums import LunaryEventName, LunaryRunType
@@ -186,7 +186,7 @@ class BaseHttpCache(ABC):
         # If cache exists, load and return it
         result = self.load_cache_response(cache_file, url)
         if result is not None:
-            if is_update_lunary_event:
+            if do_update_lunary_event:
                 self._update_lunary_event(run_ctx.get())
             return result
 
@@ -206,7 +206,7 @@ class BaseHttpCache(ABC):
         #  If cache exists, load and return it
         result = self.load_cache_response(cache_file, url)
         if result is not None:
-            if is_update_lunary_event:
+            if do_update_lunary_event:
                 self._update_lunary_event(run_ctx.get())
             return result
 
@@ -222,7 +222,7 @@ class BaseHttpCache(ABC):
     ) -> None:
         """Updating lunary event"""
 
-        if not is_update_lunary_event:
+        if not do_update_lunary_event:
             return
 
         event_params = {

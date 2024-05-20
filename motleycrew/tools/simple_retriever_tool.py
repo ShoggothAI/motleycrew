@@ -63,7 +63,7 @@ def make_retriever_langchain_tool(DATA_DIR, PERSIST_DIR, return_strings_only: bo
 
     retriever_tool = StructuredTool.from_function(
         func=call_retriever,
-        name="Information retriever tool",
+        name="information_retriever_tool",
         description="Useful for running a natural language query against a"
         " knowledge base and retrieving a set of relevant documents.",
         args_schema=RetrieverToolInput,

@@ -21,8 +21,7 @@ from curl_cffi.requests import Headers as CurlCFFI__Headers
 
 from .utils import recursive_hash, shorten_filename, FakeRLock
 
-CACHE_WHITELIST = []
-CACHE_BLACKLIST = [
+FORCED_CACHE_BLACKLIST = [
     "*//api.lunary.ai/*",
 ]
 
@@ -72,6 +71,8 @@ class BaseHttpCache(ABC):
     root_cache_dir = platformdirs.user_cache_dir(app_name)
     strong_cache: bool = False
     update_cache_if_exists: bool = False
+    cache_blacklist: List[str] = []
+    cache_whitelist: List[str] = []
 
     def __init__(self, *args, **kwargs):
         self.is_caching = False
@@ -109,14 +110,17 @@ class BaseHttpCache(ABC):
         return response
 
     def should_cache(self, url: str) -> bool:
-        if CACHE_WHITELIST and CACHE_BLACKLIST:
+        if self.match_url(url, FORCED_CACHE_BLACKLIST):
+            return False
+
+        if self.cache_whitelist and self.cache_blacklist:
             raise CacheException(
-                "It is necessary to fill in only the CACHE_WHITELIST or the CACHE_BLACKLIST"
+                "You can't use both cache whitelist and blacklist at the same time."
             )
-        elif CACHE_WHITELIST:
-            return self.url_matching(url, CACHE_WHITELIST)
-        elif CACHE_BLACKLIST:
-            return not self.url_matching(url, CACHE_BLACKLIST)
+        elif self.cache_whitelist:
+            return self.match_url(url, self.cache_whitelist)
+        elif self.cache_blacklist:
+            return not self.match_url(url, self.cache_blacklist)
         return True
 
     def get_cache_file(self, func: Callable, *args, **kwargs) -> Union[tuple, None]:
@@ -228,7 +232,7 @@ class BaseHttpCache(ABC):
             logging.warning("Pickling failed for {} url: {}".format(cache_file, e))
 
     @staticmethod
-    def url_matching(url: str, patterns: List[str]) -> bool:
+    def match_url(url: str, patterns: List[str]) -> bool:
         """Checking the url for a match in the list of templates"""
         return any([fnmatch.fnmatch(url, pat) for pat in patterns])
 

@@ -22,7 +22,7 @@ from curl_cffi.requests import AsyncSession as CurlCFFI__AsyncSession
 from curl_cffi.requests import Headers as CurlCFFI__Headers
 
 try:
-    from lunary import track_event, run_ctx
+    from lunary import track_event, run_ctx, event_queue_ctx
 
     is_update_lunary_event = True
 except ImportError:
@@ -217,6 +217,7 @@ class BaseHttpCache(ABC):
             "run_type": run_type,
             "event_name": LunaryEventName.UPDATE,
             "run_id": run_id,
+            "callback_queue": event_queue_ctx.get()
         }
         if is_cache:
             event_params["metadata"] = {"cache": True}

@@ -5,9 +5,14 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.prompts.base import BasePromptTemplate
 from langchain_core.pydantic_v1 import BaseModel, Field, create_model
 
-from autogen import ConversableAgent, ChatResult
+try:
+    from autogen import ConversableAgent, ChatResult
+except ImportError:
+    ConversableAgent = None
+    ChatResult = None
 
 from motleycrew.tools import MotleyTool
+from motleycrew.common.utils import ensure_module_is_installed
 
 
 def get_last_message(chat_result: ChatResult) -> str:
@@ -27,6 +32,7 @@ class AutoGenChatTool(MotleyTool):
         result_extractor: Callable[[ChatResult], Any] = get_last_message,
         input_schema: Optional[Type[BaseModel]] = None,
     ):
+        ensure_module_is_installed("autogen")
         langchain_tool = create_autogen_chat_tool(
             name=name,
             description=description,

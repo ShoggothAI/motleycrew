@@ -1,4 +1,4 @@
-from motleycrew.common.defaults import defaults_module_install_commands
+from motleycrew.common import Defaults
 
 
 class LLMFamilyNotSupported(Exception):
@@ -55,7 +55,7 @@ class ModuleNotInstalledException(Exception):
 
     def __init__(self, module_name: str, install_command: str = None):
         self.module_name = module_name
-        self.install_command = install_command or defaults_module_install_commands.get(
+        self.install_command = install_command or Defaults.MODULE_INSTALL_COMMANDS.get(
             module_name, None
         )
 

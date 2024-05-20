@@ -45,3 +45,8 @@ def disable_cache():
     for http_cache in caching_http_library_list:
         http_cache.disable()
     is_caching = False
+
+
+def check_is_caching():
+    """Checking caching"""
+    return all([http_cache.is_caching for http_cache in caching_http_library_list])

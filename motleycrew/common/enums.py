@@ -28,4 +28,5 @@ class LunaryRunType:
 class LunaryEventName:
     START = "start"
     END = "end"
+    UPDATE = "update"
     ERROR = "error"

@@ -1231,13 +1231,13 @@ files = [
 
 [[package]]
 name = "fsspec"
-version = "2024.3.1"
+version = "2024.5.0"
 description = "File-system specification"
 optional = true
 python-versions = ">=3.8"
 files = [
-    {file = "fsspec-2024.3.1-py3-none-any.whl", hash = "sha256:918d18d41bf73f0e2b261824baeb1b124bcf771767e3a26425cd7dec3332f512"},
-    {file = "fsspec-2024.3.1.tar.gz", hash = "sha256:f39780e282d7d117ffb42bb96992f8a90795e4d0fb0f661a70ca39fe9c43ded9"},
+    {file = "fsspec-2024.5.0-py3-none-any.whl", hash = "sha256:e0fdbc446d67e182f49a70b82cf7889028a63588fde6b222521f10937b2b670c"},
+    {file = "fsspec-2024.5.0.tar.gz", hash = "sha256:1d021b0b0f933e3b3029ed808eb400c08ba101ca2de4b3483fbc9ca23fcee94a"},
 ]
 
 [package.extras]
@@ -1245,7 +1245,7 @@ abfs = ["adlfs"]
 adl = ["adlfs"]
 arrow = ["pyarrow (>=1)"]
 dask = ["dask", "distributed"]
-devel = ["pytest", "pytest-cov"]
+dev = ["pre-commit", "ruff"]
 dropbox = ["dropbox", "dropboxdrivefs", "requests"]
 full = ["adlfs", "aiohttp (!=4.0.0a0,!=4.0.0a1)", "dask", "distributed", "dropbox", "dropboxdrivefs", "fusepy", "gcsfs", "libarchive-c", "ocifs", "panel", "paramiko", "pyarrow (>=1)", "pygit2", "requests", "s3fs", "smbprotocol", "tqdm"]
 fuse = ["fusepy"]
@@ -1262,6 +1262,9 @@ s3 = ["s3fs"]
 sftp = ["paramiko"]
 smb = ["smbprotocol"]
 ssh = ["paramiko"]
+test = ["aiohttp (!=4.0.0a0,!=4.0.0a1)", "numpy", "pytest", "pytest-asyncio (!=0.22.0)", "pytest-benchmark", "pytest-cov", "pytest-mock", "pytest-recording", "pytest-rerunfailures", "requests"]
+test-downstream = ["aiobotocore (>=2.5.4,<3.0.0)", "dask-expr", "dask[dataframe,test]", "moto[server] (>4,<5)", "pytest-timeout", "xarray"]
+test-full = ["adlfs", "aiohttp (!=4.0.0a0,!=4.0.0a1)", "cloudpickle", "dask", "distributed", "dropbox", "dropboxdrivefs", "fastparquet", "fusepy", "gcsfs", "jinja2", "kerchunk", "libarchive-c", "lz4", "notebook", "numpy", "ocifs", "pandas", "panel", "paramiko", "pyarrow", "pyarrow (>=1)", "pyftpdlib", "pygit2", "pytest", "pytest-asyncio (!=0.22.0)", "pytest-benchmark", "pytest-cov", "pytest-mock", "pytest-recording", "pytest-rerunfailures", "python-snappy", "requests", "smbprotocol", "tqdm", "urllib3", "zarr", "zstandard"]
 tqdm = ["tqdm"]
 
 [[package]]
@@ -1960,20 +1963,20 @@ tiktoken = ">=0.5.2,<0.6.0"
 
 [[package]]
 name = "langchain-text-splitters"
-version = "0.0.1"
+version = "0.0.2"
 description = "LangChain text splitting utilities"
 optional = false
-python-versions = ">=3.8.1,<4.0"
+python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langchain_text_splitters-0.0.1-py3-none-any.whl", hash = "sha256:f5b802f873f5ff6a8b9259ff34d53ed989666ef4e1582e6d1adb3b5520e3839a"},
-    {file = "langchain_text_splitters-0.0.1.tar.gz", hash = "sha256:ac459fa98799f5117ad5425a9330b21961321e30bc19a2a2f9f761ddadd62aa1"},
+    {file = "langchain_text_splitters-0.0.2-py3-none-any.whl", hash = "sha256:13887f32705862c1e1454213cb7834a63aae57c26fcd80346703a1d09c46168d"},
+    {file = "langchain_text_splitters-0.0.2.tar.gz", hash = "sha256:ac8927dc0ba08eba702f6961c9ed7df7cead8de19a9f7101ab2b5ea34201b3c1"},
 ]
 
 [package.dependencies]
-langchain-core = ">=0.1.28,<0.2.0"
+langchain-core = ">=0.1.28,<0.3"
 
 [package.extras]
-extended-testing = ["lxml (>=5.1.0,<6.0.0)"]
+extended-testing = ["beautifulsoup4 (>=4.12.3,<5.0.0)", "lxml (>=4.9.3,<6.0)"]
 
 [[package]]
 name = "langchainhub"
@@ -2010,13 +2013,13 @@ test = ["pytest", "pytest-cov"]
 
 [[package]]
 name = "langsmith"
-version = "0.1.57"
+version = "0.1.59"
 description = "Client library to connect to the LangSmith LLM Tracing and Evaluation Platform."
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langsmith-0.1.57-py3-none-any.whl", hash = "sha256:dbd83b0944a2fbea4151f0aa053530d93fcf6784a580621bc60633cb890b57dc"},
-    {file = "langsmith-0.1.57.tar.gz", hash = "sha256:4682204de19f0218029c2b8445ce2cc3485c8d0df9796b31e2ce4c9051fce365"},
+    {file = "langsmith-0.1.59-py3-none-any.whl", hash = "sha256:445e3bc1d3baa1e5340cd979907a19483b9763a2ed37b863a01113d406f69345"},
+    {file = "langsmith-0.1.59.tar.gz", hash = "sha256:e748a89f4dd6aa441349143e49e546c03b5dfb43376a25bfef6a5ca792fe1437"},
 ]
 
 [package.dependencies]
@@ -2101,13 +2104,13 @@ llama-index-llms-openai = ">=0.1.1,<0.2.0"
 
 [[package]]
 name = "llama-index-core"
-version = "0.10.37"
+version = "0.10.37.post1"
 description = "Interface between LLMs and your data"
 optional = true
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "llama_index_core-0.10.37-py3-none-any.whl", hash = "sha256:1302ccbd267627199115cd68eee7f3a726611cc92b4a8e1a43dc679f67213664"},
-    {file = "llama_index_core-0.10.37.tar.gz", hash = "sha256:b025ebda79b4e4c85269c96f0632b8f6badd1000ce458d7600b79a1de5a61a44"},
+    {file = "llama_index_core-0.10.37.post1-py3-none-any.whl", hash = "sha256:e6b8a2dd4371e0326f57845a0b3d257ef4fa0d7d7de4e911fd45a5c814520606"},
+    {file = "llama_index_core-0.10.37.post1.tar.gz", hash = "sha256:431305ecd7e8a524dc282f849ca4d7f7dccccd677cae55efefaf16b49d3d1aed"},
 ]
 
 [package.dependencies]
@@ -2332,13 +2335,13 @@ pydantic = ">=1.10"
 
 [[package]]
 name = "lunary"
-version = "1.0.17"
+version = "1.0.21"
 description = "Observability, analytics and evaluations for AI agents and chatbots."
 optional = false
 python-versions = "<4.0.0,>=3.8.1"
 files = [
-    {file = "lunary-1.0.17-py3-none-any.whl", hash = "sha256:f2b43dfb7740ecbbe10950df318c286d7ad3c9e07d6501616becc904ddb69296"},
-    {file = "lunary-1.0.17.tar.gz", hash = "sha256:fae8796449e4e3a8780e5d22eb33e58bde787e85fabbf5e8f64952f40a2c7b9e"},
+    {file = "lunary-1.0.21-py3-none-any.whl", hash = "sha256:eb2275145eea78f3a2298464edd8ee9e1e5dc723e6ee2d916354ed0c01a20925"},
+    {file = "lunary-1.0.21.tar.gz", hash = "sha256:c884b957a2054e88102b404e232fdff7472887c1dcfabd6d1e07689be0153d13"},
 ]
 
 [package.dependencies]
@@ -3782,13 +3785,13 @@ image = ["Pillow (>=8.0.0)"]
 
 [[package]]
 name = "pytest"
-version = "8.2.0"
+version = "8.2.1"
 description = "pytest: simple powerful testing with Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pytest-8.2.0-py3-none-any.whl", hash = "sha256:1733f0620f6cda4095bbf0d9ff8022486e91892245bb9e7d5542c018f612f233"},
-    {file = "pytest-8.2.0.tar.gz", hash = "sha256:d507d4482197eac0ba2bae2e9babf0672eb333017bcedaa5fb1a3d42c1174b3f"},
+    {file = "pytest-8.2.1-py3-none-any.whl", hash = "sha256:faccc5d332b8c3719f40283d0d44aa5cf101cec36f88cde9ed8f2bc0538612b1"},
+    {file = "pytest-8.2.1.tar.gz", hash = "sha256:5046e5b46d8e4cac199c373041f26be56fdb81eb4e67dc11d4e10811fc3408fd"},
 ]
 
 [package.dependencies]
@@ -5397,18 +5400,18 @@ multidict = ">=4.0"
 
 [[package]]
 name = "zipp"
-version = "3.18.1"
+version = "3.18.2"
 description = "Backport of pathlib-compatible object wrapper for zip files"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "zipp-3.18.1-py3-none-any.whl", hash = "sha256:206f5a15f2af3dbaee80769fb7dc6f249695e940acca08dfb2a4769fe61e538b"},
-    {file = "zipp-3.18.1.tar.gz", hash = "sha256:2884ed22e7d8961de1c9a05142eb69a247f120291bc0206a00a7642f09b5b715"},
+    {file = "zipp-3.18.2-py3-none-any.whl", hash = "sha256:dce197b859eb796242b0622af1b8beb0a722d52aa2f57133ead08edd5bf5374e"},
+    {file = "zipp-3.18.2.tar.gz", hash = "sha256:6278d9ddbcfb1f1089a88fde84481528b07b0e10474e09dcfe53dad4069fa059"},
 ]
 
 [package.extras]
 docs = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-lint"]
-testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-ignore-flaky", "pytest-mypy", "pytest-ruff (>=0.2.1)"]
+testing = ["big-O", "jaraco.functools", "jaraco.itertools", "jaraco.test", "more-itertools", "pytest (>=6,!=8.1.*)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-ignore-flaky", "pytest-mypy", "pytest-ruff (>=0.2.1)"]
 
 [extras]
 crewai = ["crewai"]
@@ -5417,4 +5420,4 @@ llama-index = ["llama-index"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<=3.13"
-content-hash = "30394a5e863416ab3a523f060cba1a605606c8cb068a8291a5d7f0e7c1a62c54"
+content-hash = "b3f4f7687af043fad43fa32a706e1782fd82bcc7cb57c304feeb77261c2d1d08"

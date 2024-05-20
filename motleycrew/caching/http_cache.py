@@ -22,12 +22,13 @@ from curl_cffi.requests import Headers as CurlCFFI__Headers
 
 
 try:
-    from lunary import track_event, run_ctx
+    from lunary import track_event, run_ctx, event_queue_ctx
 
     is_update_lunary_event = True
 except ImportError:
     track_event = None
     run_ctx = None
+    event_queue_ctx = None
     is_update_lunary_event = False
 
 
@@ -228,18 +229,19 @@ class BaseHttpCache(ABC):
             "run_type": run_type,
             "event_name": LunaryEventName.UPDATE,
             "run_id": run_id,
+            "callback_queue": event_queue_ctx.get(),
         }
         if is_cache:
             event_params["metadata"] = {"cache": True}
 
         try:
             track_event(**event_params)
-        except Exception as e:
-            msg = "[Lunary] An error occurred with update lunary event {}: {}\n{}".format(
-                run_id, e, traceback.format_exc()
+        except Exception as exc:
+            msg = "[Lunary] An error occurred while updating lunary event {}: {}\n{}".format(
+                run_id, exc, traceback.format_exc()
             )
             logging.warning(msg)
-            raise e
+            raise exc
 
     def load_cache_response(self, cache_file: Path, url: str) -> Union[Any, None]:
         """Loads and returns the cached response"""

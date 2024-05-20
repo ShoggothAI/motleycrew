@@ -12,8 +12,7 @@ except ImportError:
     ChatMessage = None
 
 from lunary import track_event
-from lunary.event_queue import EventQueue
-from lunary.consumer import Consumer
+from lunary import event_queue_ctx
 
 from motleycrew.common.enums import LunaryRunType, LunaryEventName
 from motleycrew.common.utils import ensure_module_is_installed
@@ -81,26 +80,20 @@ class LlamaIndexLunaryCallbackHandler(BaseCallbackHandler):
     def __init__(
         self,
         app_id: str,
-        event_starts_to_ignore: List[CBEventType] = [],
-        event_ends_to_ignore: List[CBEventType] = [],
-        queue: EventQueue = None,
+        event_starts_to_ignore: List[CBEventType] = None,
+        event_ends_to_ignore: List[CBEventType] = None,
     ):
         ensure_module_is_installed("llama_index")
         super(LlamaIndexLunaryCallbackHandler, self).__init__(
-            event_starts_to_ignore=event_starts_to_ignore,
-            event_ends_to_ignore=event_ends_to_ignore,
+            event_starts_to_ignore=event_starts_to_ignore or [],
+            event_ends_to_ignore=event_ends_to_ignore or [],
         )
 
         self.__app_id = app_id
         self._track_event = track_event
         self._event_run_type_ids = []
 
-        if queue is not None:
-            self.queue = EventQueue()
-            self.consumer = Consumer(self.queue, self.__app_id)
-            self.consumer.start()
-        else:
-            self.queue = queue
+        self.queue = event_queue_ctx.get()
 
     def _get_initial_track_event_params(
         self, run_type: LunaryRunType, event_name: LunaryEventName, run_id: str = None

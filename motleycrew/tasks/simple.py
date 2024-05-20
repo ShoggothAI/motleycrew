@@ -30,7 +30,7 @@ def compose_simple_task_prompt_with_dependencies(
             continue
 
         unit_name = getattr(unit, "name", default_task_name)
-        upstream_results.append(f"##{unit_name}\n" + "\n".join(str(out) for out in unit.output))
+        upstream_results.append(f"##{unit_name}\n" + str(unit.output))
 
     if not upstream_results:
         return description
@@ -76,11 +76,11 @@ class SimpleTask(Task):
         self.crew = crew
         self.crew.register_tasks([self])
 
-    def register_completed_unit(self, task: SimpleTaskUnit) -> None:
-        assert isinstance(task, SimpleTaskUnit)
-        assert task.done
+    def register_completed_unit(self, unit: SimpleTaskUnit) -> None:
+        assert isinstance(unit, SimpleTaskUnit)
+        assert unit.done
 
-        self.output = task.output
+        self.output = unit.output
         self.set_done()
 
     def get_next_unit(self) -> SimpleTaskUnit | None:
@@ -93,9 +93,7 @@ class SimpleTask(Task):
             return None
 
         upstream_task_units = [unit for task in upstream_tasks for unit in task.get_units()]
-        # print(upstream_tasks)
         prompt = compose_simple_task_prompt_with_dependencies(self.description, upstream_task_units)
-        # print(prompt)
         return SimpleTaskUnit(
             name=self.name,
             prompt=prompt,

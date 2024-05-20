@@ -18,7 +18,7 @@ class MermaidEvaluatorTool(MotleyTool):
 
         langchain_tool = Tool.from_function(
             func=eval_mermaid_partial,
-            name="Mermaid Evaluator Tool",
+            name="mermaid_evaluator_tool",
             description="Evaluates Mermaid code and returns the output as a BytesIO object.",
             args_schema=create_model(
                 "MermaidEvaluatorToolInput",

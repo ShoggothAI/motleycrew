@@ -88,7 +88,7 @@ class MotleyCrew:
                     agent = task.get_worker(extra_tools)
                     logging.info("Assigned unit %s to agent %s, dispatching", current_unit, agent)
                     current_unit.set_running()
-                    self.graph_store.insert_node(current_unit)
+                    task.register_started_unit(current_unit)
 
                     # TODO: accept and handle some sort of return value? Or just the final state of the task?
                     result = agent.invoke(current_unit.as_dict())

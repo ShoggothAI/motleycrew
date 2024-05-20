@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, Annotated
 
 from langchain.tools import BaseTool
 
@@ -26,7 +26,6 @@ class MotleyTool:
     """
 
     def __init__(self, tool: BaseTool):
-        ensure_module_is_installed("llama_index")
         self.tool = tool
 
     @property
@@ -73,3 +72,16 @@ class MotleyTool:
             fn_schema=self.tool.args_schema,
         )
         return llama_index_tool
+
+    def to_autogen_tool(self):
+        fields = list(self.tool.args_schema.__fields__.values())
+        if len(fields) != 1:
+            raise Exception("Multiple input fields are not supported in to_autogen_tool")
+
+        field_name = fields[0].name
+        field_type = fields[0].annotation
+
+        def autogen_tool_fn(input: field_type) -> str:
+            return self.invoke({field_name: input})
+
+        return autogen_tool_fn

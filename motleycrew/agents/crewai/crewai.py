@@ -23,16 +23,14 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
         goal: str,
         name: str | None = None,
         agent_factory: MotleyAgentFactory | None = None,
-        delegation: bool | Sequence[MotleyAgentAbstractParent] = False,
         tools: Sequence[MotleySupportedTool] | None = None,
         verbose: bool = False,
     ):
         ensure_module_is_installed("crewai")
         super().__init__(
-            goal=goal,
+            description=goal,
             name=name,
             agent_factory=agent_factory,
-            delegation=delegation,
             tools=tools,
             verbose=verbose,
         )
@@ -69,7 +67,6 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
     @staticmethod
     def from_agent(
         agent: CrewAIAgentWithConfig,
-        delegation: bool | Sequence[MotleyAgentAbstractParent] = False,
         tools: Sequence[MotleySupportedTool] | None = None,
         verbose: bool = False,
     ) -> "CrewAIMotleyAgentParent":
@@ -79,7 +76,6 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
         wrapped_agent = CrewAIMotleyAgentParent(
             goal=agent.goal,
             name=agent.role,
-            delegation=delegation,
             tools=tools,
             verbose=verbose,
         )

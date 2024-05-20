@@ -3,7 +3,7 @@ from typing import List, Optional
 import logging
 
 from lunary import LunaryCallbackHandler
-from langchain_core.callbacks import BaseCallbackHandler
+from langchain_core.callbacks import BaseCallbackHandler, BaseCallbackManager
 from langchain_core.runnables import RunnableConfig, ensure_config
 
 from .callbacks import LlamaIndexLunaryCallbackHandler
@@ -75,23 +75,39 @@ def get_default_callbacks_list(
     return _default_callbacks
 
 
-def combine_callbacks(
-    updated_callbacks: List[BaseCallbackHandler],
-    updating_callbacks: List[BaseCallbackHandler],
+def add_callback_handlers_to_config(
+    config: RunnableConfig,
+    handlers: List[BaseCallbackHandler],
     unique_cls: bool = True,
-) -> List[BaseCallbackHandler]:
-    """Combining callback lists
-    unique_cls: bool - flag adding callback with a unique class
-    return : modified updated_callbacks list
+) -> RunnableConfig:
     """
-    for updating in updating_callbacks:
+    Add callback handlers to langchain config
+    unique_cls: bool - flag adding callback with a unique class
+    return : modified config
+    """
+    if isinstance(config.get("callbacks"), BaseCallbackManager):
+        callback_manager = config.get("callbacks")
+        existing_handlers = callback_manager.handlers
+    else:
+        callback_manager = config.get("callbacks") or []
+        existing_handlers = config.get("callbacks") or []
+
+    def add_handler(handler):
+        if isinstance(callback_manager, BaseCallbackManager):
+            callback_manager.add_handler(handler)
+        else:
+            callback_manager.append(handler)
+
+    for handler in handlers:
         if unique_cls and not any(
-            isinstance(updating, updated.__class__) for updated in updated_callbacks
+            isinstance(handler, existing.__class__) for existing in existing_handlers
         ):
-            updated_callbacks.append(updating)
-        elif updating not in updating_callbacks:
-            updated_callbacks.append(updating)
-    return updated_callbacks
+            add_handler(handler)
+        elif handler not in existing_handlers:
+            add_handler(handler)
+
+    config["callbacks"] = callback_manager
+    return config
 
 
 def add_default_callbacks_to_langchain_config(
@@ -103,8 +119,7 @@ def add_default_callbacks_to_langchain_config(
     if config is None:
         config = ensure_config(config)
 
-    _default_callbacks = get_default_callbacks_list()
-    if _default_callbacks:
-        config_callbacks = config.get("callbacks") or []
-        config["callbacks"] = combine_callbacks(config_callbacks, _default_callbacks)
+    default_callbacks = get_default_callbacks_list()
+    if default_callbacks:
+        config = add_callback_handlers_to_config(config, default_callbacks)
     return config

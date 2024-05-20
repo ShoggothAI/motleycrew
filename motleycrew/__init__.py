@@ -1,2 +1,2 @@
 from .crew import MotleyCrew
-from .tasks import TaskRecipe
+from .tasks import Task

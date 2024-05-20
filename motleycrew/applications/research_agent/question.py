@@ -3,7 +3,7 @@ from dataclasses import dataclass
 import json
 
 from motleycrew.storage.graph_node import MotleyGraphNode
-from motleycrew.tasks import Task
+from motleycrew.tasks import TaskUnit
 
 REPR_CONTEXT_LENGTH_LIMIT = 30
 
@@ -28,9 +28,9 @@ class Question(MotleyGraphNode):
         )
 
 
-class QuestionGenerationTask(Task):
+class QuestionGenerationTaskUnit(TaskUnit):
     question: Question
 
 
-class QuestionAnsweringTask(Task):
+class QuestionAnsweringTaskUnit(TaskUnit):
     question: Question

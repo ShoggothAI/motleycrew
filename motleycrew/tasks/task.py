@@ -85,7 +85,7 @@ class Task(ABC, Generic[TaskUnitType]):
             self.TASK_UNIT_BELONGS_LABEL,
             self.NODE_CLASS.get_label(),
         )
-        task_units = self.crew.graph_store.run_cypher_query(
+        task_units = self.graph_store.run_cypher_query(
             query, parameters={"self_id": self.node.id}, container=self.TASK_UNIT_CLASS
         )
         return task_units
@@ -103,7 +103,7 @@ class Task(ABC, Generic[TaskUnitType]):
             self.TASK_IS_UPSTREAM_LABEL,
             self.NODE_CLASS.get_label(),
         )
-        upstream_task_nodes = self.crew.graph_store.run_cypher_query(
+        upstream_task_nodes = self.graph_store.run_cypher_query(
             query, parameters={"self_id": self.node.id}, container=self.NODE_CLASS
         )
         return [task for task in self.crew.tasks if task.node in upstream_task_nodes]
@@ -121,7 +121,7 @@ class Task(ABC, Generic[TaskUnitType]):
             self.NODE_CLASS.get_label(),
             self.TASK_IS_UPSTREAM_LABEL,
         )
-        downstream_task_nodes = self.crew.graph_store.run_cypher_query(
+        downstream_task_nodes = self.graph_store.run_cypher_query(
             query, parameters={"self_id": self.node.id}, container=self.NODE_CLASS
         )
         return [task for task in self.crew.tasks if task.node in downstream_task_nodes]
@@ -130,7 +130,17 @@ class Task(ABC, Generic[TaskUnitType]):
         self.done = value
         self.node.done = value
 
-    def register_completed_unit(self, task: TaskUnitType) -> None:
+    def register_started_unit(self, unit: TaskUnitType) -> None:
+        assert isinstance(unit, self.TASK_UNIT_CLASS)
+        assert not unit.done
+
+        self.graph_store.upsert_triplet(
+            from_node=unit,
+            to_node=self.node,
+            label=self.TASK_UNIT_BELONGS_LABEL,
+        )
+
+    def register_completed_unit(self, unit: TaskUnitType) -> None:
         pass
 
     @abstractmethod

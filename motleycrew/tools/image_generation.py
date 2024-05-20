@@ -79,7 +79,7 @@ def create_dalle_image_generator_langchain_tool(images_directory: Optional[str] 
         return run_dalle_and_save_images(description=description, images_directory=images_directory)
 
     return Tool(
-        name="Dall-E-Image-Generator",
+        name="dalle_image_generator",
         func=run_dalle_and_save_images_partial,
         description="A wrapper around OpenAI DALL-E API. Useful for when you need to generate images from a text description. "
         "Input should be an image description.",

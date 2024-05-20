@@ -53,7 +53,7 @@ class QuestionTask(Task):
         logging.info("Most pertinent question according to the tool: %s", most_pertinent_question)
         return QuestionGenerationTaskUnit(question=most_pertinent_question)
 
-    def register_completed_unit(self, task: TaskUnitType) -> None:
+    def register_completed_unit(self, unit: TaskUnitType) -> None:
         logging.info("==== Completed iteration %s of %s ====", self.n_iter + 1, self.max_iter)
         self.n_iter += 1
         if self.n_iter >= self.max_iter:

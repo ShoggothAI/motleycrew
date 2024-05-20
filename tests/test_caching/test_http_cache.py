@@ -1,11 +1,11 @@
 import pytest
 
 from motleycrew.caching.http_cache import RequestsHttpCaching, CacheException
-from motleycrew.caching import http_cache
+from motleycrew.caching import set_cache_whitelist, set_cache_blacklist
 
 
 @pytest.fixture
-def requests_cash():
+def requests_cache():
     return RequestsHttpCaching()
 
 
@@ -18,10 +18,9 @@ def requests_cash():
         ("https://links.duckduckgo.com/d.j", False),
     ],
 )
-def test_white_list(requests_cash, url, expected_result):
-    http_cache.CACHE_WHITELIST = ["*//api.openai.com/v1/*"]
-    http_cache.CACHE_BLACKLIST = []
-    assert requests_cash.should_cache(url) == expected_result
+def test_cache_whitelist(requests_cache, url, expected_result):
+    set_cache_whitelist(["*//api.openai.com/v1/*"])
+    assert requests_cache.should_cache(url) == expected_result
 
 
 @pytest.mark.parametrize(
@@ -33,15 +32,14 @@ def test_white_list(requests_cash, url, expected_result):
         ("https://links.duckduckgo.com/d.j", False),
     ],
 )
-def test_black_list(requests_cash, url, expected_result):
-    http_cache.CACHE_WHITELIST = []
-    http_cache.CACHE_BLACKLIST = ["*//api.lunary.ai/v1/*", "*//links.duckduckgo.com/*"]
-    assert requests_cash.should_cache(url) == expected_result
+def test_cache_blacklist(requests_cache, url, expected_result):
+    set_cache_blacklist(["*//api.lunary.ai/v1/*", "*//links.duckduckgo.com/*"])
+    assert requests_cache.should_cache(url) == expected_result
 
 
-def test_raise_cache_lists(requests_cash):
-    http_cache.CACHE_WHITELIST = ["*//links.duckduckgo.com/*"]
-    http_cache.CACHE_BLACKLIST = ["*//api.lunary.ai/v1/*"]
+def test_exception_if_both_lists_set(requests_cache):
+    requests_cache.cache_whitelist = ["*//links.duckduckgo.com/*"]
+    requests_cache.cache_blacklist = ["*//api.lunary.ai/v1/*"]
     url = "https://api.openai.com/v1/chat/completions"
     with pytest.raises(CacheException):
-        requests_cash.should_cache(url)
+        requests_cache.should_cache(url)

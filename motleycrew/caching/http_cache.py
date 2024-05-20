@@ -6,10 +6,9 @@ from urllib.parse import urlparse
 import logging
 import inspect
 import fnmatch
-import traceback
-
 import cloudpickle
 import platformdirs
+import traceback
 
 import requests
 from requests.structures import CaseInsensitiveDict
@@ -21,22 +20,27 @@ from httpx import (
 from curl_cffi.requests import AsyncSession as CurlCFFI__AsyncSession
 from curl_cffi.requests import Headers as CurlCFFI__Headers
 
+
 try:
     from lunary import track_event, run_ctx, event_queue_ctx
 
-    is_update_lunary_event = True
+    do_update_lunary_event = True
 except ImportError:
-    is_update_lunary_event = False
+    track_event = None
+    run_ctx = None
+    event_queue_ctx = None
+    do_update_lunary_event = False
 
 
-from .utils import recursive_hash, hash_code, FakeRLock
 from motleycrew.common.enums import LunaryEventName, LunaryRunType
+from .utils import recursive_hash, shorten_filename, FakeRLock
 
 
-CACHE_WHITELIST = []
-CACHE_BLACKLIST = [
+FORCED_CACHE_BLACKLIST = [
     "*//api.lunary.ai/*",
 ]
+
+CACHE_FILENAME_LENGTH_LIMIT = 120
 
 
 class CacheException(Exception):
@@ -82,6 +86,8 @@ class BaseHttpCache(ABC):
     root_cache_dir = platformdirs.user_cache_dir(app_name)
     strong_cache: bool = False
     update_cache_if_exists: bool = False
+    cache_blacklist: List[str] = []
+    cache_whitelist: List[str] = []
 
     def __init__(self, *args, **kwargs):
         self.is_caching = False
@@ -119,14 +125,17 @@ class BaseHttpCache(ABC):
         return response
 
     def should_cache(self, url: str) -> bool:
-        if CACHE_WHITELIST and CACHE_BLACKLIST:
+        if self.match_url(url, FORCED_CACHE_BLACKLIST):
+            return False
+
+        if self.cache_whitelist and self.cache_blacklist:
             raise CacheException(
-                "It is necessary to fill in only the CACHE_WHITELIST or the CACHE_BLACKLIST"
+                "You can't use both cache whitelist and blacklist at the same time."
             )
-        elif CACHE_WHITELIST:
-            return self.url_matching(url, CACHE_WHITELIST)
-        elif CACHE_BLACKLIST:
-            return not self.url_matching(url, CACHE_BLACKLIST)
+        elif self.cache_whitelist:
+            return self.match_url(url, self.cache_whitelist)
+        elif self.cache_blacklist:
+            return not self.match_url(url, self.cache_blacklist)
         return True
 
     def get_cache_file(self, func: Callable, *args, **kwargs) -> Union[tuple, None]:
@@ -140,7 +149,14 @@ class BaseHttpCache(ABC):
 
         # check or create cache dirs
         root_dir = Path(self.root_cache_dir)
-        cache_dir = root_dir / url_parsed.hostname / url_parsed.path.strip("/").replace("/", "_")
+
+        cache_dir = (
+            root_dir
+            / shorten_filename(url_parsed.hostname, length=CACHE_FILENAME_LENGTH_LIMIT)
+            / shorten_filename(
+                url_parsed.path.strip("/").replace("/", "_"), length=CACHE_FILENAME_LENGTH_LIMIT
+            )
+        )
         cache_dir.mkdir(parents=True, exist_ok=True)
 
         # Convert args to a dictionary based on the function's signature
@@ -154,14 +170,10 @@ class BaseHttpCache(ABC):
             kwargs_clone.pop(param, None)
 
         # Create hash based on argument names, argument values, and function source code
-        func_source_code_hash = hash_code(inspect.getsource(func))
-        arg_hash = (
-            recursive_hash(args_dict, ignore_params=self.ignore_params)
-            + recursive_hash(kwargs_clone, ignore_params=self.ignore_params)
-            + func_source_code_hash
-        )
+        hashing_base = [args_dict, kwargs_clone, inspect.getsource(func)]
+        call_hash = recursive_hash(hashing_base, ignore_params=self.ignore_params)
 
-        cache_file = cache_dir / "{}.pkl".format(arg_hash)
+        cache_file = cache_dir / "{}.pkl".format(call_hash)
         return cache_file, url
 
     def get_response(self, func: Callable, *args, **kwargs) -> Any:
@@ -174,7 +186,7 @@ class BaseHttpCache(ABC):
         # If cache exists, load and return it
         result = self.load_cache_response(cache_file, url)
         if result is not None:
-            if is_update_lunary_event:
+            if do_update_lunary_event:
                 self._update_lunary_event(run_ctx.get())
             return result
 
@@ -194,7 +206,7 @@ class BaseHttpCache(ABC):
         #  If cache exists, load and return it
         result = self.load_cache_response(cache_file, url)
         if result is not None:
-            if is_update_lunary_event:
+            if do_update_lunary_event:
                 self._update_lunary_event(run_ctx.get())
             return result
 
@@ -210,25 +222,26 @@ class BaseHttpCache(ABC):
     ) -> None:
         """Updating lunary event"""
 
-        if not is_update_lunary_event:
+        if not do_update_lunary_event:
             return
 
         event_params = {
             "run_type": run_type,
             "event_name": LunaryEventName.UPDATE,
             "run_id": run_id,
-            "callback_queue": event_queue_ctx.get()
+            "callback_queue": event_queue_ctx.get(),
         }
         if is_cache:
             event_params["metadata"] = {"cache": True}
 
         try:
             track_event(**event_params)
-        except Exception as e:
-            msg = "[Lunary] An error occurred with update lunary event {}: {}\n{}".format(run_id, e,
-                                                                                          traceback.format_exc())
+        except Exception as exc:
+            msg = "[Lunary] An error occurred while updating lunary event {}: {}\n{}".format(
+                run_id, exc, traceback.format_exc()
+            )
             logging.warning(msg)
-            raise e
+            raise exc
 
     def load_cache_response(self, cache_file: Path, url: str) -> Union[Any, None]:
         """Loads and returns the cached response"""
@@ -265,7 +278,7 @@ class BaseHttpCache(ABC):
             logging.warning("Pickling failed for {} url: {}".format(cache_file, e))
 
     @staticmethod
-    def url_matching(url: str, patterns: List[str]) -> bool:
+    def match_url(url: str, patterns: List[str]) -> bool:
         """Checking the url for a match in the list of templates"""
         return any([fnmatch.fnmatch(url, pat) for pat in patterns])
 

@@ -15,6 +15,18 @@ caching_http_library_list = [
 ]
 
 
+def set_cache_whitelist(whitelist: list[str]):
+    """Set the cache whitelist"""
+    BaseHttpCache.cache_whitelist = whitelist
+    BaseHttpCache.cache_blacklist = []
+
+
+def set_cache_blacklist(blacklist: list[str]):
+    """Set the cache blacklist"""
+    BaseHttpCache.cache_blacklist = blacklist
+    BaseHttpCache.cache_whitelist = []
+
+
 def set_strong_cache(val: bool):
     """Enable or disable the strict-caching option"""
     BaseHttpCache.strong_cache = bool(val)

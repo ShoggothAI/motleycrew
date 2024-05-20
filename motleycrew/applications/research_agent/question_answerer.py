@@ -12,7 +12,7 @@ from motleycrew.tools import MotleyTool, LLMTool
 from motleycrew.storage import MotleyGraphStore
 from motleycrew.common.utils import print_passthrough
 
-from motleycrew.applications.research_agent.question import Question, QuestionAnsweringTask
+from motleycrew.applications.research_agent.question import Question, QuestionAnsweringTaskUnit
 
 
 _default_prompt = PromptTemplate.from_template(
@@ -50,7 +50,7 @@ class AnswerSubQuestionTool(MotleyTool):
 class QuestionAnswererInput(BaseModel, arbitrary_types_allowed=True):
     """Data on the question to answer."""
 
-    task: QuestionAnsweringTask = Field(
+    question: Question = Field(
         description="Question node to process.",
     )
 
@@ -111,6 +111,7 @@ def create_answer_question_langchain_tool(
         question = input_dict["question"]
         answer = input_dict["answer"].content
         question.answer = answer
+        return answer
 
     this_chain = (
         RunnablePassthrough.assign(
@@ -123,7 +124,7 @@ def create_answer_question_langchain_tool(
     )
 
     langchain_tool = Tool.from_function(
-        func=lambda task: this_chain.invoke({"question": task.question}),
+        func=lambda q: this_chain.invoke({"question": q}),
         name="Answer Sub-Question Tool",
         description="Answer a question based on the notes and sub-questions.",
         args_schema=QuestionAnswererInput,

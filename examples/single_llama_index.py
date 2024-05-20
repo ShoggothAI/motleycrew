@@ -5,6 +5,7 @@ from langchain_community.tools import DuckDuckGoSearchRun
 from motleycrew import MotleyCrew
 from motleycrew.agents.llama_index import ReActLlamaIndexMotleyAgent
 from motleycrew.common.utils import configure_logging
+from motleycrew.caching import enable_cache, disable_cache
 
 
 def main():
@@ -37,7 +38,8 @@ def main():
 
 
 if __name__ == "__main__":
+    enable_cache()
     configure_logging(verbose=True)
-
     load_dotenv()
     main()
+    disable_cache()

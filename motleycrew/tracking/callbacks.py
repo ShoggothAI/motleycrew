@@ -83,6 +83,7 @@ class LlamaIndexLunaryCallbackHandler(BaseCallbackHandler):
         app_id: str,
         event_starts_to_ignore: List[CBEventType] = [],
         event_ends_to_ignore: List[CBEventType] = [],
+        queue: EventQueue = None,
     ):
         ensure_module_is_installed("llama_index")
         super(LlamaIndexLunaryCallbackHandler, self).__init__(
@@ -94,9 +95,12 @@ class LlamaIndexLunaryCallbackHandler(BaseCallbackHandler):
         self._track_event = track_event
         self._event_run_type_ids = []
 
-        self.queue = EventQueue()
-        self.consumer = Consumer(self.queue, self.__app_id)
-        self.consumer.start()
+        if queue is not None:
+            self.queue = EventQueue()
+            self.consumer = Consumer(self.queue, self.__app_id)
+            self.consumer.start()
+        else:
+            self.queue = queue
 
     def _get_initial_track_event_params(
         self, run_type: LunaryRunType, event_name: LunaryEventName, run_id: str = None

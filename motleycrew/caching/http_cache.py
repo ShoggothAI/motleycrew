@@ -6,6 +6,8 @@ from urllib.parse import urlparse
 import logging
 import inspect
 import fnmatch
+import traceback
+
 import cloudpickle
 import platformdirs
 
@@ -19,7 +21,17 @@ from httpx import (
 from curl_cffi.requests import AsyncSession as CurlCFFI__AsyncSession
 from curl_cffi.requests import Headers as CurlCFFI__Headers
 
+try:
+    from lunary import track_event, run_ctx, event_queue_ctx
+
+    is_update_lunary_event = True
+except ImportError:
+    is_update_lunary_event = False
+
+
 from .utils import recursive_hash, hash_code, FakeRLock
+from motleycrew.common.enums import LunaryEventName, LunaryRunType
+
 
 CACHE_WHITELIST = []
 CACHE_BLACKLIST = [
@@ -162,6 +174,8 @@ class BaseHttpCache(ABC):
         # If cache exists, load and return it
         result = self.load_cache_response(cache_file, url)
         if result is not None:
+            if is_update_lunary_event:
+                self._update_lunary_event(run_ctx.get())
             return result
 
         # Otherwise, call the function and save its result to the cache
@@ -180,6 +194,8 @@ class BaseHttpCache(ABC):
         #  If cache exists, load and return it
         result = self.load_cache_response(cache_file, url)
         if result is not None:
+            if is_update_lunary_event:
+                self._update_lunary_event(run_ctx.get())
             return result
 
         # Otherwise, call the function and save its result to the cache
@@ -187,6 +203,32 @@ class BaseHttpCache(ABC):
 
         self.write_to_cache(result, cache_file, url)
         return result
+
+    @staticmethod
+    def _update_lunary_event(
+        run_id: str, run_type: str = LunaryRunType.LLM, is_cache: bool = True
+    ) -> None:
+        """Updating lunary event"""
+
+        if not is_update_lunary_event:
+            return
+
+        event_params = {
+            "run_type": run_type,
+            "event_name": LunaryEventName.UPDATE,
+            "run_id": run_id,
+            "callback_queue": event_queue_ctx.get()
+        }
+        if is_cache:
+            event_params["metadata"] = {"cache": True}
+
+        try:
+            track_event(**event_params)
+        except Exception as e:
+            msg = "[Lunary] An error occurred with update lunary event {}: {}\n{}".format(run_id, e,
+                                                                                          traceback.format_exc())
+            logging.warning(msg)
+            raise e
 
     def load_cache_response(self, cache_file: Path, url: str) -> Union[Any, None]:
         """Loads and returns the cached response"""

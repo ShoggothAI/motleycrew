@@ -48,7 +48,9 @@ class MotleyTool(Runnable):
         return MotleyTool.from_langchain_tool(langchain_tool=langchain_tool)
 
     @staticmethod
-    def from_supported_tool(tool: Union["MotleyTool", BaseTool, LlamaIndex__BaseTool]):
+    def from_supported_tool(
+        tool: Union["MotleyTool", BaseTool, LlamaIndex__BaseTool, MotleyAgentAbstractParent]
+    ):
         if isinstance(tool, MotleyTool):
             return tool
         elif isinstance(tool, BaseTool):

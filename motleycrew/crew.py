@@ -3,7 +3,7 @@ import logging
 import os
 
 from motleycrew.agents.parent import MotleyAgentParent
-from motleycrew.tasks import TaskRecipe, Task, SimpleTaskRecipe
+from motleycrew.tasks import Task, TaskUnit, SimpleTask
 from motleycrew.storage import MotleyGraphStore
 from motleycrew.storage.graph_store_utils import init_graph_store
 from motleycrew.tools import MotleyTool
@@ -17,7 +17,7 @@ class MotleyCrew:
 
         self.single_thread = os.environ.get("MC_SINGLE_THREAD", False)
         self.tools = []
-        self.task_recipes = []
+        self.tasks = []
 
     def create_simple_task(
         self,
@@ -26,84 +26,87 @@ class MotleyCrew:
         name: Optional[str] = None,
         generate_name: bool = False,
         tools: Optional[Sequence[MotleyTool]] = None,
-    ) -> SimpleTaskRecipe:
+    ) -> SimpleTask:
         """
-        Basic method for creating a simple task recipe
+        Basic method for creating a simple task
         """
         if name is None and generate_name:
             # Call llm to generate a name
             raise NotImplementedError("Name generation not yet implemented")
-        task_recipe = SimpleTaskRecipe(name=name, description=description, agent=agent, tools=tools)
-        self.register_task_recipes([task_recipe])
-        return task_recipe
+        task = SimpleTask(name=name, description=description, agent=agent, tools=tools)
+        self.register_tasks([task])
+        return task
 
-    def run(self) -> list[Task]:
+    def run(self) -> list[TaskUnit]:
         if not self.single_thread:
             logging.warning("Multithreading is not implemented yet, will run in single thread")
 
         return self._run_sync()
 
-    def add_dependency(self, upstream: TaskRecipe, downstream: TaskRecipe):
+    def add_dependency(self, upstream: Task, downstream: Task):
         self.graph_store.create_relation(
-            upstream.node, downstream.node, label=TaskRecipe.TASK_RECIPE_IS_UPSTREAM_LABEL
+            upstream.node, downstream.node, label=Task.TASK_IS_UPSTREAM_LABEL
         )
         # # TODO: rollback if bad?
         # self.check_cyclical_dependencies()
 
-    def register_task_recipes(self, task_recipes: Collection[TaskRecipe]):
-        for task_recipe in task_recipes:
-            if task_recipe not in self.task_recipes:
-                self.task_recipes.append(task_recipe)
-                task_recipe.crew = self
-                self.graph_store.insert_node(task_recipe.node)
+    def register_tasks(self, tasks: Collection[Task]):
+        for task in tasks:
+            if task not in self.tasks:
+                self.tasks.append(task)
+                task.crew = self
+                self.graph_store.insert_node(task.node)
 
                 self.graph_store.ensure_relation_table(
-                    from_class=type(task_recipe.node),
-                    to_class=type(task_recipe.node),
-                    label=TaskRecipe.TASK_RECIPE_IS_UPSTREAM_LABEL,
+                    from_class=type(task.node),
+                    to_class=type(task.node),
+                    label=Task.TASK_IS_UPSTREAM_LABEL,
                 )  # TODO: remove this workaround, https://github.com/kuzudb/kuzu/issues/3488
 
-    def _run_sync(self) -> list[Task]:
-        done_tasks = []
+    def _run_sync(self) -> list[TaskUnit]:
+        done_units = []
         while True:
             did_something = False
 
-            available_task_recipes = self.get_available_task_recipes()
-            logging.info("Available task recipes: %s", available_task_recipes)
+            available_tasks = self.get_available_tasks()
+            logging.info("Available tasks: %s", available_tasks)
 
-            for recipe in available_task_recipes:
-                logging.info("Processing recipe: %s", recipe)
+            for task in available_tasks:
+                logging.info("Processing task: %s", task)
 
-                matching_tasks = recipe.identify_candidates()
-                logging.info("Got %s matching tasks for recipe %s", len(matching_tasks), recipe)
-                if len(matching_tasks) > 0:
-                    current_task = matching_tasks[0]
-                    logging.info("Processing task: %s", current_task)
+                next_unit = task.get_next_unit()
 
-                    extra_tools = self.get_extra_tools(recipe)
+                if next_unit is None:
+                    logging.info("Got no matching units for task %s", task)
+                else:
+                    logging.info("Got a matching unit for task %s", task)
+                    current_unit = next_unit
+                    logging.info("Processing task: %s", current_unit)
 
-                    agent = recipe.get_worker(extra_tools)
-                    logging.info("Assigned task %s to agent %s, dispatching", current_task, agent)
-                    current_task.set_running()
-                    self.graph_store.insert_node(current_task)
+                    extra_tools = self.get_extra_tools(task)
+
+                    agent = task.get_worker(extra_tools)
+                    logging.info("Assigned unit %s to agent %s, dispatching", current_unit, agent)
+                    current_unit.set_running()
+                    self.graph_store.insert_node(current_unit)
 
                     # TODO: accept and handle some sort of return value? Or just the final state of the task?
-                    result = agent.invoke(current_task.as_dict())
-                    current_task.output = result
+                    result = agent.invoke(current_unit.as_dict())
+                    current_unit.output = result
 
-                    logging.info("Task %s completed, marking as done", current_task)
-                    current_task.set_done()
-                    recipe.register_completed_task(current_task)
-                    done_tasks.append(current_task)
+                    logging.info("Task unit %s completed, marking as done", current_unit)
+                    current_unit.set_done()
+                    task.register_completed_unit(current_unit)
+                    done_units.append(current_unit)
 
                     did_something = True
                     continue
 
             if not did_something:
                 logging.info("Nothing left to do, exiting")
-                return done_tasks
+                return done_units
 
-    def get_available_task_recipes(self) -> list[TaskRecipe]:
+    def get_available_tasks(self) -> list[Task]:
         query = (
             "MATCH (downstream:{}) "
             "WHERE NOT downstream.done "
@@ -111,16 +114,12 @@ class MotleyCrew:
             "WHERE NOT upstream.done}} "
             "RETURN downstream"
         ).format(
-            TaskRecipe.NODE_CLASS.get_label(),
-            TaskRecipe.NODE_CLASS.get_label(),
-            TaskRecipe.TASK_RECIPE_IS_UPSTREAM_LABEL,
+            Task.NODE_CLASS.get_label(),
+            Task.NODE_CLASS.get_label(),
+            Task.TASK_IS_UPSTREAM_LABEL,
         )
-        available_task_recipe_nodes = self.graph_store.run_cypher_query(
-            query, container=TaskRecipe.NODE_CLASS
-        )
-        return [
-            recipe for recipe in self.task_recipes if recipe.node in available_task_recipe_nodes
-        ]
+        available_task_nodes = self.graph_store.run_cypher_query(query, container=Task.NODE_CLASS)
+        return [task for task in self.tasks if task.node in available_task_nodes]
 
     # def _run_async(self):
     #     tasks = self.task_graph
@@ -159,11 +158,11 @@ class MotleyCrew:
     #         self.futures.add(future)
     #         future.mc_task = t
 
-    def get_extra_tools(self, task_recipe: TaskRecipe) -> list[MotleyTool]:
+    def get_extra_tools(self, task: Task) -> list[MotleyTool]:
         # TODO: Smart tool selection goes here
         tools = []
         tools += self.tools or []
-        # tools += task_recipe.tools or []
+        # tools += task.tools or []
 
         return tools
 

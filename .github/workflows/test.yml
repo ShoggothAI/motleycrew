@@ -45,12 +45,10 @@ jobs:
       run: poetry install --no-interaction --no-root
 
     - name: Install project
-      run: poetry install --no-interaction
+      run: poetry install --no-interaction --extras "crewai llama-index"
 
     - name: Run tests
       run: poetry run pytest
 
-    - name: Run integration tests
-      env:
-        OPENAI_API_KEY: fake_key_1337
-      run: poetry run python tests/run_integration_tests.py
+    - name: Tests coverage
+      run: poetry run pytest --cov=motleycrew tests/

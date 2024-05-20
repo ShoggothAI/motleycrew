@@ -40,11 +40,24 @@ IPYNB_INTEGRATION_TESTS = {
     "math_crewai_ipynb": "examples/math_crewai.ipynb",
     "single_crewai_ipynb": "examples/single_crewai.ipynb",
     "single_llama_index_ipynb": "examples/single_llama_index.ipynb",
-    "single_openai_tools_react_ipynb": "examples/single_openai_tools_react.ipynb"
+    "single_openai_tools_react_ipynb": "examples/single_openai_tools_react.ipynb",
+}
+
+MINIMAL_INTEGRATION_TESTS = {}
+
+MINIMAL_IPYNB_INTEGRATION_TESTS = {
+    "delegation_crewai_ipynb": "examples/delegation_crewai.ipynb",
+    "image_generation_crewai_ipynb": "examples/image_generation_crewai.ipynb",
+    "math_crewai_ipynb": "examples/math_crewai.ipynb",
+    "single_crewai_ipynb": "examples/single_crewai.ipynb",
+    "single_llama_index_ipynb": "examples/single_llama_index.ipynb",
+    "single_openai_tools_react_ipynb": "examples/single_openai_tools_react.ipynb",
 }
 
 DEFAULT_CACHE_DIR = Path(__file__).parent / "itest_cache"
 DEFAULT_GOLDEN_DIR = Path(__file__).parent / "itest_golden_data"
+TIKTOKEN_CACHE_DIR_NAME = "tiktoken_cache"
+TIKTOKEN_CACHE_DIR_ENV_VAR = "TIKTOKEN_CACHE_DIR"
 
 
 def get_args_parser():
@@ -67,6 +80,12 @@ def get_args_parser():
         "--update-golden",
         action="store_true",
         help="Update reference data together with the cache",
+    )
+    parser.add_argument(
+        "--minimal_only",
+        default=False,
+        action="store_true",
+        help="Run minimal tests"
     )
 
     return parser
@@ -120,10 +139,27 @@ def run_ipynb(ipynb_path: str):
     ep.preprocess(nb)
 
 
-def build_ipynb_integration_tests() -> dict:
+def set_tiktoken_cache_dir(cache_dir: str) -> str:
+    """Set tiktoken cache directory to env, return its old value to set it back after the tests"""
+    old_value = os.environ.get(TIKTOKEN_CACHE_DIR_ENV_VAR)
+
+    tiktoken_cache_dir = os.path.join(cache_dir, "tiktoken_cache")
+    os.environ[TIKTOKEN_CACHE_DIR_ENV_VAR] = tiktoken_cache_dir
+    return old_value
+
+
+def unset_tiktoken_cache_dir(old_value: Optional[str] = None):
+    """Restore the tiktoken cache environment variable, so it is not used outside the tests"""
+    if old_value is not None:
+        os.environ[TIKTOKEN_CACHE_DIR_ENV_VAR] = old_value
+    os.environ.pop(TIKTOKEN_CACHE_DIR_ENV_VAR, None)
+
+
+def build_ipynb_integration_tests(is_minimal: bool = False) -> dict:
     """Build and return dict of ipynb integration tests functions"""
     test_functions = {}
-    for test_name, nb_path in IPYNB_INTEGRATION_TESTS.items():
+    tests = MINIMAL_IPYNB_INTEGRATION_TESTS if is_minimal else IPYNB_INTEGRATION_TESTS
+    for test_name, nb_path in tests.items():
         if not os.path.exists(nb_path):
             logging.info("Ipynb test notebook {} not found".format(test_name))
             continue
@@ -138,11 +174,24 @@ def run_integration_tests(
     golden_dir: str,
     update_golden: bool = False,
     test_name: Optional[str] = None,
+    minimal_only: bool = False
 ):
     failed_tests = {}
 
-    integration_tests = copy(INTEGRATION_TESTS)
-    integration_tests.update(build_ipynb_integration_tests())
+    if minimal_only:
+        integration_tests = {}
+    else:
+        integration_tests = copy(INTEGRATION_TESTS)
+        integration_tests.update(build_ipynb_integration_tests())
+
+    minimal_integration_tests = copy(MINIMAL_INTEGRATION_TESTS)
+    minimal_integration_tests.update(build_ipynb_integration_tests(is_minimal=True))
+
+    for test_key, test_value in minimal_integration_tests.items():
+        integration_test_key = "minimal_{}".format(test_key)
+        integration_tests[integration_test_key] = test_value
+
+    old_tiktoken_cache_dir = set_tiktoken_cache_dir(cache_dir)
 
     for current_test_name, test_fn in integration_tests.items():
         if test_name is not None and test_name != current_test_name:
@@ -184,6 +233,9 @@ def run_integration_tests(
     if failed_tests:
         raise IntegrationTestException(test_names=list(failed_tests.keys()))
 
+    logging.info("All tests passed!")
+    unset_tiktoken_cache_dir(old_tiktoken_cache_dir)
+
 
 def main():
     configure_logging(verbose=True)
@@ -198,6 +250,7 @@ def main():
         golden_dir=args.golden_dir,
         update_golden=args.update_golden,
         test_name=args.test_name,
+        minimal_only=args.minimal_only
     )
 
 

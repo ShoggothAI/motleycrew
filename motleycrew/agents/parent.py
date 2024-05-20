@@ -2,6 +2,7 @@ import logging
 from typing import TYPE_CHECKING, Optional, Sequence
 
 from langchain_core.tools import Tool
+from langchain_core.runnables import Runnable
 from pydantic import BaseModel
 
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
@@ -13,7 +14,7 @@ if TYPE_CHECKING:
     from motleycrew import MotleyCrew
 
 
-class MotleyAgentParent(MotleyAgentAbstractParent):
+class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
     def __init__(
         self,
         goal: str,

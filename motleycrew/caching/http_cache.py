@@ -8,13 +8,18 @@ import inspect
 import fnmatch
 import traceback
 
-import requests
-from requests.structures import CaseInsensitiveDict
-from httpx import Client, Headers
-from curl_cffi.requests import AsyncSession
-from curl_cffi.requests import Headers as CurlCffiHeaders
 import cloudpickle
 import platformdirs
+
+import requests
+from requests.structures import CaseInsensitiveDict
+from httpx import (
+    Client as HTTPX__Client,
+    AsyncClient as HTTPX_AsyncClient,
+    Headers as HTTPX__Headers,
+)
+from curl_cffi.requests import AsyncSession as CurlCFFI__AsyncSession
+from curl_cffi.requests import Headers as CurlCFFI__Headers
 
 try:
     from lunary import track_event, run_ctx
@@ -271,7 +276,7 @@ class RequestsHttpCaching(BaseHttpCache):
     library_name = "requests"
 
     def __init__(self, *args, **kwargs):
-        super(RequestsHttpCaching, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.library_method = requests.api.request
 
     def get_url(self, *args, **kwargs) -> str:
@@ -305,8 +310,9 @@ class HttpxHttpCaching(BaseHttpCache):
     library_name = "Httpx"
 
     def __init__(self, *args, **kwargs):
-        super(HttpxHttpCaching, self).__init__(*args, **kwargs)
-        self.library_method = Client.send
+        super().__init__(*args, **kwargs)
+        self.library_method = HTTPX__Client.send
+        self.alibrary_method = HTTPX_AsyncClient.send
 
     def get_url(self, *args, **kwargs) -> str:
         """Finds the url in the arguments and returns it"""
@@ -314,8 +320,8 @@ class HttpxHttpCaching(BaseHttpCache):
 
     def prepare_response(self, response: Any) -> Any:
         """Preparing the response object before saving"""
-        response.headers = Headers()
-        response.request.headers = Headers()
+        response.headers = HTTPX__Headers()
+        response.request.headers = HTTPX__Headers()
         return response
 
     def _enable(self):
@@ -325,11 +331,17 @@ class HttpxHttpCaching(BaseHttpCache):
         def request_func(s, request, *args, **kwargs):
             return self.library_method(s, request, **kwargs)
 
-        Client.send = request_func
+        @afile_cache(self, updating_parameters={"stream": False})
+        async def arequest_func(s, request, *args, **kwargs):
+            return await self.alibrary_method(s, request, **kwargs)
+
+        HTTPX__Client.send = request_func
+        HTTPX_AsyncClient.send = arequest_func
 
     def _disable(self):
         """Replacing the caching function with the original one"""
-        Client.send = self.library_method
+        HTTPX__Client.send = self.library_method
+        HTTPX_AsyncClient.send = self.alibrary_method
 
 
 class CurlCffiHttpCaching(BaseHttpCache):
@@ -339,8 +351,8 @@ class CurlCffiHttpCaching(BaseHttpCache):
     library_name = "Curl cffi"
 
     def __init__(self, *args, **kwargs):
-        super(CurlCffiHttpCaching, self).__init__(*args, **kwargs)
-        self.library_method = AsyncSession.request
+        super().__init__(*args, **kwargs)
+        self.library_method = CurlCFFI__AsyncSession.request
 
     def get_url(self, *args, **kwargs) -> str:
         """Finds the url in the arguments and returns it"""
@@ -348,8 +360,8 @@ class CurlCffiHttpCaching(BaseHttpCache):
 
     def prepare_response(self, response: Any) -> Any:
         """Preparing the response object before saving"""
-        response.headers = CurlCffiHeaders()
-        response.request.headers = CurlCffiHeaders()
+        response.headers = CurlCFFI__Headers()
+        response.request.headers = CurlCFFI__Headers()
         response.curl = None
         response.cookies.jar._cookies_lock = FakeRLock()
         return response
@@ -361,8 +373,8 @@ class CurlCffiHttpCaching(BaseHttpCache):
         async def request_func(s, method, url, *args, **kwargs):
             return await self.library_method(s, method, url, *args, **kwargs)
 
-        AsyncSession.request = request_func
+        CurlCFFI__AsyncSession.request = request_func
 
     def _disable(self):
         """Replacing the caching function with the original one"""
-        AsyncSession.request = self.library_method
+        CurlCFFI__AsyncSession.request = self.library_method

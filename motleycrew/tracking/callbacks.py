@@ -2,18 +2,26 @@ from typing import List, Dict, Optional, Any, Union
 import logging
 import traceback
 
-from llama_index.core.callbacks.base_handler import BaseCallbackHandler
-from llama_index.core.callbacks.schema import CBEventType, EventPayload
-from llama_index.core.base.llms.types import ChatMessage
+try:
+    from llama_index.core.callbacks.base_handler import BaseCallbackHandler
+    from llama_index.core.callbacks.schema import CBEventType, EventPayload
+    from llama_index.core.base.llms.types import ChatMessage
+except ImportError:
+    BaseCallbackHandler = object
+    CBEventType = None
+    ChatMessage = None
+
 from lunary import track_event
 from lunary.event_queue import EventQueue
 from lunary.consumer import Consumer
 
 from motleycrew.common.enums import LunaryRunType, LunaryEventName
+from motleycrew.common.utils import ensure_module_is_installed
 
 
 def event_delegate_decorator(f):
     def wrapper(self, *args, **kwargs):
+        ensure_module_is_installed("llama_index")
         run_type = "start" if "start" in f.__name__ else "end"
 
         # find event type
@@ -22,11 +30,11 @@ def event_delegate_decorator(f):
         else:
             event_type = kwargs.get("event_type", None)
 
-        if not [event for event in CBEventType if event.value == event_type]:
+        if not [event for event in CBEventType if event.value == event_type.value]:
             return f(*args, **kwargs)
 
         # find and call handler
-        handler_name = "_on_{}_{}".format(event_type, run_type)
+        handler_name = "_on_{}_{}".format(event_type.value, run_type)
         handler = getattr(self, handler_name, None)
         if handler is not None and callable(handler):
             handler_args = list(args)[1:]
@@ -77,6 +85,7 @@ class LlamaIndexLunaryCallbackHandler(BaseCallbackHandler):
         event_ends_to_ignore: List[CBEventType] = [],
         queue: EventQueue = None,
     ):
+        ensure_module_is_installed("llama_index")
         super(LlamaIndexLunaryCallbackHandler, self).__init__(
             event_starts_to_ignore=event_starts_to_ignore,
             event_ends_to_ignore=event_ends_to_ignore,
@@ -224,9 +233,7 @@ class LlamaIndexLunaryCallbackHandler(BaseCallbackHandler):
             run_id = parent_id if parent_id else event_id
 
         _exception = payload.get(EventPayload.EXCEPTION)
-        params = self._get_initial_track_event_params(
-            run_type, LunaryEventName.ERROR, run_id
-        )
+        params = self._get_initial_track_event_params(run_type, LunaryEventName.ERROR, run_id)
         params["error"] = {"message": str(_exception), "stack": traceback.format_exc()}
         return params
 

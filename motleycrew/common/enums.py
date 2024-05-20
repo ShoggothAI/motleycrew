@@ -11,7 +11,7 @@ class GraphStoreType:
     KUZU = "kuzu"
 
 
-class TaskStatus:
+class TaskUnitStatus:
     PENDING = "pending"
     RUNNING = "running"
     DONE = "done"
@@ -28,4 +28,5 @@ class LunaryRunType:
 class LunaryEventName:
     START = "start"
     END = "end"
+    UPDATE = "update"
     ERROR = "error"

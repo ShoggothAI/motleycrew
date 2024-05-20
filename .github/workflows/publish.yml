@@ -3,7 +3,7 @@ name: Publish
 on:
   release:
     types: [published]
-      
+
 jobs:
   build:
     strategy:
@@ -22,7 +22,7 @@ jobs:
 
     - name: Install poetry
       run: pip install -U poetry
-        
+
     - name: Configure poetry
       run: |
         poetry config virtualenvs.create true
@@ -36,11 +36,11 @@ jobs:
       with:
         path: .venv
         key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-          
+
     - name: Install dependencies
       if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
       run: poetry install --no-interaction --no-root
-        
+
     - name: Install project
       run: poetry install --no-interaction
 

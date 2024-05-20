@@ -1,6 +1,7 @@
 from typing import Union
 
 from langchain.tools import BaseTool
+from langchain_core.runnables import Runnable
 
 try:
     from llama_index.core.tools import BaseTool as LlamaIndex__BaseTool
@@ -19,14 +20,13 @@ def normalize_input(args, kwargs):
         return args[0]
 
 
-class MotleyTool:
+class MotleyTool(Runnable):
     """
     Base tool class compatible with MotleyAgents.
     It is a wrapper for LangChain's BaseTool, containing all necessary adapters and converters.
     """
 
     def __init__(self, tool: BaseTool):
-        ensure_module_is_installed("llama_index")
         self.tool = tool
 
     @property
@@ -66,6 +66,7 @@ class MotleyTool:
         return self.tool
 
     def to_llama_index_tool(self) -> LlamaIndex__BaseTool:
+        ensure_module_is_installed("llama_index")
         llama_index_tool = LlamaIndex__FunctionTool.from_defaults(
             fn=self.tool._run,
             name=self.tool.name,

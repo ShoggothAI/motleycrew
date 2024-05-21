@@ -1,5 +1,5 @@
+import os
 import pytest
-from dotenv import load_dotenv
 
 from langchain_community.tools import DuckDuckGoSearchRun
 from motleycrew.agents.crewai.crewai_agent import CrewAIMotleyAgent
@@ -9,8 +9,7 @@ from motleycrew.common.exceptions import AgentNotMaterialized, CannotModifyMater
 from motleycrew.tools.python_repl import create_repl_tool
 from motleycrew.tools.tool import MotleyTool
 
-
-load_dotenv()
+os.environ["OPENAI_API_KEY"] = "YOUR OPENAI API KEY"
 
 test_agents_names = ("crewai", "langchain", "llama_index")
 

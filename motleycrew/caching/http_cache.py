@@ -40,7 +40,7 @@ FORCED_CACHE_BLACKLIST = [
     "*//api.lunary.ai/*",
 ]
 
-CACHE_FILENAME_LENGTH_LIMIT = 120
+CACHE_FILENAME_LENGTH_LIMIT = 64
 
 
 class CacheException(Exception):
@@ -171,7 +171,10 @@ class BaseHttpCache(ABC):
 
         # Create hash based on argument names, argument values, and function source code
         hashing_base = [args_dict, kwargs_clone, inspect.getsource(func)]
-        call_hash = recursive_hash(hashing_base, ignore_params=self.ignore_params)
+        call_hash = shorten_filename(
+            recursive_hash(hashing_base, ignore_params=self.ignore_params),
+            length=CACHE_FILENAME_LENGTH_LIMIT,
+        )
 
         cache_file = cache_dir / "{}.pkl".format(call_hash)
         return cache_file, url

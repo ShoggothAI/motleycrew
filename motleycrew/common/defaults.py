@@ -10,8 +10,8 @@ class Defaults:
 
     DEFAULT_GRAPH_STORE_TYPE = GraphStoreType.KUZU
 
-
-defaults_module_install_commands = {
-    "crewai": "pip install crewai",
-    "llama_index": "pip install llama-index"
-}
+    MODULE_INSTALL_COMMANDS = {
+        "crewai": "pip install crewai",
+        "llama_index": "pip install llama-index",
+        "autogen": "pip install autogen",
+    }

@@ -1,9 +1,9 @@
-from motleycrew.tools.python_repl import create_repl_tool
+from motleycrew.tools import PythonREPLTool
 
 
 class TestREPLTool:
     def test_repl_tool(self):
-        repl_tool = create_repl_tool()
+        repl_tool = PythonREPLTool()
         repl_tool_input_fields = list(repl_tool.tool.args_schema.__fields__.keys())
 
         assert repl_tool_input_fields == ["command"]

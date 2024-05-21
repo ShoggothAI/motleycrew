@@ -1,14 +1,14 @@
 from dotenv import load_dotenv
 
-from motleycrew import MotleyCrew, Task
+from motleycrew import MotleyCrew
 from motleycrew.agents.crewai import CrewAIMotleyAgent
-from motleycrew.tools.python_repl import create_repl_tool
+from motleycrew.tools import PythonREPLTool
 from motleycrew.common.utils import configure_logging
 
 
 def main():
     """Main function of running the example."""
-    repl_tool = create_repl_tool()
+    repl_tool = PythonREPLTool()
 
     # Define your agents with roles and goals
     solver1 = CrewAIMotleyAgent(

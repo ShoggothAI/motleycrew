@@ -7,7 +7,7 @@ from langchain_core.runnables import Runnable
 
 from motleycrew import MotleyCrew
 from motleycrew.tools import MotleyTool
-from motleycrew.tasks import Task, TaskUnitType
+from motleycrew.tasks import Task, TaskUnitType, TaskUnit
 from motleycrew.storage import MotleyKuzuGraphStore
 from motleycrew.common.exceptions import TaskDependencyCycleError
 
@@ -131,3 +131,27 @@ class TestSetUpstream:
     def test_error_on_direct_dependency_cycle(self, task_1):
         with pytest.raises(TaskDependencyCycleError):
             task_1 >> task_1
+
+
+class TestTask:
+
+    @pytest.fixture(scope="class")
+    def task(self):
+        return create_dummy_task(MotleyCrew(), "test task")
+
+    def test_register_started_unit(self, task):
+        with pytest.raises(AssertionError):
+            task.register_started_unit("unit")
+
+        unit = TaskUnit()
+        unit.set_done()
+
+        with pytest.raises(AssertionError):
+            task.register_started_unit(unit)
+
+    def test_set_done(self, task):
+        assert not task.done
+        assert not task.node.done
+        task.set_done()
+        assert task.done
+        assert task.node.done

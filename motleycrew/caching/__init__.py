@@ -7,3 +7,4 @@ from .caching import (
     set_cache_whitelist,
     set_cache_blacklist,
 )
+from .http_cache import logger

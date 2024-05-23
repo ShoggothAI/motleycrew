@@ -36,6 +36,9 @@ from motleycrew.common.enums import LunaryEventName, LunaryRunType
 from .utils import recursive_hash, shorten_filename, FakeRLock
 
 
+logger = logging.getLogger(__name__)
+
+
 FORCED_CACHE_BLACKLIST = [
     "*//api.lunary.ai/*",
 ]
@@ -110,7 +113,7 @@ class BaseHttpCache(ABC):
         self.is_caching = True
 
         library_log = "for {} library.".format(self.library_name) if self.library_name else "."
-        logging.info("Enable caching {} class {}".format(self.__class__, library_log))
+        logger.info("Enable caching {} class {}".format(self.__class__, library_log))
 
     def disable(self):
         """Disable caching"""
@@ -118,7 +121,7 @@ class BaseHttpCache(ABC):
         self.is_caching = False
 
         library_log = "for {} library.".format(self.library_name) if self.library_name else "."
-        logging.info("Disable caching {} class {}".format(self.__class__, library_log))
+        logger.info("Disable caching {} class {}".format(self.__class__, library_log))
 
     def prepare_response(self, response: Any) -> Any:
         """Preparing the response object before saving"""
@@ -144,7 +147,7 @@ class BaseHttpCache(ABC):
 
         # Check valid url
         if not self.should_cache(url):
-            logging.info("Ignore url to cache: {}".format(url))
+            logger.info("Ignore url to cache: {}".format(url))
             return None
 
         # check or create cache dirs
@@ -243,7 +246,7 @@ class BaseHttpCache(ABC):
             msg = "[Lunary] An error occurred while updating lunary event {}: {}\n{}".format(
                 run_id, exc, traceback.format_exc()
             )
-            logging.warning(msg)
+            logger.warning(msg)
             raise exc
 
     def load_cache_response(self, cache_file: Path, url: str) -> Union[Any, None]:
@@ -260,11 +263,11 @@ class BaseHttpCache(ABC):
         """Reads and returns a serialized object from a file"""
         try:
             with cache_file.open("rb") as f:
-                logging.info("Used cache for {} url from {}".format(url, cache_file))
+                logger.info("Used cache for {} url from {}".format(url, cache_file))
                 result = cloudpickle.load(f)
                 return result
         except Exception as e:
-            logging.warning("Unpickling failed for {}".format(cache_file))
+            logger.warning("Unpickling failed for {}".format(cache_file))
             if self.strong_cache:
                 msg = "Error reading cached file: {}\n{}".format(str(e), str(cache_file))
                 raise StrongCacheException(msg)
@@ -276,9 +279,9 @@ class BaseHttpCache(ABC):
         try:
             with cache_file.open("wb") as f:
                 cloudpickle.dump(response, f)
-                logging.info("Write cache for {} url to {}".format(url, cache_file))
+                logger.info("Write cache for {} url to {}".format(url, cache_file))
         except Exception as e:
-            logging.warning("Pickling failed for {} url: {}".format(cache_file, e))
+            logger.warning("Pickling failed for {} url: {}".format(cache_file, e))
 
     @staticmethod
     def match_url(url: str, patterns: List[str]) -> bool:

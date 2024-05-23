@@ -1,10 +1,10 @@
+import logging
 import shutil
 from typing import Optional
 
 import os
 import argparse
 from pathlib import Path
-import logging
 import traceback
 import difflib
 import json

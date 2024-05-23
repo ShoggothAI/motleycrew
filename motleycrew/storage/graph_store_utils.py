@@ -1,6 +1,6 @@
-import tempfile
 from typing import Optional
 import logging
+import tempfile
 import os
 
 from motleycrew.common import Defaults

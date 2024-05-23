@@ -8,7 +8,6 @@ except ImportError:
     LLM = object
 
 from motleycrew.agents.llama_index import LlamaIndexMotleyAgent
-from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
 from motleycrew.tools import MotleyTool
 from motleycrew.common import MotleySupportedTool
 from motleycrew.common import LLMFramework
@@ -30,7 +29,7 @@ class ReActLlamaIndexMotleyAgent(LlamaIndexMotleyAgent):
         if llm is None:
             llm = init_llm(llm_framework=LLMFramework.LLAMA_INDEX)
 
-        def agent_factory(tools: dict[str, MotleyTool]):
+        def agent_factory(tools: dict[str, MotleyTool]) -> ReActAgent:
             llama_index_tools = [t.to_llama_index_tool() for t in tools.values()]
             # TODO: feed description into the agent's prompt
             callbacks = get_default_callbacks_list(LLMFramework.LLAMA_INDEX)

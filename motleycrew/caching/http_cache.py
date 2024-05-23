@@ -1,9 +1,9 @@
+import logging
 import os
 from pathlib import Path
 from abc import ABC, abstractmethod
 from typing import List, Callable, Any, Union
 from urllib.parse import urlparse
-import logging
 import inspect
 import fnmatch
 import cloudpickle

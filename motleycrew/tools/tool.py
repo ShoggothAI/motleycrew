@@ -1,4 +1,4 @@
-from typing import Union, Annotated
+from typing import Callable
 
 from langchain.tools import BaseTool
 from langchain_core.runnables import Runnable
@@ -8,8 +8,10 @@ try:
     from llama_index.core.tools import FunctionTool as LlamaIndex__FunctionTool
 except ImportError:
     LlamaIndex__BaseTool = None
+    LlamaIndex__FunctionTool = None
 
 from motleycrew.common.utils import ensure_module_is_installed
+from motleycrew.common.types import MotleySupportedTool
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
 
 
@@ -48,9 +50,7 @@ class MotleyTool(Runnable):
         return MotleyTool.from_langchain_tool(langchain_tool=langchain_tool)
 
     @staticmethod
-    def from_supported_tool(
-        tool: Union["MotleyTool", BaseTool, LlamaIndex__BaseTool, MotleyAgentAbstractParent]
-    ):
+    def from_supported_tool(tool: MotleySupportedTool) -> "MotleyTool":
         if isinstance(tool, MotleyTool):
             return tool
         elif isinstance(tool, BaseTool):
@@ -77,7 +77,7 @@ class MotleyTool(Runnable):
         )
         return llama_index_tool
 
-    def to_autogen_tool(self):
+    def to_autogen_tool(self) -> Callable:
         fields = list(self.tool.args_schema.__fields__.values())
         if len(fields) != 1:
             raise Exception("Multiple input fields are not supported in to_autogen_tool")

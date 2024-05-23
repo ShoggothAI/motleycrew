@@ -1,12 +1,12 @@
-from typing import Any, Optional, Sequence, Callable
+from typing import Any, Optional, Sequence, Callable, Union
 
 from langchain.agents import AgentExecutor
 from langchain_core.runnables import RunnableConfig
 from langchain_core.language_models import BaseLanguageModel
-from langchain_core.prompts.chat import ChatPromptTemplate
+from langchain_core.prompts import BasePromptTemplate
+from langchain_core.tools import BaseTool
 
 from motleycrew.agents.parent import MotleyAgentParent
-from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
 
 from motleycrew.tools import MotleyTool
 from motleycrew.tracking import add_default_callbacks_to_langchain_config
@@ -21,7 +21,7 @@ class LangchainMotleyAgent(MotleyAgentParent):
         self,
         description: str,
         name: str | None = None,
-        agent_factory: MotleyAgentFactory | None = None,
+        agent_factory: MotleyAgentFactory[AgentExecutor] | None = None,
         tools: Sequence[MotleySupportedTool] | None = None,
         verbose: bool = False,
     ):
@@ -54,14 +54,20 @@ class LangchainMotleyAgent(MotleyAgentParent):
         return output
 
     @staticmethod
-    def from_function(
-        function: Callable[..., Any],
+    def from_creating_function(
+        creating_function: Callable[
+            [
+                BaseLanguageModel,
+                Sequence[BaseTool],
+                Union[BasePromptTemplate, Sequence[BasePromptTemplate], None],
+            ],
+            Any,
+        ],
         description: str,
         name: str | None = None,
         llm: BaseLanguageModel | None = None,
-        delegation: bool | Sequence[MotleyAgentAbstractParent] = False,
         tools: Sequence[MotleySupportedTool] | None = None,
-        prompt: ChatPromptTemplate | Sequence[ChatPromptTemplate] | None = None,
+        prompt: BasePromptTemplate | Sequence[BasePromptTemplate] | None = None,
         require_tools: bool = False,
         verbose: bool = False,
     ) -> "LangchainMotleyAgent":
@@ -71,10 +77,13 @@ class LangchainMotleyAgent(MotleyAgentParent):
         if require_tools and not tools:
             raise ValueError("You must provide at least one tool to the ReactMotleyAgent")
 
-        def agent_factory(tools: dict[str, MotleyTool]):
+        for tool in tools:
+            MotleyTool.from_supported_tool(tool)
+
+        def agent_factory(tools: dict[str, MotleyTool]) -> AgentExecutor:
             langchain_tools = [t.to_langchain_tool() for t in tools.values()]
             # TODO: feed description into the agent's prompt
-            agent = function(llm=llm, tools=langchain_tools, prompt=prompt)
+            agent = creating_function(llm, langchain_tools, prompt)
             agent_executor = AgentExecutor(
                 agent=agent,
                 tools=langchain_tools,

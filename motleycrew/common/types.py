@@ -1,17 +1,34 @@
-from typing import TYPE_CHECKING
-from typing import Any
-from typing import Protocol
+from typing import TYPE_CHECKING, Any, Union, Protocol, TypeVar
+
 
 if TYPE_CHECKING:
+    from langchain.tools import BaseTool
+
+    try:
+        from llama_index.core.tools import BaseTool as LlamaIndex__BaseTool
+    except ImportError:
+        LlamaIndex__BaseTool = "LlamaIndex__BaseTool"
+
     from motleycrew.tools import MotleyTool
+    from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
 
-MotleySupportedTool = Any  # TODO: more specific typing for supported tools
+else:
+    MotleyTool = "MotleyTool"
+    BaseTool = "BaseTool"
+    LlamaIndex__BaseTool = "LlamaIndex__BaseTool"
+    MotleyAgentAbstractParent = "MotleyAgentAbstractParent"
 
 
-class MotleyAgentFactory(Protocol):
+MotleySupportedTool = Union[MotleyTool, BaseTool, LlamaIndex__BaseTool, MotleyAgentAbstractParent]
+
+
+AgentType = TypeVar("AgentType")
+
+
+class MotleyAgentFactory(Protocol[AgentType]):
     """
     Type protocol for an agent factory.
     It is a function that accepts tools as an argument and returns an agent instance of an appropriate class.
     """
 
-    def __call__(self, tools: dict[str, "MotleyTool"]) -> Any: ...
+    def __call__(self, tools: dict[str, MotleyTool]) -> AgentType: ...

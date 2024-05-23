@@ -8,8 +8,6 @@ except ImportError:
 from langchain_core.runnables import RunnableConfig
 
 from motleycrew.agents.parent import MotleyAgentParent
-from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
-from motleycrew.tasks import TaskUnit
 from motleycrew.common import MotleySupportedTool
 from motleycrew.common import MotleyAgentFactory
 from motleycrew.common.utils import ensure_module_is_installed
@@ -20,7 +18,7 @@ class LlamaIndexMotleyAgent(MotleyAgentParent):
         self,
         description: str,
         name: str | None = None,
-        agent_factory: MotleyAgentFactory | None = None,
+        agent_factory: MotleyAgentFactory[AgentRunner] | None = None,
         tools: Sequence[MotleySupportedTool] | None = None,
         verbose: bool = False,
     ):

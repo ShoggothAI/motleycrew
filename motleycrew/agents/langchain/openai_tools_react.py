@@ -209,13 +209,13 @@ class ReactOpenAIToolsAgent(LangchainMotleyAgent):
         llm: BaseLanguageModel | None = None,
         verbose: bool = False,
     ):
-        return cls.from_function(
+        return cls.from_creating_function(
             description=goal,
             name=name,
             llm=llm,
             tools=tools,
             prompt=prompt,
-            function=create_openai_tools_react_agent,
+            creating_function=create_openai_tools_react_agent,
             require_tools=True,
             verbose=verbose,
         )

@@ -3,7 +3,7 @@ import pytest
 
 from langchain_community.tools import DuckDuckGoSearchRun
 from motleycrew.agents.crewai.crewai_agent import CrewAIMotleyAgent
-from motleycrew.agents.langchain.react import ReactMotleyAgent
+from motleycrew.agents.langchain.openai_tools_react import ReactOpenAIToolsAgent
 from motleycrew.agents.llama_index.llama_index_react import ReActLlamaIndexMotleyAgent
 from motleycrew.common.exceptions import AgentNotMaterialized, CannotModifyMaterializedAgent
 from motleycrew.tools.python_repl import create_repl_tool
@@ -32,11 +32,8 @@ class TestAgents:
 
     @pytest.fixture(scope="class")
     def langchain_agent(self):
-        agent = ReactMotleyAgent(
+        agent = ReactOpenAIToolsAgent(
             name="AI writer agent",
-            description="""Conduct a comprehensive analysis of the latest advancements in AI in 2024.
-                  Identify key trends, breakthrough technologies, and potential industry impacts.
-                  Your final answer MUST be a full analysis report""",
             tools=[DuckDuckGoSearchRun()],
             verbose=True,
         )

@@ -2,7 +2,7 @@ import pytest
 
 from langchain_community.tools import DuckDuckGoSearchRun
 from motleycrew.crew import MotleyCrew
-from motleycrew.agents.langchain import ReactMotleyAgent
+from motleycrew.agents.langchain.openai_tools_react import ReactOpenAIToolsAgent
 from motleycrew.tasks.simple import (
     SimpleTask,
     SimpleTaskUnit,
@@ -18,11 +18,8 @@ class TestSimpleTask:
 
     @pytest.fixture(scope="class")
     def agent(self):
-        agent = ReactMotleyAgent(
+        agent = ReactOpenAIToolsAgent(
             name="AI writer agent",
-            description="""Conduct a comprehensive analysis of the latest advancements in AI in 2024.
-                     Identify key trends, breakthrough technologies, and potential industry impacts.
-                     Your final answer MUST be a full analysis report""",
             tools=[DuckDuckGoSearchRun()],
             verbose=True,
         )

@@ -81,3 +81,10 @@ class TestMotleyTool:
         motley_tool_2 = MotleyTool.from_supported_tool(motley_tool)
 
         assert motley_tool.name == motley_tool_2.name
+
+    def test_autogen_tool_conversion(self, langchain_tool, mock_input):
+        motley_tool = MotleyTool.from_supported_tool(langchain_tool)
+        assert isinstance(motley_tool.tool, BaseTool)
+
+        converted_autogen_tool = motley_tool.to_autogen_tool()
+        assert converted_autogen_tool(mock_input.get("mock_input")) == motley_tool.invoke(mock_input)

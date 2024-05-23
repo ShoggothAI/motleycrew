@@ -204,9 +204,8 @@ class BaseHttpCache(ABC):
         # If cache exists, load and return it
         result = self.load_cache_response(cache_file, url)
         if result is not None:
-            run_id = run_ctx.get()
-            if do_update_lunary_event and run_id and self.lunary_app_id:
-                self._update_lunary_event(run_id, self.lunary_app_id)
+            if self._can_update_lunary_event():
+                self._update_lunary_event(run_ctx.get(), self.lunary_app_id)
             return result
 
         # Otherwise, call the function and save its result to the cache
@@ -225,9 +224,8 @@ class BaseHttpCache(ABC):
         #  If cache exists, load and return it
         result = self.load_cache_response(cache_file, url)
         if result is not None:
-            run_id = run_ctx.get()
-            if do_update_lunary_event and run_id and self.lunary_app_id:
-                self._update_lunary_event(run_id, self.lunary_app_id)
+            if self._can_update_lunary_event():
+                self._update_lunary_event(run_ctx.get(), self.lunary_app_id)
             return result
 
         # Otherwise, call the function and save its result to the cache
@@ -263,6 +261,13 @@ class BaseHttpCache(ABC):
             )
             logger.warning(msg)
             raise exc
+
+    def _can_update_lunary_event(self) -> bool:
+        """Check whether the lunar event can be updated"""
+        if not do_update_lunary_event or run_ctx is None:
+            return False
+        run_id = run_ctx.get()
+        return bool(run_id and self.lunary_app_id)
 
     def load_cache_response(self, cache_file: Path, url: str) -> Union[Any, None]:
         """Loads and returns the cached response"""

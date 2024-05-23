@@ -95,6 +95,18 @@ class BaseHttpCache(ABC):
     def __init__(self, *args, **kwargs):
         self.is_caching = False
 
+    @property
+    def lunary_app_id(self):
+        try:
+            return self.__lunary_app_id
+        except AttributeError:
+            self.__lunary_app_id = (
+                os.environ.get("LUNARY_PRIVATE_KEY")
+                or os.environ.get("LUNARY_PUBLIC_KEY")
+                or os.getenv("LUNARY_APP_ID")
+            )
+        return self.__lunary_app_id
+
     @abstractmethod
     def get_url(self, *args, **kwargs) -> str:
         """Finds the url in the arguments and returns it"""
@@ -192,8 +204,9 @@ class BaseHttpCache(ABC):
         # If cache exists, load and return it
         result = self.load_cache_response(cache_file, url)
         if result is not None:
-            if do_update_lunary_event:
-                self._update_lunary_event(run_ctx.get())
+            run_id = run_ctx.get()
+            if do_update_lunary_event and run_id and self.lunary_app_id:
+                self._update_lunary_event(run_id, self.lunary_app_id)
             return result
 
         # Otherwise, call the function and save its result to the cache
@@ -212,8 +225,9 @@ class BaseHttpCache(ABC):
         #  If cache exists, load and return it
         result = self.load_cache_response(cache_file, url)
         if result is not None:
-            if do_update_lunary_event:
-                self._update_lunary_event(run_ctx.get())
+            run_id = run_ctx.get()
+            if do_update_lunary_event and run_id and self.lunary_app_id:
+                self._update_lunary_event(run_id, self.lunary_app_id)
             return result
 
         # Otherwise, call the function and save its result to the cache
@@ -224,7 +238,7 @@ class BaseHttpCache(ABC):
 
     @staticmethod
     def _update_lunary_event(
-        run_id: str, run_type: str = LunaryRunType.LLM, is_cache: bool = True
+        run_id: str, app_id: str, run_type: str = LunaryRunType.LLM, is_cache: bool = True
     ) -> None:
         """Updating lunary event"""
 
@@ -236,6 +250,7 @@ class BaseHttpCache(ABC):
             "event_name": LunaryEventName.UPDATE,
             "run_id": run_id,
             "callback_queue": event_queue_ctx.get(),
+            "app_id": app_id,
         }
         if is_cache:
             event_params["metadata"] = {"cache": True}

@@ -33,7 +33,7 @@ class MotleyCrew:
         if name is None and generate_name:
             # Call llm to generate a name
             raise NotImplementedError("Name generation not yet implemented")
-        task = SimpleTask(name=name, description=description, agent=agent, tools=tools)
+        task = SimpleTask(crew=self, name=name, description=description, agent=agent, tools=tools)
         self.register_tasks([task])
         return task
 

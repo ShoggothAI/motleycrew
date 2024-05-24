@@ -12,14 +12,8 @@ except ImportError:
 
 from motleycrew.common.utils import ensure_module_is_installed
 from motleycrew.common.types import MotleySupportedTool
+from motleycrew.common.exceptions import InvalidToolInput
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
-
-
-def normalize_input(args, kwargs):
-    if "tool_input" in kwargs:
-        return kwargs["tool_input"]
-    else:
-        return args[0]
 
 
 class MotleyTool(Runnable):
@@ -30,6 +24,12 @@ class MotleyTool(Runnable):
 
     def __init__(self, tool: BaseTool):
         self.tool = tool
+
+    def __repr__(self):
+        return f"MotleyTool(name={self.name})"
+
+    def __str__(self):
+        return self.__repr__()
 
     @property
     def name(self):

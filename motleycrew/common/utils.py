@@ -5,7 +5,7 @@ import hashlib
 from urllib.parse import urlparse
 from langchain_core.messages import BaseMessage
 
-from motleycrew.common.exceptions import ModuleNotInstalledException
+from motleycrew.common.exceptions import ModuleNotInstalled
 
 
 def configure_logging(verbose: bool = False, debug: bool = False):
@@ -59,4 +59,4 @@ def ensure_module_is_installed(module_name: str, install_command: str = None) ->
     """
     module_path = sys.modules.get(module_name, None)
     if module_path is None:
-        raise ModuleNotInstalledException(module_name, install_command)
+        raise ModuleNotInstalled(module_name, install_command)

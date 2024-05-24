@@ -6,4 +6,3 @@ Advanced API with Knowledge Graph-based dispatch
     :maxdepth: 2
 
     kg_api
-    examples/research_agent

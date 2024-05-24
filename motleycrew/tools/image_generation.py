@@ -66,7 +66,9 @@ def run_dalle_and_save_images(
             file_name = motley_utils.generate_hex_hash(url, length=file_name_length)
             file_path = os.path.join(images_directory, file_name)
 
-            file_path_with_extension = download_image(url=url, file_path=file_path)
+            file_path_with_extension = download_image(url=url, file_path=file_path).replace(
+                os.sep, "/"
+            )
             file_paths.append(file_path_with_extension)
         return file_paths
     else:

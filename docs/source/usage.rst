@@ -7,4 +7,5 @@ Usage
 
    quickstart
    knowledge_graph
+   another_llm
    caching_observability

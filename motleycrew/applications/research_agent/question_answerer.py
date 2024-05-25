@@ -56,9 +56,11 @@ class QuestionAnswererInput(BaseModel, arbitrary_types_allowed=True):
 
 
 def get_subquestions(graph: MotleyGraphStore, question: Question) -> list[Question]:
-    query = "MATCH (n1:{})-[]->(n2:{}) WHERE n1.id = $question_id and n2.context IS NOT NULL RETURN n2".format(
-        Question.get_label(), Question.get_label()
-    )
+    query = (
+        "MATCH (n1:{})-[]->(n2:{}) "
+        "WHERE n1.id = $question_id and n2.context IS NOT NULL "
+        "RETURN n2"
+    ).format(Question.get_label(), Question.get_label())
 
     query_result = graph.run_cypher_query(
         query, parameters={"question_id": question.id}, container=Question

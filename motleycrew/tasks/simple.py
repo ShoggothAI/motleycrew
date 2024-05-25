@@ -60,7 +60,7 @@ class SimpleTask(Task):
         creator_name: str | None = None,
         return_to_creator: bool = False,
     ):
-        super().__init__(name or description)
+        super().__init__(name=name or description, task_unit_class=SimpleTaskUnit, crew=crew)
         self.description = description
         self.agent = agent  # to be auto-assigned at crew creation if missing?
         self.tools = tools or []
@@ -71,10 +71,6 @@ class SimpleTask(Task):
             return_to_creator  # for orchestrator to know to send back to creator
         )
         self.output = None  # to be filled in by the agent(s) once the task is complete
-
-        # This will be set by MotleyCrew.register_task
-        self.crew = crew
-        self.crew.register_tasks([self])
 
     def register_completed_unit(self, unit: SimpleTaskUnit) -> None:
         assert isinstance(unit, SimpleTaskUnit)

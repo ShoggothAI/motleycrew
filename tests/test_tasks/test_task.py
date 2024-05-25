@@ -23,6 +23,7 @@ class TaskMock(Task):
 def create_dummy_task(crew: MotleyCrew, name: str):
     return TaskMock(
         name=name,
+        task_unit_class=TaskUnit,
         crew=crew,
     )
 

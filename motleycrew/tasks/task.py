@@ -5,8 +5,8 @@ from typing import Optional, Sequence, List, Type, TypeVar, Generic, TYPE_CHECKI
 
 from langchain_core.runnables import Runnable
 from motleycrew.common.exceptions import TaskDependencyCycleError
-from motleycrew.storage import MotleyGraphStore, MotleyGraphNode
-from motleycrew.tasks import TaskUnit, TaskUnitType
+from motleycrew.storage import MotleyGraphStore, MotleyGraphNode, MotleyKuzuGraphStore
+from motleycrew.tasks import TaskUnitType
 from motleycrew.tools import MotleyTool
 
 if TYPE_CHECKING:
@@ -27,17 +27,32 @@ TaskNodeType = TypeVar("TaskNodeType", bound=TaskNode)
 
 class Task(ABC, Generic[TaskUnitType]):
     NODE_CLASS: Type[TaskNodeType] = TaskNode
-    TASK_UNIT_CLASS: Type[TaskUnitType] = TaskUnit
     TASK_IS_UPSTREAM_LABEL = "task_is_upstream"
-    TASK_UNIT_BELONGS_LABEL = "task_unit_belongs"
 
-    def __init__(self, name: str, crew: Optional[MotleyCrew] = None):
+    def __init__(
+        self, name: str, task_unit_class: Type[TaskUnitType], crew: Optional[MotleyCrew] = None
+    ):
         self.name = name
         self.done = False
         self.node = self.NODE_CLASS(name=name, done=self.done)
         self.crew = crew
+
+        self.task_unit_class = task_unit_class
+        self.task_unit_belongs_label = "{}_belongs".format(self.task_unit_class.get_label())
+
         if crew is not None:
             crew.register_tasks([self])
+            self.prepare_graph_store()
+
+    def prepare_graph_store(self):
+        if isinstance(self.graph_store, MotleyKuzuGraphStore):
+            self.graph_store.ensure_node_table(self.NODE_CLASS)
+            self.graph_store.ensure_node_table(self.task_unit_class)
+            self.graph_store.ensure_relation_table(
+                from_class=self.task_unit_class,
+                to_class=self.NODE_CLASS,
+                label=self.task_unit_belongs_label,
+            )
 
     @property
     def graph_store(self) -> MotleyGraphStore:
@@ -81,12 +96,13 @@ class Task(ABC, Generic[TaskUnitType]):
     def get_units(self) -> List[TaskUnitType]:
         assert self.crew is not None, "Task must be registered with a crew for accessing task units"
 
-        query = "MATCH (unit)-[{}]->(task:{}) WHERE task.id = $self_id RETURN unit".format(
-            self.TASK_UNIT_BELONGS_LABEL,
+        query = "MATCH (unit:{})-[:{}]->(task:{}) WHERE task.id = $self_id RETURN unit".format(
+            self.task_unit_class.get_label(),
+            self.task_unit_belongs_label,
             self.NODE_CLASS.get_label(),
         )
         task_units = self.graph_store.run_cypher_query(
-            query, parameters={"self_id": self.node.id}, container=self.TASK_UNIT_CLASS
+            query, parameters={"self_id": self.node.id}, container=self.task_unit_class
         )
         return task_units
 
@@ -131,13 +147,13 @@ class Task(ABC, Generic[TaskUnitType]):
         self.node.done = value
 
     def register_started_unit(self, unit: TaskUnitType) -> None:
-        assert isinstance(unit, self.TASK_UNIT_CLASS)
+        assert isinstance(unit, self.task_unit_class)
         assert not unit.done
 
         self.graph_store.upsert_triplet(
             from_node=unit,
             to_node=self.node,
-            label=self.TASK_UNIT_BELONGS_LABEL,
+            label=self.task_unit_belongs_label,
         )
 
     def register_completed_unit(self, unit: TaskUnitType) -> None:

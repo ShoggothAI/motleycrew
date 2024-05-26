@@ -422,7 +422,7 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
                     value[len(MotleyKuzuGraphStore.JSON_CONTENT_PREFIX) :]
                 )
 
-        node = node_class.parse_obj(node_dict)
+        node = node_class.model_validate(node_dict)
         node._id = node_dict["id"]
         node.__graph_store__ = self
         if "id" in node_dict:

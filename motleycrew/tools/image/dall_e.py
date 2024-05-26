@@ -9,8 +9,11 @@ from langchain.agents import Tool
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_community.utilities.dalle_image_generator import DallEAPIWrapper
 
-from .tool import MotleyTool
+from motleycrew.tools.tool import MotleyTool
 import motleycrew.common.utils as motley_utils
+from motleycrew.common import LLMFramework
+from motleycrew.common.llms import init_llm
+from langchain.prompts import PromptTemplate
 
 
 def download_image(url: str, file_path: str) -> Optional[str]:
@@ -34,9 +37,22 @@ def download_image(url: str, file_path: str) -> Optional[str]:
 
 
 class DallEImageGeneratorTool(MotleyTool):
-    def __init__(self, images_directory: Optional[str] = None):
+    def __init__(
+        self,
+        images_directory: Optional[str] = None,
+        refine_prompt_with_llm: bool = True,
+        model: str = "dall-e-3",
+        quality: str = "standard",
+        size: str = "1024x1024",
+        style: Optional[str] = None,
+    ):
         langchain_tool = create_dalle_image_generator_langchain_tool(
-            images_directory=images_directory
+            images_directory=images_directory,
+            refine_prompt_with_llm=refine_prompt_with_llm,
+            model=model,
+            quality=quality,
+            size=size,
+            style=style,
         )
         super().__init__(langchain_tool)
 
@@ -47,11 +63,44 @@ class DallEToolInput(BaseModel):
     description: str = Field(description="image description")
 
 
+prompt_template = """Generate a detailed DALL-E prompt to generate an image 
+based on the following description: 
+```{text}```
+Your output MUST NOT exceed 3500 characters"""
+
+dall_e_template = """{text}
+Note: Do not include any text in the images.
+"""
+
+
 def run_dalle_and_save_images(
-    description: str, images_directory: Optional[str] = None, file_name_length: int = 8
+    description: str,
+    images_directory: Optional[str] = None,
+    refine_prompt_with_llm: bool = True,
+    model: str = "dall-e-3",
+    quality: str = "standard",
+    size: str = "1024x1024",
+    style: Optional[str] = None,
+    file_name_length: int = 8,
 ) -> Optional[list[str]]:
-    dalle_api = DallEAPIWrapper()
-    dalle_result = dalle_api.run(query=description)
+
+    dall_e_prompt = PromptTemplate.from_template(dall_e_template)
+
+    if refine_prompt_with_llm:
+        prompt = PromptTemplate.from_template(template=prompt_template)
+        llm = init_llm(llm_framework=LLMFramework.LANGCHAIN)
+        dall_e_prompt = prompt | llm | (lambda x: {"text": x.content}) | dall_e_prompt
+
+    prompt_value = dall_e_prompt.invoke({"text": description})
+
+    dalle_api = DallEAPIWrapper(
+        model=model,
+        quality=quality,
+        size=size,
+        model_kwargs={"style": style} if (model == "dall-e-3" and style) else {},
+    )
+
+    dalle_result = dalle_api.run(prompt_value.text)
     logging.info("Dall-E API output: %s", dalle_result)
 
     urls = dalle_result.split(dalle_api.separator)
@@ -76,9 +125,24 @@ def run_dalle_and_save_images(
         return urls
 
 
-def create_dalle_image_generator_langchain_tool(images_directory: Optional[str] = None):
+def create_dalle_image_generator_langchain_tool(
+    images_directory: Optional[str] = None,
+    refine_prompt_with_llm: bool = True,
+    model: str = "dall-e-3",
+    quality: str = "standard",
+    size: str = "1024x1024",
+    style: Optional[str] = None,
+):
     def run_dalle_and_save_images_partial(description: str):
-        return run_dalle_and_save_images(description=description, images_directory=images_directory)
+        return run_dalle_and_save_images(
+            description=description,
+            images_directory=images_directory,
+            refine_prompt_with_llm=refine_prompt_with_llm,
+            model=model,
+            quality=quality,
+            size=size,
+            style=style,
+        )
 
     return Tool(
         name="dalle_image_generator",
@@ -87,3 +151,9 @@ def create_dalle_image_generator_langchain_tool(images_directory: Optional[str] 
         "Input should be an image description.",
         args_schema=DallEToolInput,
     )
+
+
+if __name__ == "__main__":
+    tool = DallEImageGeneratorTool()
+    out = tool.invoke("A beautiful castle on top of a hill at sunset")
+    logging.info(out)

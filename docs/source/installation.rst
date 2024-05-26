@@ -10,7 +10,7 @@ Installation using pip
 
 Installation from source
 ------------------------
-| Motleycrew uses Poetry to manage its dependencies. We suggest you use it if you want to install Motleycrew from source.
+| Motleycrew uses Poetry to manage its dependencies. We suggest you use it if you want to install motleycrew from source.
 | For installation instructions, see https://python-poetry.org/docs/#installation.
 
 Clone the repository_ and install the dependencies:

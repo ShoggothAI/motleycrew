@@ -1,4 +1,3 @@
-import logging
 from typing import Optional
 
 import os
@@ -13,6 +12,7 @@ from motleycrew.tools.tool import MotleyTool
 import motleycrew.common.utils as motley_utils
 from motleycrew.common import LLMFramework
 from motleycrew.common.llms import init_llm
+from motleycrew.common import logger
 from langchain.prompts import PromptTemplate
 
 
@@ -25,7 +25,7 @@ def download_image(url: str, file_path: str) -> Optional[str]:
             extension = ".png"  # default to .png if content-type is not recognized
 
         file_path_with_extension = file_path + extension
-        logging.info("Downloading image %s to %s", url, file_path_with_extension)
+        logger.info("Downloading image %s to %s", url, file_path_with_extension)
 
         with open(file_path_with_extension, "wb") as f:
             for chunk in response:
@@ -33,7 +33,7 @@ def download_image(url: str, file_path: str) -> Optional[str]:
 
         return file_path_with_extension
     else:
-        logging.error("Failed to download image. Status code: %s", response.status_code)
+        logger.error("Failed to download image. Status code: %s", response.status_code)
 
 
 class DallEImageGeneratorTool(MotleyTool):
@@ -101,11 +101,11 @@ def run_dalle_and_save_images(
     )
 
     dalle_result = dalle_api.run(prompt_value.text)
-    logging.info("Dall-E API output: %s", dalle_result)
+    logger.info("Dall-E API output: %s", dalle_result)
 
     urls = dalle_result.split(dalle_api.separator)
     if not len(urls) or not motley_utils.is_http_url(urls[0]):
-        logging.error("Dall-E API did not return a valid url: %s", dalle_result)
+        logger.error("Dall-E API did not return a valid url: %s", dalle_result)
         return
 
     if images_directory:
@@ -121,7 +121,7 @@ def run_dalle_and_save_images(
             file_paths.append(file_path_with_extension)
         return file_paths
     else:
-        logging.info("Images directory is not provided, returning URLs")
+        logger.info("Images directory is not provided, returning URLs")
         return urls
 
 
@@ -156,4 +156,4 @@ def create_dalle_image_generator_langchain_tool(
 if __name__ == "__main__":
     tool = DallEImageGeneratorTool()
     out = tool.invoke("A beautiful castle on top of a hill at sunset")
-    logging.info(out)
+    logger.info(out)

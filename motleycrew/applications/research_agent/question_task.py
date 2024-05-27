@@ -1,4 +1,3 @@
-import logging
 from typing import List, Optional
 
 from langchain_core.runnables import Runnable
@@ -10,6 +9,7 @@ from motleycrew.crew import MotleyCrew
 from .question import Question, QuestionGenerationTaskUnit
 from .question_generator import QuestionGeneratorTool
 from .question_prioritizer import QuestionPrioritizerTool
+from motleycrew.common import logger
 
 
 class QuestionTask(Task):
@@ -39,7 +39,7 @@ class QuestionTask(Task):
             return None
 
         unanswered_questions = self.get_unanswered_questions(only_without_children=True)
-        logging.info("Loaded unanswered questions: %s", unanswered_questions)
+        logger.info("Loaded unanswered questions: %s", unanswered_questions)
 
         if not len(unanswered_questions):
             return None
@@ -50,11 +50,11 @@ class QuestionTask(Task):
                 "unanswered_questions": unanswered_questions,
             }
         )
-        logging.info("Most pertinent question according to the tool: %s", most_pertinent_question)
+        logger.info("Most pertinent question according to the tool: %s", most_pertinent_question)
         return QuestionGenerationTaskUnit(question=most_pertinent_question)
 
     def register_completed_unit(self, unit: TaskUnitType) -> None:
-        logging.info("==== Completed iteration %s of %s ====", self.n_iter + 1, self.max_iter)
+        logger.info("==== Completed iteration %s of %s ====", self.n_iter + 1, self.max_iter)
         self.n_iter += 1
         if self.n_iter >= self.max_iter:
             self.set_done(True)

@@ -1,11 +1,10 @@
 import tempfile
 from typing import Optional
-import logging
 import os
 
 from motleycrew.common import Defaults
 from motleycrew.common import GraphStoreType
-
+from motleycrew.common import logger
 from motleycrew.storage import MotleyKuzuGraphStore
 
 
@@ -17,10 +16,10 @@ def init_graph_store(
         import kuzu
 
         if db_path is None:
-            logging.info("No db_path provided, creating temporary directory for database")
+            logger.info("No db_path provided, creating temporary directory for database")
             db_path = os.path.join(tempfile.mkdtemp(), "kuzu_db")
 
-        logging.info("Using Kuzu graph store with path: %s", db_path)
+        logger.info("Using Kuzu graph store with path: %s", db_path)
         db = kuzu.Database(db_path)
         return MotleyKuzuGraphStore(db)
 

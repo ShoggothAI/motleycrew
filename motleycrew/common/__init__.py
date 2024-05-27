@@ -9,3 +9,5 @@ from .defaults import Defaults
 
 from .types import MotleySupportedTool
 from .types import MotleyAgentFactory
+
+from .logging import logger, configure_logging

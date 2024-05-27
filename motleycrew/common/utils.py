@@ -1,21 +1,10 @@
 import sys
 from typing import Optional, Sequence
-import logging
 import hashlib
 from urllib.parse import urlparse
 from langchain_core.messages import BaseMessage
 
 from motleycrew.common.exceptions import ModuleNotInstalledException
-
-
-def configure_logging(verbose: bool = False, debug: bool = False):
-    if debug:
-        level = logging.DEBUG
-    elif verbose:
-        level = logging.INFO
-    else:
-        level = logging.WARNING
-    logging.basicConfig(format="%(asctime)s - %(levelname)s - %(message)s", level=level)
 
 
 def to_str(value: str | BaseMessage | Sequence[str] | Sequence[BaseMessage]) -> str:

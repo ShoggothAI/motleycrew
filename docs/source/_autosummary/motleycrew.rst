@@ -1,4 +1,4 @@
-motleycrew
+﻿motleycrew
 ==========
 
 .. automodule:: motleycrew
@@ -29,7 +29,6 @@ motleycrew
 
    motleycrew.agents
    motleycrew.applications
-   motleycrew.caching
    motleycrew.common
    motleycrew.crew
    motleycrew.storage

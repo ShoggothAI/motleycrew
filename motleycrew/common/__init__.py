@@ -10,4 +10,4 @@ from .defaults import Defaults
 from .types import MotleySupportedTool
 from .types import MotleyAgentFactory
 
-from .utils import logger, configure_logging
+from .logging import logger, configure_logging

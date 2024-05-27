@@ -9,11 +9,10 @@ from langchain_community.tools import DuckDuckGoSearchRun
 import kuzu
 from motleycrew.storage import MotleyKuzuGraphStore
 
-from motleycrew import MotleyCrew
 from motleycrew.agents.crewai import CrewAIMotleyAgent
 from motleycrew.agents.langchain.react import ReactMotleyAgent
 from motleycrew.agents.llama_index import ReActLlamaIndexMotleyAgent
-from motleycrew.tools.image_generation import DallEImageGeneratorTool
+from motleycrew.tools.image.dall_e import DallEImageGeneratorTool
 from motleycrew.common.utils import configure_logging
 from motleycrew.tasks import SimpleTask
 

@@ -82,7 +82,7 @@ def get_args_parser():
         help="Update reference data together with the cache",
     )
     parser.add_argument(
-        "--minimal_only", default=False, action="store_true", help="Run minimal tests"
+        "--minimal-only", default=False, action="store_true", help="Run minimal tests"
     )
 
     return parser

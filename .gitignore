@@ -86,3 +86,6 @@ dmypy.json
 *.pyc
 
 scripts/
+
+# docs-related stuff
+docs/source/_autosummary

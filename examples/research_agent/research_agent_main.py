@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 from motleycrew import MotleyCrew
 from motleycrew.storage import MotleyKuzuGraphStore
-from motleycrew.common.utils import configure_logging
+from motleycrew.common import configure_logging
 from motleycrew.applications.research_agent.question_task import QuestionTask
 from motleycrew.applications.research_agent.answer_task import AnswerTask
 

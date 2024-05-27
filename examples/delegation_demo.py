@@ -13,7 +13,7 @@ from motleycrew.agents.crewai import CrewAIMotleyAgent
 from motleycrew.agents.langchain.react import ReactMotleyAgent
 from motleycrew.agents.llama_index import ReActLlamaIndexMotleyAgent
 from motleycrew.tools.image.dall_e import DallEImageGeneratorTool
-from motleycrew.common.utils import configure_logging
+from motleycrew.common import configure_logging
 from motleycrew.tasks import SimpleTask
 
 WORKING_DIR = Path(os.path.realpath("."))

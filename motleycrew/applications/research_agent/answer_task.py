@@ -1,4 +1,3 @@
-import logging
 from typing import List, Optional
 from langchain_core.runnables import Runnable
 
@@ -10,6 +9,7 @@ from motleycrew.tasks import TaskUnit
 from motleycrew.applications.research_agent.question import Question, QuestionAnsweringTaskUnit
 from motleycrew.applications.research_agent.question_answerer import AnswerSubQuestionTool
 from motleycrew.storage import MotleyGraphStore
+from motleycrew.common import logger
 
 
 class AnswerTask(Task):
@@ -34,7 +34,7 @@ class AnswerTask(Task):
         ).format(Question.get_label(), Question.get_label())
 
         query_result = self.graph_store.run_cypher_query(query, container=Question)
-        logging.info("Available questions: %s", query_result)
+        logger.info("Available questions: %s", query_result)
         if not query_result:
             return None
         else:

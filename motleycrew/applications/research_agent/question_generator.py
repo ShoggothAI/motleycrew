@@ -1,6 +1,5 @@
 from typing import Optional
 from pathlib import Path
-import logging
 
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.runnables import (
@@ -18,6 +17,7 @@ from motleycrew.common import LLMFramework
 from motleycrew.common.llms import init_llm
 from motleycrew.common.utils import print_passthrough
 from motleycrew.storage import MotleyGraphStore
+from motleycrew.common import logger
 
 
 from motleycrew.applications.research_agent.question import Question, QuestionGenerationTaskUnit
@@ -103,10 +103,10 @@ def create_question_generator_langchain_tool(
         questions_raw = input_dict["subquestions"].content
         questions = [q.strip() for q in questions_raw.split("\n") if len(q.strip()) > 1]
         for q in questions:
-            logging.info("Inserting question: %s", q)
+            logger.info("Inserting question: %s", q)
             subquestion = graph.insert_node(Question(question=q))
             graph.create_relation(input_dict["question"], subquestion, IS_SUBQUESTION_PREDICATE)
-        logging.info("Inserted %s questions", len(questions))
+        logger.info("Inserted %s questions", len(questions))
 
     def set_context(input_dict: dict):
         node = input_dict["question"]

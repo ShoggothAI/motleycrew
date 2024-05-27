@@ -1,5 +1,4 @@
 from typing import List, Dict, Optional, Any, Union
-import logging
 import traceback
 
 try:
@@ -16,6 +15,7 @@ from lunary import event_queue_ctx
 
 from motleycrew.common.enums import LunaryRunType, LunaryEventName
 from motleycrew.common.utils import ensure_module_is_installed
+from motleycrew.common import logger
 
 
 def event_delegate_decorator(f):
@@ -47,12 +47,12 @@ def event_delegate_decorator(f):
                 msg = "[Lunary] An error occurred in {}: {}\n{}".format(
                     handler_name, e, traceback.format_exc()
                 )
-                logging.warning(msg)
+                logger.warning(msg)
         else:
             msg = "No handler with the name of the {} was found for {}".format(
                 handler_name, self.__class__
             )
-            logging.warning(msg)
+            logger.warning(msg)
 
         return f(*args, **kwargs)
 

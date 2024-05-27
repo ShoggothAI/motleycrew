@@ -43,7 +43,9 @@ class TestCrew:
 
     def test_create_simple_task(self, crew, agent):
         assert len(crew.tasks) == 0
-        simple_task = crew.create_simple_task(description="task description", agent=agent)
+        simple_task = crew.create_simple_task(
+            description="task description", agent=agent
+        )
         assert isinstance(simple_task, SimpleTask)
         assert len(crew.tasks) == 1
         node = simple_task.node

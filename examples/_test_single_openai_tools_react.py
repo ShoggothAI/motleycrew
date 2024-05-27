@@ -6,7 +6,7 @@ from motleycrew.agents.langchain.openai_tools_react import ReactOpenAIToolsAgent
 from motleycrew.agents.langchain.react import ReactMotleyAgent
 from motleycrew.common.utils import configure_logging
 from motleycrew.tasks import SimpleTask
-from motleycrew.caching import enable_cache
+from motleycache import enable_cache
 
 
 def main():

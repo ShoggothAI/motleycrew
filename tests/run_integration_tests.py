@@ -18,7 +18,7 @@ from nbconvert.preprocessors import ExecutePreprocessor
 from motleycrew.common.exceptions import IntegrationTestException
 from motleycrew.common.utils import configure_logging
 
-from motleycrew.caching import (
+from motleycache import (
     enable_cache,
     set_cache_location,
     set_strong_cache,

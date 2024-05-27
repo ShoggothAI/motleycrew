@@ -8,14 +8,21 @@ from langchain_core.messages import BaseMessage
 from motleycrew.common.exceptions import ModuleNotInstalledException
 
 
+# init logger
+logger = logging.getLogger("motleycrew_logger")
+stream_handler = logging.StreamHandler()
+formatter = logging.Formatter(fmt="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+stream_handler.setFormatter(formatter)
+logger.addHandler(stream_handler)
+
+
 def configure_logging(verbose: bool = False, debug: bool = False):
     if debug:
-        level = logging.DEBUG
+        logger.setLevel(logging.DEBUG)
     elif verbose:
-        level = logging.INFO
+        logger.setLevel(logging.INFO)
     else:
-        level = logging.WARNING
-    logging.basicConfig(format="%(asctime)s - %(levelname)s - %(message)s", level=level)
+        logger.setLevel(logging.WARNING)
 
 
 def to_str(value: str | BaseMessage | Sequence[str] | Sequence[BaseMessage]) -> str:

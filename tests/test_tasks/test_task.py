@@ -2,13 +2,12 @@ from typing import List, Optional
 
 import pytest
 
-import kuzu
 from langchain_core.runnables import Runnable
 
 from motleycrew import MotleyCrew
 from motleycrew.tools import MotleyTool
 from motleycrew.tasks import Task, TaskUnitType, TaskUnit
-from motleycrew.storage import MotleyKuzuGraphStore
+from motleycrew.storage.graph_store_utils import init_graph_store
 from motleycrew.common.exceptions import TaskDependencyCycleError
 
 
@@ -28,11 +27,9 @@ def create_dummy_task(crew: MotleyCrew, name: str):
     )
 
 
-@pytest.fixture
-def graph_store(tmpdir):
-    db_path = tmpdir / "test_db"
-    db = kuzu.Database(str(db_path))
-    graph_store = MotleyKuzuGraphStore(db)
+@pytest.fixture(scope="session")
+def graph_store():
+    graph_store = init_graph_store()
     return graph_store
 
 

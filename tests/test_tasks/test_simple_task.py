@@ -1,11 +1,10 @@
 import pytest
 
 from langchain_community.tools import DuckDuckGoSearchRun
-import kuzu
 
 from motleycrew.crew import MotleyCrew
 from motleycrew.agents.langchain.openai_tools_react import ReactOpenAIToolsAgent
-from motleycrew.storage import MotleyKuzuGraphStore
+from motleycrew.storage.graph_store_utils import init_graph_store
 from motleycrew.tasks.simple import (
     SimpleTask,
     SimpleTaskUnit,
@@ -13,11 +12,9 @@ from motleycrew.tasks.simple import (
 )
 
 
-@pytest.fixture
-def graph_store(tmpdir):
-    db_path = tmpdir / "test_db"
-    db = kuzu.Database(str(db_path))
-    graph_store = MotleyKuzuGraphStore(db)
+@pytest.fixture(scope="session")
+def graph_store():
+    graph_store = init_graph_store()
     return graph_store
 
 
@@ -64,7 +61,9 @@ class TestSimpleTask:
         task1, task2 = tasks
         crew.add_dependency(task1, task2)
         assert task2.get_next_unit() is None
-        prompt = compose_simple_task_prompt_with_dependencies(task1.description, task1.get_units())
+        prompt = compose_simple_task_prompt_with_dependencies(
+            task1.description, task1.get_units()
+        )
         expected_unit = SimpleTaskUnit(
             name=task1.name,
             prompt=prompt,

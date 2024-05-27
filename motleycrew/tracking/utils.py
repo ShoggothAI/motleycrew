@@ -1,6 +1,5 @@
 import os
 from typing import List, Optional
-import logging
 
 from lunary import LunaryCallbackHandler
 from langchain_core.callbacks import BaseCallbackHandler, BaseCallbackManager
@@ -8,6 +7,7 @@ from langchain_core.runnables import RunnableConfig, ensure_config
 
 from .callbacks import LlamaIndexLunaryCallbackHandler
 from motleycrew.common import LLMFramework
+from motleycrew.common import logger
 
 
 def get_lunary_public_key():
@@ -18,7 +18,7 @@ def get_lunary_public_key():
         or os.getenv("LLMONITOR_APP_ID")
     )
     if not key:
-        logging.warning("Lunary public key is not set, tracking will be disabled")
+        logger.warning("Lunary public key is not set, tracking will be disabled")
     return key
 
 
@@ -70,7 +70,7 @@ def get_default_callbacks_list(
         _default_callbacks = dc_factory()
     else:
         msg = "Default callbacks are not implemented for {} framework".format(framework_name)
-        logging.warning(msg)
+        logger.warning(msg)
 
     return _default_callbacks
 

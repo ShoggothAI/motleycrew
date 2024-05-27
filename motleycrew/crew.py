@@ -1,5 +1,4 @@
 from typing import Collection, Sequence, Optional
-import logging
 import os
 
 from motleycrew.agents.parent import MotleyAgentParent
@@ -7,6 +6,7 @@ from motleycrew.tasks import Task, TaskUnit, SimpleTask
 from motleycrew.storage import MotleyGraphStore
 from motleycrew.storage.graph_store_utils import init_graph_store
 from motleycrew.tools import MotleyTool
+from motleycrew.common import logger
 
 
 class MotleyCrew:
@@ -39,7 +39,7 @@ class MotleyCrew:
 
     def run(self) -> list[TaskUnit]:
         if not self.single_thread:
-            logging.warning("Multithreading is not implemented yet, will run in single thread")
+            logger.warning("Multithreading is not implemented yet, will run in single thread")
 
         return self._run_sync()
 
@@ -70,24 +70,24 @@ class MotleyCrew:
             did_something = False
 
             available_tasks = self.get_available_tasks()
-            logging.info("Available tasks: %s", available_tasks)
+            logger.info("Available tasks: %s", available_tasks)
 
             for task in available_tasks:
-                logging.info("Processing task: %s", task)
+                logger.info("Processing task: %s", task)
 
                 next_unit = task.get_next_unit()
 
                 if next_unit is None:
-                    logging.info("Got no matching units for task %s", task)
+                    logger.info("Got no matching units for task %s", task)
                 else:
-                    logging.info("Got a matching unit for task %s", task)
+                    logger.info("Got a matching unit for task %s", task)
                     current_unit = next_unit
-                    logging.info("Processing task: %s", current_unit)
+                    logger.info("Processing task: %s", current_unit)
 
                     extra_tools = self.get_extra_tools(task)
 
                     agent = task.get_worker(extra_tools)
-                    logging.info("Assigned unit %s to agent %s, dispatching", current_unit, agent)
+                    logger.info("Assigned unit %s to agent %s, dispatching", current_unit, agent)
                     current_unit.set_running()
                     task.register_started_unit(current_unit)
 
@@ -95,7 +95,7 @@ class MotleyCrew:
                     result = agent.invoke(current_unit.as_dict())
                     current_unit.output = result
 
-                    logging.info("Task unit %s completed, marking as done", current_unit)
+                    logger.info("Task unit %s completed, marking as done", current_unit)
                     current_unit.set_done()
                     task.register_completed_unit(current_unit)
                     done_units.append(current_unit)
@@ -104,7 +104,7 @@ class MotleyCrew:
                     continue
 
             if not did_something:
-                logging.info("Nothing left to do, exiting")
+                logger.info("Nothing left to do, exiting")
                 return done_units
 
     def get_available_tasks(self) -> list[Task]:
@@ -138,7 +138,7 @@ class MotleyCrew:
     #                 raise exc
     #
     #             task = future.mc_task
-    #             logging.info(f"Finished task '{task.name}'")
+    #             logger.info(f"Finished task '{task.name}'")
     #             self.futures.remove(future)
     #             tasks.set_task_done(task)
     #             self.adispatch_next_batch()
@@ -150,7 +150,7 @@ class MotleyCrew:
     #     next_ = self.task_graph.get_ready_tasks()
     #     for t in next_:
     #         self.task_graph.set_task_running(t)
-    #         logging.info(f"Dispatching task '{t.name}'")
+    #         logger.info(f"Dispatching task '{t.name}'")
     #         future = self.thread_pool.submit(
     #             self.execute,
     #             t,

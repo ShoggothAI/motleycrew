@@ -7,7 +7,7 @@ import requests
 import httpx
 import curl_cffi
 
-from motleycrew.caching.http_cache import (
+from motleycache.http_cache import (
     BaseHttpCache,
     RequestsHttpCaching,
     HttpxHttpCaching,
@@ -15,7 +15,7 @@ from motleycrew.caching.http_cache import (
     CacheException,
     StrongCacheException,
 )
-from motleycrew.caching import (
+from motleycache import (
     set_cache_whitelist,
     set_cache_blacklist,
     set_cache_location,

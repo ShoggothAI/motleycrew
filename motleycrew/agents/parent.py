@@ -1,4 +1,3 @@
-import logging
 from typing import TYPE_CHECKING, Optional, Sequence
 
 from langchain_core.tools import Tool
@@ -9,6 +8,7 @@ from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
 from motleycrew.tools import MotleyTool
 from motleycrew.common import MotleyAgentFactory, MotleySupportedTool
 from motleycrew.common.exceptions import AgentNotMaterialized, CannotModifyMaterializedAgent
+from motleycrew.common import logger
 
 if TYPE_CHECKING:
     from motleycrew import MotleyCrew
@@ -57,7 +57,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
 
     def materialize(self):
         if self.is_materialized:
-            logging.info("Agent is already materialized, skipping materialization")
+            logger.info("Agent is already materialized, skipping materialization")
             return
         assert self.agent_factory, "Cannot materialize agent without a factory provided"
         self._agent = self.agent_factory(tools=self.tools)
@@ -91,7 +91,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
         )
 
     # def call_as_tool(self, *args, **kwargs) -> Any:
-    #     logging.info("Entering delegation for %s", self.name)
+    #     logger.info("Entering delegation for %s", self.name)
     #     assert self.crew, "can't accept delegated task outside of a crew"
     #
     #     if len(args) > 0:
@@ -102,7 +102,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
     #     else:
     #         input_ = json.dumps(kwargs)
     #
-    #     logging.info("Made the args: %s", input_)
+    #     logger.info("Made the args: %s", input_)
     #
     #     # TODO: pass context of parent task to agent nicely?
     #     # TODO: mark the current task as depending on the new task
@@ -117,11 +117,11 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
     #     )
     #
     #     # TODO: make sure tools return task objects, which are properly used by callers
-    #     logging.info("Executing subtask '%s'", task.name)
+    #     logger.info("Executing subtask '%s'", task.name)
     #     self.crew.task_graph.set_task_running(task=task)
     #     result = self.crew.execute(task, return_result=True)
     #
-    #     logging.info("Finished subtask '%s' - %s", task.name, result)
+    #     logger.info("Finished subtask '%s' - %s", task.name, result)
     #     self.crew.task_graph.set_task_done(task=task)
     #
     #     return result

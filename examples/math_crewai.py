@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from motleycrew import MotleyCrew
 from motleycrew.agents.crewai import CrewAIMotleyAgent
 from motleycrew.tools import PythonREPLTool
-from motleycrew.common.utils import configure_logging
+from motleycrew.common import configure_logging
 
 
 def main():

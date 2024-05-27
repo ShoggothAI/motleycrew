@@ -4,7 +4,7 @@ from langchain_community.tools import DuckDuckGoSearchRun
 
 from motleycrew import MotleyCrew
 from motleycrew.agents.llama_index import ReActLlamaIndexMotleyAgent
-from motleycrew.common.utils import configure_logging
+from motleycrew.common import configure_logging
 from motleycrew.tasks import SimpleTask
 
 

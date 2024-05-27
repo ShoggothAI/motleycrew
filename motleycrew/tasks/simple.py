@@ -1,5 +1,4 @@
 from __future__ import annotations
-import logging
 from typing import TYPE_CHECKING, Any, Sequence, List, Optional
 
 from motleycrew.tasks.task import Task
@@ -7,6 +6,7 @@ from motleycrew.tasks import TaskUnit
 
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
 from motleycrew.tools import MotleyTool
+from motleycrew.common import logger
 
 if TYPE_CHECKING:
     from motleycrew.crew import MotleyCrew
@@ -81,7 +81,7 @@ class SimpleTask(Task):
 
     def get_next_unit(self) -> SimpleTaskUnit | None:
         if self.done:
-            logging.info("Task %s is already done", self)
+            logger.info("Task %s is already done", self)
             return None
 
         upstream_tasks = self.get_upstream_tasks()
@@ -102,12 +102,12 @@ class SimpleTask(Task):
             raise ValueError("Task is not associated with an agent")
 
         if hasattr(self.agent, "is_materialized") and self.agent.is_materialized and tools:
-            logging.warning(
+            logger.warning(
                 "Agent %s is already materialized, can't add extra tools %s", self.agent, tools
             )
 
         if hasattr(self.agent, "add_tools") and tools:
-            logging.info("Adding tools %s to agent %s", tools, self.agent)
+            logger.info("Adding tools %s to agent %s", tools, self.agent)
             self.agent.add_tools(tools)
 
         # TODO: that's a pretty big assumption on agent structure. Necessary?

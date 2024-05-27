@@ -2835,6 +2835,29 @@ files = [
 ]
 
 [[package]]
+name = "motleycache"
+version = "0.0.1"
+description = "Package for caching http requests"
+optional = false
+python-versions = "<4.0,>=3.10"
+files = [
+    {file = "motleycache-0.0.1-py3-none-any.whl", hash = "sha256:7950f66641cb7d8fbe057b5c5fea1c9e3bfc7b2b12037000e56c1f6e32310043"},
+    {file = "motleycache-0.0.1.tar.gz", hash = "sha256:d62f7fdfe29f337ff336dad34f02374b7f5e03aa24021b4a56d28e82dc28420e"},
+]
+
+[package.dependencies]
+cloudpickle = ">=3.0.0,<4.0.0"
+curl-cffi = ">=0.6.4,<0.7.0"
+httpx = ">=0.27.0,<0.28.0"
+platformdirs = ">=4.2.1,<5.0.0"
+pytest = ">=8.0.2,<9.0.0"
+pytest-cov = ">=4.1.0,<5.0.0"
+requests = ">=2.31.0,<3.0.0"
+
+[package.extras]
+lunary = ["lunary (>=1.0.21,<2.0.0)"]
+
+[[package]]
 name = "multidict"
 version = "6.0.5"
 description = "multidict implementation"
@@ -5770,4 +5793,4 @@ llama-index = ["llama-index"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<=3.13"
-content-hash = "a7426b0bfd64bc3c27bcacdccec54fbc47c3d616d4509a813b3b7231480477c4"
+content-hash = "d90bb9ace1e33cfdf32a2e6cfb2ef3beeb1a640c09c169dbc74441dfce5c46ec"

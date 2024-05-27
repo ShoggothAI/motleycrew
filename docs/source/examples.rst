@@ -5,9 +5,6 @@ Examples
 .. toctree::
    :maxdepth: 2
 
-   examples/image_generation_crewai
-   examples/math_crewai
-   examples/single_crewai
-   examples/single_llama_index
-   examples/single_openai_tools_react
+   examples/blog_with_images
+   examples/research_agent
    autogen

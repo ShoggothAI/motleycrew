@@ -18,7 +18,7 @@ class AnswerTask(Task):
         crew: MotleyCrew,
         answer_length: int = 1000,
     ):
-        super().__init__("AnswerTask", crew)
+        super().__init__(name="AnswerTask", task_unit_class=QuestionAnsweringTaskUnit, crew=crew)
         self.answer_length = answer_length
         self.answerer = AnswerSubQuestionTool(
             graph=self.graph_store, answer_length=self.answer_length

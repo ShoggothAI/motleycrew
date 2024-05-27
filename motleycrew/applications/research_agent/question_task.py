@@ -23,7 +23,7 @@ class QuestionTask(Task):
     ):
         # Need to supply the crew already at this stage
         # because need to use the graph store in constructor
-        super().__init__(name, crew=crew)
+        super().__init__(name=name, task_unit_class=QuestionGenerationTaskUnit, crew=crew)
 
         self.max_iter = max_iter
         self.n_iter = 0

@@ -8,6 +8,7 @@ import logging
 
 from kuzu import Connection, PreparedStatement, QueryResult
 import json
+import os
 
 from motleycrew.storage import MotleyGraphStore
 from motleycrew.storage import MotleyGraphNode
@@ -37,6 +38,16 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
         # TODO: fix, https://github.com/kuzudb/kuzu/issues/3488
         self.ensure_node_table(MotleyGraphNode)
         self.ensure_relation_table(MotleyGraphNode, MotleyGraphNode, "dummy")
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(path={self.database_path})"
+
+    def __str__(self):
+        return self.__repr__()
+
+    @property
+    def database_path(self) -> str:
+        return os.path.abspath(self.database.database_path)
 
     def _execute_query(
         self, query: str | PreparedStatement, parameters: Optional[dict[str, Any]] = None
@@ -422,7 +433,7 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
                     value[len(MotleyKuzuGraphStore.JSON_CONTENT_PREFIX) :]
                 )
 
-        node = node_class.parse_obj(node_dict)
+        node = node_class.model_validate(node_dict)
         node._id = node_dict["id"]
         node.__graph_store__ = self
         if "id" in node_dict:

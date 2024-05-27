@@ -80,6 +80,23 @@ class MotleyGraphStore(ABC):
         """
         pass
 
+    def ensure_node_table(self, node_class: Type[MotleyGraphNode]) -> str:  # for Kuzu
+        """
+        Create a table for storing nodes of that class if such does not already exist.
+        If it does exist, create all missing columns.
+        Return the table name.
+        """
+        pass
+
+    def ensure_relation_table(
+        self, from_class: Type[MotleyGraphNode], to_class: Type[MotleyGraphNode], label: str
+    ):  # for Kuzu
+        """
+        Create a table for storing relations from from_node-like nodes to to_node-like nodes,
+        if such does not already exist.
+        """
+        pass
+
     def run_cypher_query(
         self,
         query: str,

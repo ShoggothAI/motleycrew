@@ -55,6 +55,7 @@ class MotleyCrew:
             if task not in self.tasks:
                 self.tasks.append(task)
                 task.crew = self
+                task.prepare_graph_store()
                 self.graph_store.insert_node(task.node)
 
                 self.graph_store.ensure_relation_table(

@@ -1,3 +1,4 @@
+""" Module description """
 from typing import Any, Optional, List
 
 from langchain_core.runnables import RunnableConfig
@@ -12,12 +13,17 @@ except ImportError:
 
 
 class CrewAIAgentWithConfig(Agent):
-    """
-    Subclass for CrewAI Agent that overrides the execute_task method to include a config parameter.
-    TODO: get rid of this when https://github.com/joaomdmoura/crewAI/pull/483 is merged.
-    """
-    
+
     def __init__(self, *args, **kwargs):
+        """Subclass for CrewAI Agent that overrides the execute_task method to include a config parameter.
+
+        Args:
+            *args:
+            **kwargs:
+
+        Todo:
+            * get rid of this when https://github.com/joaomdmoura/crewAI/pull/483 is merged.
+        """
         ensure_module_is_installed("crewai")
         super(CrewAIAgentWithConfig, self).__init__(*args, **kwargs)
 
@@ -31,12 +37,13 @@ class CrewAIAgentWithConfig(Agent):
         """Execute a task with the agent.
 
         Args:
-            task: Task to execute.
-            context: Context to execute the task in.
-            tools: Tools to use for the task.
-            config: Runnable config
+            task (Any): Task to execute.
+            context (:obj:'str', optional): Context to execute the task in.
+            tools: (:obj:'List[Any]', optional): Tools to use for the task.
+            config (:obj:'RunnableConfig', optional): Runnable config.
+
         Returns:
-            Output of the agent
+            Any: Output of the agent
         """
         task_prompt = task.prompt()
 

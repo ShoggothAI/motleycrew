@@ -1,8 +1,20 @@
+""" Module description """
 from motleycrew.common import LLMFamily
 from motleycrew.common import GraphStoreType
 
 
 class Defaults:
+    """ Description
+
+    Attributes:
+        DEFAULT_LLM_FAMILY (str):
+        DEFAULT_LLM_NAME (str):
+        DEFAULT_LLM_TEMPERATURE (float):
+        LLM_MAP (dict):
+        DEFAULT_GRAPH_STORE_TYPE (str):
+        MODULE_INSTALL_COMMANDS (dict)
+
+    """
     DEFAULT_LLM_FAMILY = LLMFamily.OPENAI
     DEFAULT_LLM_NAME = "gpt-4-turbo"
     DEFAULT_LLM_TEMPERATURE = 0.0

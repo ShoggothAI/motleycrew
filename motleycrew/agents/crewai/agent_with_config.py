@@ -38,9 +38,9 @@ class CrewAIAgentWithConfig(Agent):
 
         Args:
             task (Any): Task to execute.
-            context (:obj:'str', optional): Context to execute the task in.
-            tools: (:obj:'List[Any]', optional): Tools to use for the task.
-            config (:obj:'RunnableConfig', optional): Runnable config.
+            context (:obj:`str`, optional): Context to execute the task in.
+            tools (:obj:`List[Any]`, optional): Tools to use for the task.
+            config (:obj:`RunnableConfig`, optional): Runnable config.
 
         Returns:
             Any: Output of the agent

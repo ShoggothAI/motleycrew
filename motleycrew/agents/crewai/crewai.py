@@ -31,9 +31,9 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
 
         Args:
             goal (str):
-            name (:obj:'str', optional):
-            agent_factory (:obj:'MotleyAgentFactory', optional):
-            tools (:obj:'Sequence[MotleySupportedTool]', optional:
+            name (:obj:`str`, optional):
+            agent_factory (:obj:`MotleyAgentFactory`, optional):
+            tools (:obj:`Sequence[MotleySupportedTool]`, optional:
             verbose (bool):
         """
         ensure_module_is_installed("crewai")
@@ -55,7 +55,7 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
 
         Args:
             task_dict (dict):
-            config (:obj:'RunnableConfig', optional):
+            config (:obj:`RunnableConfig`, optional):
             **kwargs:
 
         Returns:
@@ -110,7 +110,7 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
 
         Args:
             agent (CrewAIAgentWithConfig):
-            tools (:obj:'Sequence[MotleySupportedTool]', optional):
+            tools (:obj:`Sequence[MotleySupportedTool]`, optional):
             verbose (bool):
 
         Returns:

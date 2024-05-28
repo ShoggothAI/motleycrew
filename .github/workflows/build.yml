@@ -47,5 +47,8 @@ jobs:
     - name: Install project
       run: poetry install --no-interaction
 
-    - name: Run tests
+    - name: Run build
       run: poetry build
+
+    - name: Run docs build
+      run: cd docs && make html

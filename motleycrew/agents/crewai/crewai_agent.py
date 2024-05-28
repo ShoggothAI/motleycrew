@@ -28,7 +28,7 @@ class CrewAIMotleyAgent(CrewAIMotleyAgentParent):
             goal (str):
             backstory (str):
             delegation (bool):
-            tools (:obj:'Sequence[MotleySupportedTool]', optional):
+            tools (:obj:`Sequence[MotleySupportedTool]`, optional):
             llm (:obj:'Any', optional):
             verbose (bool):
         """

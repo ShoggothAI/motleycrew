@@ -1,3 +1,4 @@
+""" Module description """
 from typing import List, Optional
 
 from langchain_core.runnables import Runnable
@@ -21,6 +22,15 @@ class QuestionTask(Task):
         max_iter: int = 10,
         name: str = "QuestionTask",
     ):
+        """ Description
+
+        Args:
+            question (str):
+            query_tool (MotleyTool):
+            crew (MotleyCrew):
+            max_iter (:obj:`int`, optional):
+            name (:obj:`str`, optional):
+        """
         # Need to supply the crew already at this stage
         # because need to use the graph store in constructor
         super().__init__(name=name, task_unit_class=QuestionGenerationTaskUnit, crew=crew)
@@ -35,6 +45,11 @@ class QuestionTask(Task):
         )
 
     def get_next_unit(self) -> QuestionGenerationTaskUnit | None:
+        """ Description
+
+        Returns:
+            QuestionGenerationTaskUnit
+        """
         if self.done:
             return None
 
@@ -54,15 +69,39 @@ class QuestionTask(Task):
         return QuestionGenerationTaskUnit(question=most_pertinent_question)
 
     def register_completed_unit(self, unit: TaskUnitType) -> None:
+        """ Description
+
+        Args:
+            unit (TaskUnitType):
+
+        Returns:
+
+        """
         logger.info("==== Completed iteration %s of %s ====", self.n_iter + 1, self.max_iter)
         self.n_iter += 1
         if self.n_iter >= self.max_iter:
             self.set_done(True)
 
     def get_worker(self, tools: Optional[List[MotleyTool]]) -> Runnable:
+        """ Description
+
+        Args:
+            tools (List[MotleyTool]):
+
+        Returns:
+            Runnable
+        """
         return self.question_generation_tool
 
     def get_unanswered_questions(self, only_without_children: bool = False) -> list[Question]:
+        """ Description
+
+        Args:
+            only_without_children (:obj:`bool`, optional):
+
+        Returns:
+            list[Question]
+        """
         if only_without_children:
             query = (
                 "MATCH (n1:{}) WHERE n1.answer IS NULL AND NOT (n1)-[]->(:{}) RETURN n1;".format(

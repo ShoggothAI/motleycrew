@@ -1,3 +1,4 @@
+""" Module description """
 from typing import Optional, Any, Sequence
 
 from motleycrew.tools import MotleyTool
@@ -20,6 +21,17 @@ class CrewAIMotleyAgent(CrewAIMotleyAgentParent):
         llm: Optional[Any] = None,
         verbose: bool = False,
     ):
+        """ Description
+
+        Args:
+            role (str):
+            goal (str):
+            backstory (str):
+            delegation (bool):
+            tools (:obj:'Sequence[MotleySupportedTool]', optional):
+            llm (:obj:'Any', optional):
+            verbose (bool):
+        """
         if tools is None:
             tools = []
 

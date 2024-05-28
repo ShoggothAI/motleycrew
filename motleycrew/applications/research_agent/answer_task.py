@@ -1,3 +1,4 @@
+""" Module description"""
 from typing import List, Optional
 from langchain_core.runnables import Runnable
 
@@ -18,6 +19,12 @@ class AnswerTask(Task):
         crew: MotleyCrew,
         answer_length: int = 1000,
     ):
+        """ Description
+
+        Args:
+            crew (MotleyCrew):
+            answer_length (:obj:`int`, optional):
+        """
         super().__init__(name="AnswerTask", task_unit_class=QuestionAnsweringTaskUnit, crew=crew)
         self.answer_length = answer_length
         self.answerer = AnswerSubQuestionTool(
@@ -25,6 +32,11 @@ class AnswerTask(Task):
         )
 
     def get_next_unit(self) -> QuestionAnsweringTaskUnit | None:
+        """ Description
+
+        Returns:
+            QuestionAnsweringTaskUnit | None:
+        """
         query = (
             "MATCH (n1:{}) "
             "WHERE n1.answer IS NULL AND n1.context IS NOT NULL "
@@ -41,4 +53,12 @@ class AnswerTask(Task):
             return QuestionAnsweringTaskUnit(question=query_result[0])
 
     def get_worker(self, tools: Optional[List[MotleyTool]]) -> Runnable:
+        """ Description
+
+        Args:
+            tools (List[MotleyTool]):
+
+        Returns:
+            Runnable:
+        """
         return self.answerer

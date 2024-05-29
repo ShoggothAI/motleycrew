@@ -1,3 +1,9 @@
+""" Module description
+
+Attributes:
+    TaskUnitType (TypeVar):
+
+"""
 from __future__ import annotations
 
 from abc import ABC
@@ -8,6 +14,13 @@ from motleycrew.storage import MotleyGraphNode
 
 
 class TaskUnit(MotleyGraphNode, ABC):
+    """ Description
+
+    Attributes:
+        status (:obj:`str`, optional):
+        output (:obj:`Any`, optional):
+
+    """
     status: str = TaskUnitStatus.PENDING
     output: Optional[Any] = None
 

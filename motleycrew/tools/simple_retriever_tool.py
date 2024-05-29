@@ -1,3 +1,4 @@
+""" Module description """
 import os.path
 
 from langchain_core.pydantic_v1 import BaseModel, Field
@@ -19,6 +20,13 @@ from motleycrew.applications.research_agent.question import Question
 
 class SimpleRetrieverTool(MotleyTool):
     def __init__(self, DATA_DIR, PERSIST_DIR, return_strings_only: bool = False):
+        """ Description
+
+        Args:
+            DATA_DIR (str):
+            PERSIST_DIR (str):
+            return_strings_only (:obj:`bool`, optional):
+        """
         tool = make_retriever_langchain_tool(
             DATA_DIR, PERSIST_DIR, return_strings_only=return_strings_only
         )
@@ -26,7 +34,12 @@ class SimpleRetrieverTool(MotleyTool):
 
 
 class RetrieverToolInput(BaseModel, arbitrary_types_allowed=True):
-    """Input for the Retriever Tool."""
+    """Input for the Retriever Tool.
+
+    Attributes:
+        question (Question):
+
+    """
 
     question: Question = Field(
         description="The input question for which to retrieve relevant data."
@@ -34,6 +47,16 @@ class RetrieverToolInput(BaseModel, arbitrary_types_allowed=True):
 
 
 def make_retriever_langchain_tool(DATA_DIR, PERSIST_DIR, return_strings_only: bool = False):
+    """ Description
+
+    Args:
+        DATA_DIR (str):
+        PERSIST_DIR (str):
+        return_strings_only (:obj:`bool`, optional):
+
+    Returns:
+
+    """
     text_embedding_model = "text-embedding-ada-002"
     embeddings = OpenAIEmbedding(model=text_embedding_model)
 

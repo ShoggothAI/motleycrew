@@ -1,3 +1,9 @@
+""" Module description
+
+Attributes:
+   PROMPT_TEMPLATE_WITH_DEPS (str):
+
+"""
 from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Sequence, List, Optional
 
@@ -24,6 +30,16 @@ You must use the results of these upstream tasks:
 def compose_simple_task_prompt_with_dependencies(
     description: str, upstream_task_units: List[TaskUnit], default_task_name: str = "Unnamed task"
 ) -> str:
+    """ Description
+
+    Args:
+        description (str):
+        upstream_task_units (:obj:`list` of :obj:`TaskUnit`):
+        default_task_name (:obj:`str`, optional):
+
+    Returns:
+        str:
+    """
     upstream_results = []
     for unit in upstream_task_units:
         if not unit.output:
@@ -43,6 +59,14 @@ def compose_simple_task_prompt_with_dependencies(
 
 
 class SimpleTaskUnit(TaskUnit):
+    """ Description
+
+    Attributes:
+        name (str):
+        prompt (str):
+        message_history (:obj:`list` of :obj:`str`):
+
+    """
     name: str
     prompt: str
     message_history: List[str] = []
@@ -60,6 +84,18 @@ class SimpleTask(Task):
         creator_name: str | None = None,
         return_to_creator: bool = False,
     ):
+        """ Description
+
+        Args:
+            crew (MotleyCrew):
+            description (str):
+            name (:obj:`str`, optional):
+            agent (:obj:`MotleyAgentAbstractParent`, optional):
+            tools (:obj:`Sequence[MotleyTool]`, optional):
+            documents (:obj:`Sequence[Any]`, optional):
+            creator_name (:obj:`str`, optional):
+            return_to_creator (:obj:`bool`, optional):
+        """
         super().__init__(name=name or description, task_unit_class=SimpleTaskUnit, crew=crew)
         self.description = description
         self.agent = agent  # to be auto-assigned at crew creation if missing?
@@ -73,6 +109,14 @@ class SimpleTask(Task):
         self.output = None  # to be filled in by the agent(s) once the task is complete
 
     def register_completed_unit(self, unit: SimpleTaskUnit) -> None:
+        """ Description
+
+        Args:
+            unit (SimpleTaskUnit):
+
+        Returns:
+
+        """
         assert isinstance(unit, SimpleTaskUnit)
         assert unit.done
 
@@ -80,6 +124,11 @@ class SimpleTask(Task):
         self.set_done()
 
     def get_next_unit(self) -> SimpleTaskUnit | None:
+        """ Description
+
+        Returns:
+            :obj:`SimpleTaskUnit`, None:
+        """
         if self.done:
             logger.info("Task %s is already done", self)
             return None
@@ -96,6 +145,14 @@ class SimpleTask(Task):
         )
 
     def get_worker(self, tools: Optional[List[MotleyTool]]) -> MotleyAgentAbstractParent:
+        """ Description
+
+        Args:
+            tools (:obj:`List[MotleyTool]`, :obj:`None`):
+
+        Returns:
+            MotleyAgentAbstractParent
+        """
         if self.crew is None:
             raise ValueError("Task is not associated with a crew")
         if self.agent is None:

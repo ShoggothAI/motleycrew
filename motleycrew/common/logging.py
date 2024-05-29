@@ -1,3 +1,8 @@
+""" Project logger configuration module
+
+Attributes:
+    logger (logging.Logger): project logger
+"""
 import logging
 
 
@@ -10,6 +15,15 @@ logger.addHandler(stream_handler)
 
 
 def configure_logging(verbose: bool = False, debug: bool = False):
+    """ Logging configuration
+
+    Args:
+        verbose (:obj:`bool`, optional): if true logging level = INFO
+        debug (:obj:`bool`, optional): if true logging level = DEBUG else WARNING
+
+    Returns:
+
+    """
     if debug:
         logger.setLevel(logging.DEBUG)
     elif verbose:

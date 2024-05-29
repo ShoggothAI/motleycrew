@@ -1,3 +1,4 @@
+""" Module description"""
 from typing import Optional, Type
 
 from langchain_core.tools import StructuredTool
@@ -20,6 +21,15 @@ class LLMTool(MotleyTool):
         llm: Optional[BaseLanguageModel] = None,
         input_schema: Optional[Type[BaseModel]] = None,
     ):
+        """ Description
+
+        Args:
+            name (str):
+            description (str):
+            prompt (:obj:`str`, :obj:`BasePromptTemplate`):
+            llm (:obj:`BaseLanguageModel`, optional):
+            input_schema (:obj:`Type[BaseModel]`, optional):
+        """
         langchain_tool = create_llm_langchain_tool(
             name=name,
             description=description,
@@ -37,6 +47,18 @@ def create_llm_langchain_tool(
     llm: Optional[BaseLanguageModel] = None,
     input_schema: Optional[Type[BaseModel]] = None,
 ):
+    """ Description
+
+    Args:
+        name (str):
+        description (str):
+        prompt (:obj:`str`, :obj:`BasePromptTemplate`):
+        llm (:obj:`BaseLanguageModel`, optional):
+        input_schema (:obj:`Type[BaseModel]`, optional):
+
+    Returns:
+
+    """
     if llm is None:
         llm = init_llm(llm_framework=LLMFramework.LANGCHAIN)
 

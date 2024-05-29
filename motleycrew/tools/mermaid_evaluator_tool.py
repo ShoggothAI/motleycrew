@@ -1,3 +1,4 @@
+""" Module description """
 # https://nodejs.org/en/download
 # npm install -g @mermaid-js/mermaid-cli
 import os.path
@@ -13,6 +14,11 @@ from motleycrew.tools import MotleyTool
 
 class MermaidEvaluatorTool(MotleyTool):
     def __init__(self, format: Optional[str] = "svg"):
+        """ Description
+
+        Args:
+            format (:obj:`str`, None):
+        """
         def eval_mermaid_partial(mermaid_code: str):
             return eval_mermaid(mermaid_code, format)
 
@@ -29,6 +35,15 @@ class MermaidEvaluatorTool(MotleyTool):
 
 
 def eval_mermaid(mermaid_code: str, format: Optional[str] = "svg") -> io.BytesIO:
+    """ Description
+
+    Args:
+        mermaid_code (str):
+        format (:obj:`str`, optional):
+
+    Returns:
+        io.BytesIO:
+    """
     with tempfile.NamedTemporaryFile(delete=True, mode="w+", suffix=".mmd") as temp_in:
         temp_in.write(mermaid_code)
         temp_in.flush()  # Ensure all data is written to disk

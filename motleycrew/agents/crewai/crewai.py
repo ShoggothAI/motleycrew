@@ -1,3 +1,4 @@
+""" Module description """
 from typing import Any, Optional, Sequence
 
 from langchain_core.runnables import RunnableConfig
@@ -26,6 +27,15 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
         tools: Sequence[MotleySupportedTool] | None = None,
         verbose: bool = False,
     ):
+        """ Description
+
+        Args:
+            goal (str):
+            name (:obj:`str`, optional):
+            agent_factory (:obj:`MotleyAgentFactory`, optional):
+            tools (:obj:`Sequence[MotleySupportedTool]`, optional:
+            verbose (bool):
+        """
         ensure_module_is_installed("crewai")
         super().__init__(
             description=goal,
@@ -41,6 +51,16 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
         config: Optional[RunnableConfig] = None,
         **kwargs: Any,
     ) -> Any:
+        """ Description
+
+        Args:
+            task_dict (dict):
+            config (:obj:`RunnableConfig`, optional):
+            **kwargs:
+
+        Returns:
+            Any:
+        """
         self.materialize()
 
         prompt = task_dict.get("prompt")
@@ -59,9 +79,25 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
 
     # TODO: what do these do?
     def set_cache_handler(self, cache_handler: Any) -> None:
+        """ Description
+
+        Args:
+            cache_handler (Any):
+
+        Returns:
+            None:
+        """
         return self.agent.set_cache_handler(cache_handler)
 
     def set_rpm_controller(self, rpm_controller: Any) -> None:
+        """ Description
+
+        Args:
+            rpm_controller (Any):
+
+        Returns:
+            None:
+        """
         return self.agent.set_rpm_controller(rpm_controller)
 
     @staticmethod
@@ -70,6 +106,16 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
         tools: Sequence[MotleySupportedTool] | None = None,
         verbose: bool = False,
     ) -> "CrewAIMotleyAgentParent":
+        """ Description
+
+        Args:
+            agent (CrewAIAgentWithConfig):
+            tools (:obj:`Sequence[MotleySupportedTool]`, optional):
+            verbose (bool):
+
+        Returns:
+            CrewAIMotleyAgentParent:
+        """
         if tools or agent.tools:
             tools = list(tools or []) + list(agent.tools or [])
 

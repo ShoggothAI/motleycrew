@@ -1,3 +1,4 @@
+""" Module description """
 from typing import Sequence
 
 try:
@@ -26,6 +27,15 @@ class ReActLlamaIndexMotleyAgent(LlamaIndexMotleyAgent):
         llm: LLM | None = None,
         verbose: bool = False,
     ):
+        """ Description
+
+        Args:
+            description (str):
+            name (:obj:`str`, optional):
+            tools (:obj:`Sequence[MotleySupportedTool]`, optional):
+            llm (:obj:`LLM`, optional):
+            verbose (:obj:`bool`, optional):
+        """
         ensure_module_is_installed("llama_index")
         if llm is None:
             llm = init_llm(llm_framework=LLMFramework.LLAMA_INDEX)

@@ -1,3 +1,10 @@
+""" Module description
+
+Attributes:
+    default_think_prompt:
+    default_act_prompt:
+
+"""
 from typing import Sequence, List, Union
 
 from langchain_core.messages import BaseMessage
@@ -70,12 +77,28 @@ Thought:{agent_scratchpad}
 
 
 def add_thought_to_background(x: dict):
+    """ Description
+
+    Args:
+        x (dict):
+
+    Returns:
+
+    """
     out = x["background"]
     out["agent_scratchpad"] += [x["thought"]]
     return out
 
 
 def check_variables(prompt: ChatPromptTemplate):
+    """ Description
+
+    Args:
+        prompt (ChatPromptTemplate):
+
+    Returns:
+
+    """
     missing_vars = {"agent_scratchpad"}.difference(prompt.input_variables)
     if missing_vars:
         raise ValueError(f"Prompt missing required variables: {missing_vars}")
@@ -90,10 +113,10 @@ def create_openai_tools_react_agent(
     #TODO: this docstring is out of date, need to update it
 
     Args:
-        llm: LLM to use as the agent.
-        tools: Tools this agent has access to.
-        prompt: The prompt to use. See Prompt section below for more on the expected
-            input variables.
+        llm (BaseLanguageModel): LLM to use as the agent.
+        tools (Sequence[BaseTool]): Tools this agent has access to.
+        prompt (:obj:`Union[ChatPromptTemplate`, :obj:`Sequence[ChatPromptTemplate]`, optional): The prompt to use.
+            See Prompt section below for more on the expected input variables.
 
     Returns:
         A Runnable sequence representing an agent. It takes as input all the same input
@@ -193,6 +216,15 @@ def create_openai_tools_react_agent(
 def add_messages_to_action(
     actions: List[AgentActionMessageLog] | AgentFinish, messages: List[BaseMessage]
 ) -> List[AgentActionMessageLog] | AgentFinish:
+    """ Description
+
+    Args:
+        actions (:obj:`List[AgentActionMessageLog]`, :obj:`AgentFinish`):
+        messages (List[BaseMessage]):
+
+    Returns:
+        List[AgentActionMessageLog] | AgentFinish:
+    """
     if not isinstance(actions, AgentFinish):
         for action in actions:
             action.message_log = messages + list(action.message_log)
@@ -209,6 +241,16 @@ class ReactOpenAIToolsAgent(LangchainMotleyAgent):
         llm: BaseLanguageModel | None = None,
         verbose: bool = False,
     ):
+        """ Description
+
+        Args:
+            tools (Sequence[MotleySupportedTool]):
+            goal (:obj:`str`, optional):
+            name (:obj:`str`, optional):
+            prompt (:obj:ChatPromptTemplate`, :obj:`Sequence[ChatPromptTemplate]', optional):
+            llm (:obj:`BaseLanguageModel`, optional):
+            verbose (:obj:`bool`, optional):
+        """
         return cls.from_function(
             description=goal,
             name=name,

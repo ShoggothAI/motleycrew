@@ -1,3 +1,4 @@
+""" Module description """
 from typing import Any, Optional, Sequence, Callable
 
 from langchain.agents import AgentExecutor
@@ -25,6 +26,15 @@ class LangchainMotleyAgent(MotleyAgentParent):
         tools: Sequence[MotleySupportedTool] | None = None,
         verbose: bool = False,
     ):
+        """ Description
+
+        Args:
+            description (str):
+            name (:obj:`str`, optional):
+            agent_factory (:obj:`MotleyAgentFactory`, optional):
+            tools (:obj:`Sequence[MotleySupportedTool]`, optional):
+            verbose (bool):
+        """
         super().__init__(
             description=description,
             name=name,
@@ -39,6 +49,16 @@ class LangchainMotleyAgent(MotleyAgentParent):
         config: Optional[RunnableConfig] = None,
         **kwargs: Any,
     ) -> Any:
+        """ Description
+
+        Args:
+            task_dict (dict):
+            config (:obj:`RunnableConfig`, optional):
+            **kwargs:
+
+        Returns:
+
+        """
         self.materialize()
 
         prompt = task_dict.get("prompt")
@@ -65,6 +85,22 @@ class LangchainMotleyAgent(MotleyAgentParent):
         require_tools: bool = False,
         verbose: bool = False,
     ) -> "LangchainMotleyAgent":
+        """ Description
+
+        Args:
+            function (Callable):
+            description (str):
+            name (:obj:`str`, optional):
+            llm (:obj:`BaseLanguageModel`, optional):
+            delegation: (:obj:`bool`, :obj:`Sequence[MotleyAgentAbstractParent]`, optional):
+            tools (:obj:`Sequence[MotleySupportedTool]`, optional):
+            prompt (:obj:`ChatPromptTemplate`, :obj:`Sequence[ChatPromptTemplate]`, optional):
+            require_tools (bool):
+            verbose (bool):
+
+        Returns:
+            LangchainMotleyAgent:
+        """
         if llm is None:
             llm = init_llm(llm_framework=LLMFramework.LANGCHAIN)
 
@@ -97,6 +133,17 @@ class LangchainMotleyAgent(MotleyAgentParent):
         tools: Sequence[MotleySupportedTool] | None = None,
         verbose: bool = False,
     ) -> "LangchainMotleyAgent":
+        """ Description
+
+        Args:
+            agent (AgentExecutor):
+            goal (str):
+            tools(:obj:`Sequence[MotleySupportedTool]`, optional):
+            verbose (bool):
+
+        Returns:
+            LangchainMotleyAgent
+        """
         # TODO: do we really need to unite the tools implicitly like this?
         # TODO: confused users might pass tools both ways at the same time
         # TODO: and we will silently unite them, which can have side effects (e.g. doubled tools)

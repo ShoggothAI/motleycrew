@@ -1,3 +1,9 @@
+""" Module description
+
+Attributes:
+    TaskNodeType (TypeVar):
+
+"""
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -14,6 +20,13 @@ if TYPE_CHECKING:
 
 
 class TaskNode(MotleyGraphNode):
+    """ Description
+
+    Attributes:
+        name (str):
+        done (bool):
+
+    """
     __label__ = "TaskNode"
     name: str
     done: bool = False
@@ -26,12 +39,24 @@ TaskNodeType = TypeVar("TaskNodeType", bound=TaskNode)
 
 
 class Task(ABC, Generic[TaskUnitType]):
+    """
+    Attributes:
+        NODE_CLASS (TaskNodeType):
+        TASK_IS_UPSTREAM_LABEL (str):
+    """
     NODE_CLASS: Type[TaskNodeType] = TaskNode
     TASK_IS_UPSTREAM_LABEL = "task_is_upstream"
 
     def __init__(
         self, name: str, task_unit_class: Type[TaskUnitType], crew: Optional[MotleyCrew] = None
     ):
+        """ Description
+
+        Args:
+            name (str):
+            task_unit_class (Type[TaskUnitType]):
+            crew (:obj:`MotleyCrew`, optional):
+        """
         self.name = name
         self.done = False
         self.node = self.NODE_CLASS(name=name, done=self.done)
@@ -45,6 +70,11 @@ class Task(ABC, Generic[TaskUnitType]):
             self.prepare_graph_store()
 
     def prepare_graph_store(self):
+        """ Description
+
+        Returns:
+
+        """
         if isinstance(self.graph_store, MotleyKuzuGraphStore):
             self.graph_store.ensure_node_table(self.NODE_CLASS)
             self.graph_store.ensure_node_table(self.task_unit_class)
@@ -67,6 +97,14 @@ class Task(ABC, Generic[TaskUnitType]):
         return self.__repr__()
 
     def set_upstream(self, task: Task) -> Task:
+        """ Description
+
+        Args:
+            task (Task):
+
+        Returns:
+            Task:
+        """
         if self.crew is None or task.crew is None:
             raise ValueError("Both tasks must be registered with a crew")
 
@@ -94,6 +132,11 @@ class Task(ABC, Generic[TaskUnitType]):
         return other
 
     def get_units(self) -> List[TaskUnitType]:
+        """
+
+        Returns:
+            :obj:`list` of :obj:`TaskUnitType`:
+        """
         assert self.crew is not None, "Task must be registered with a crew for accessing task units"
 
         query = "MATCH (unit:{})-[:{}]->(task:{}) WHERE task.id = $self_id RETURN unit".format(
@@ -107,6 +150,11 @@ class Task(ABC, Generic[TaskUnitType]):
         return task_units
 
     def get_upstream_tasks(self) -> List[Task]:
+        """ Description
+
+        Returns:
+            :obj:`list` of :obj:`Task`
+        """
         assert (
             self.crew is not None and self.node.is_inserted
         ), "Task must be registered with a crew for accessing upstream tasks"
@@ -125,6 +173,11 @@ class Task(ABC, Generic[TaskUnitType]):
         return [task for task in self.crew.tasks if task.node in upstream_task_nodes]
 
     def get_downstream_tasks(self) -> List[Task]:
+        """ Description
+
+        Returns:
+            :obj:`list` of :obj:`Task`
+        """
         assert (
             self.crew is not None and self.node.is_inserted
         ), "Task must be registered with a crew for accessing downstream tasks"
@@ -143,10 +196,26 @@ class Task(ABC, Generic[TaskUnitType]):
         return [task for task in self.crew.tasks if task.node in downstream_task_nodes]
 
     def set_done(self, value: bool = True):
+        """ Description
+
+        Args:
+            value (bool):
+
+        Returns:
+
+        """
         self.done = value
         self.node.done = value
 
     def register_started_unit(self, unit: TaskUnitType) -> None:
+        """ Description
+
+        Args:
+            unit (TaskUnitType):
+
+        Returns:
+
+        """
         assert isinstance(unit, self.task_unit_class)
         assert not unit.done
 
@@ -161,8 +230,21 @@ class Task(ABC, Generic[TaskUnitType]):
 
     @abstractmethod
     def get_next_unit(self) -> TaskUnitType | None:
+        """ Description
+
+        Returns:
+            :obj:`TaskUnitType` | None:
+        """
         pass
 
     @abstractmethod
     def get_worker(self, tools: Optional[List[MotleyTool]]) -> Runnable:
+        """ Description
+
+        Args:
+            tools (:obj:`List[MotleyTool]`, None):
+
+        Returns:
+            Runnable:
+        """
         pass

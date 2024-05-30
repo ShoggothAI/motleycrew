@@ -48,7 +48,10 @@ class Task(ABC, Generic[TaskUnitType]):
     TASK_IS_UPSTREAM_LABEL = "task_is_upstream"
 
     def __init__(
-        self, name: str, task_unit_class: Type[TaskUnitType], crew: Optional[MotleyCrew] = None
+        self, name: str,
+            task_unit_class: Type[TaskUnitType],
+            crew: Optional[MotleyCrew] = None,
+            allow_async_units: bool = False
     ):
         """ Description
 
@@ -56,11 +59,13 @@ class Task(ABC, Generic[TaskUnitType]):
             name (str):
             task_unit_class (Type[TaskUnitType]):
             crew (:obj:`MotleyCrew`, optional):
+            allow_async_units (:obj:'bool', optional)
         """
         self.name = name
         self.done = False
         self.node = self.NODE_CLASS(name=name, done=self.done)
         self.crew = crew
+        self.allow_async_units = allow_async_units
 
         self.task_unit_class = task_unit_class
         self.task_unit_belongs_label = "{}_belongs".format(self.task_unit_class.get_label())

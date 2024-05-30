@@ -11,13 +11,19 @@ For a basic introduction, you can check out the `quickstart <quickstart.html>`_.
 Crew and knowledge graph
 ------------------------
 
-The crew is a central concept in motleycrew. It is the orchestrator that knows what tasks sould be done in which order, and manages the execution of those tasks.
+The crew is a central concept in motleycrew. It is the orchestrator that knows what tasks sould be done in which order,
+and manages the execution of those tasks.
 
-The crew has an underlying knowledge graph, in which it stores all information relevant to the execution of the tasks. Besides storing the tasks themselves, the knowledge graph can act as a universal storage for any kind of context that is relevant to the tasks. You can find more info on how to use the knowledge graph in the `tutorial <knowledge_graph.html>`_.
+The crew has an underlying knowledge graph, in which it stores all information relevant to the execution of the tasks.
+Besides storing the tasks themselves, the knowledge graph can act as a universal storage for any kind of context
+that is relevant to the tasks. You can find more info on how to use the knowledge graph in the `tutorial <knowledge_graph.html>`_.
 
-We currently use `Kùzu <https://kuzudb.com/>`_  as a knowledge graph backend because it's embeddable, available under an MIT license, and is one of the LlamaIndex-supported KG backends - please raise an issue on GitHub if you'd like us to support others.
+We currently use `Kùzu <https://kuzudb.com/>`_  as a knowledge graph backend because it's embeddable,
+available under an MIT license, and is one of the LlamaIndex-supported KG backends -
+please raise an issue on GitHub if you'd like us to support others.
 
-The relationships between tasks are automatically stored in the KG backend; but the agents that are working on the tasks can also read and write any other context they want to share.
+The relationships between tasks are automatically stored in the KG backend; but the agents that are working
+on the tasks can also read and write any other context they want to share.
 
 .. code-block:: python
 
@@ -43,11 +49,15 @@ If you want to persist the data or otherwise customize the graph store, you can 
 Tasks, task units, and workers
 ------------------------------
 
-In motleycrew, a **task** is a body of work that is carried out according to certain rules. The task provides the crew with a description of what needs to be done in the form of **task units**, and who must do it - that's called a **worker**. A worker can be an agent, a tool, or for that matter any Runnable (in the Langchain sense).
+In motleycrew, a **task** is a body of work that is carried out according to certain rules. The task provides the crew
+with a description of what needs to be done in the form of **task units**, and who must do it - that's called a
+**worker**. A worker can be an agent, a tool, or for that matter any Runnable (in the Langchain sense).
 
-The worker recieves a task unit as an input, processes it, and returns a result.
+The worker receives a task unit as an input, processes it, and returns a result.
 
-In a simple case, a task will have a single task unit, and becomes completed as soon as the unit is done. For such cases, motleycrew provides a `SimpleTask` class, which basically contains an agent and a prompt. Refer to the `blog with images <examples/blog_with_images.html>`_ example for a more elaborate illustration.
+In a simple case, a task will have a single task unit, and becomes completed as soon as the unit is done.
+For such cases, motleycrew provides a `SimpleTask` class, which basically contains an agent and a prompt.
+Refer to the `blog with images <examples/blog_with_images.html>`_ example for a more elaborate illustration.
 
 .. code-block:: python
 
@@ -60,9 +70,12 @@ In a simple case, a task will have a single task unit, and becomes completed as 
     crew.run()
     print(task.output)
 
-This task is basically a prompt ("Do something") that is fed to the provided agent. The task will be completed as soon as the agent finishes processing the only task unit.
+This task is basically a prompt ("Do something") that is fed to the provided agent. The task will be completed as
+soon as the agent finishes processing the only task unit.
 
-For describing more complex tasks, you should subclass the `Task` class. It has two abstract methods that you should implement: ``get_next_unit`` and ``get_worker``, as well as some optional methods that you can override to customize the task's behavior.
+For describing more complex tasks, you should subclass the `Task` class. It has two abstract
+methods that you should implement: ``get_next_unit`` and ``get_worker``, as well as some optional methods
+that you can override to customize the task's behavior.
 
 #. ``get_next_unit`` should return the next task unit to be processed. If there are no units to do at the moment, it should return `None`.
 #. ``get_worker`` should return the worker (typically an agent) that will process the task's units.
@@ -73,7 +86,9 @@ For describing more complex tasks, you should subclass the `Task` class. It has 
 Task hierarchy
 --------------
 
-Tasks can be set to depend on other tasks, basically forming a directed acyclic graph. This is done by either calling a task's ``set_upstream`` method or by using the ``>>`` operator. The crew will then make sure that the upstream tasks are completed before starting the dependent task.
+Tasks can be set to depend on other tasks, forming a directed acyclic graph. This is done by either calling a
+task's ``set_upstream`` method or by using the ``>>`` operator. The crew will then make sure that the upstream
+tasks are completed before starting the dependent task, and pass the former's output to the latter.
 
 .. code-block:: python
 
@@ -87,16 +102,23 @@ Tasks can be set to depend on other tasks, basically forming a directed acyclic 
 How the crew handles tasks
 --------------------------
 
-The crew queries the tasks for task units and dispatches them in a loop. The crew will keep running until either all tasks are completed or available tasks stop providing task units.
+The crew queries the tasks for task units and dispatches them in a loop. The crew will keep running until either all
+tasks are completed or available tasks stop providing task units.
 
-A task is considered completed when it has ``done`` attribute set to ``True``. For example, in case of `SimpleTask`, this happens when its only task unit is completed and the crew calls the task's ``register_completed_unit`` method. In case of a custom task, this behavior is up to the task's implementation.
+A task is considered completed when it has ``done`` attribute set to ``True``. For example, in the case of `SimpleTask`,
+this happens when its only task unit is completed and the crew calls the task's ``register_completed_unit`` method.
+In case of a custom task, this behavior is up to the task's implementation.
 
-On each iteration, available tasks are defined as tasks that have not been completed and have no incomplete upstream tasks. They are queried for task units one by one, and the crew will dispatch the task unit to the worker that the task provides.
+Available tasks are defined as tasks that have not been completed and have no incomplete
+upstream tasks. On each iteration, available tasks are queried for task units one by one,
+and the crew will dispatch the task unit to the worker that the task provides.
 
-When a task unit is dispatched, the crew adds it to the knowledge graph and calls the task's ``register_started_unit`` method. When the worker finishes processing the task unit, the crew calls the task's ``register_completed_unit`` method.
+When a task unit is dispatched, the crew adds it to the knowledge graph and calls the task's ``register_started_unit``
+method. When the worker finishes processing the task unit, the crew calls the task's ``register_completed_unit`` method.
 
 .. image:: images/crew_diagram.png
     :alt: Crew main loop
     :align: center
 
-Now that you know the basics, we suggest you check out the `research agent example <examples/research_agent.html>`_ to see how it all works together.
+Now that you know the basics, we suggest you check out the `research agent example <examples/research_agent.html>`_
+to see how it all works together.

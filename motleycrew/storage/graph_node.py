@@ -13,7 +13,8 @@ if TYPE_CHECKING:
 
 
 class MotleyGraphNode(BaseModel):
-    """ Description """
+    """Description"""
+
     # Q: KuzuGraphNode a better name? Because def id is specific?
     # A: No, I think _id attribute is pretty universal
     __label__: Optional[str] = None
@@ -29,7 +30,7 @@ class MotleyGraphNode(BaseModel):
 
     @classmethod
     def get_label(cls) -> str:
-        """ Description
+        """Description
 
         Returns:
             str:
@@ -51,6 +52,9 @@ class MotleyGraphNode(BaseModel):
 
         if self.__graph_store__ and self.is_inserted:
             self.__graph_store__.update_property(self, name)
+
+    def __eq__(self, other):
+        return self.is_inserted and self.get_label() == other.get_label() and self.id == other.id
 
 
 MotleyGraphNodeType = TypeVar("MotleyGraphNodeType", bound=MotleyGraphNode)

@@ -1,9 +1,11 @@
 """Thread pool module for running agents"""
 
-from typing import Tuple, Any, List
 import threading
 from queue import Queue
 from enum import Enum
+from typing import Tuple, Any, List
+
+from motleycrew.common import Defaults
 
 
 class InvokeThreadState(Enum):
@@ -25,33 +27,33 @@ class InvokeThread(threading.Thread):
         """
         self.input_queue = input_queue
         self.output_queue = output_queue
-        self.__state = InvokeThreadState.WAITING
-        self.__is_close = False
+        self._state = InvokeThreadState.WAITING
+        self._is_close = False
         super(InvokeThread, self).__init__(*args, **kwargs)
 
     @property
     def state(self):
-        return self.__state
+        return self._state
 
     def stop(self):
         """Plans to stop the execution cycle when the next task is received"""
         self.input_queue.put(None)
-        self.__is_close = True
+        self._is_close = True
 
     def run(self) -> None:
         while True:
             running_data = self.input_queue.get()
 
-            self.__state = InvokeThreadState.PROCESS
+            self._state = InvokeThreadState.PROCESS
 
-            if running_data is None or self.__is_close:
-                self.__state = InvokeThreadState.STOP
+            if running_data is None or self._is_close:
+                self._state = InvokeThreadState.STOP
                 break
 
             agent, task, unit = running_data
             result = agent.invoke(unit.as_dict())
             self.output_queue.put((task, unit, result))
-            self.__state = InvokeThreadState.WAITING
+            self._state = InvokeThreadState.WAITING
 
 
 class InvokeThreadPool:
@@ -60,19 +62,19 @@ class InvokeThreadPool:
         """The thread storage class for performing tasks
 
         Args:
-            num_threads (int): number of threads being created default 4
+            num_threads (int): number of threads being created default Defaults.DEFAULT_NUM_THREADS
         """
-        self.num_threads = num_threads or 4
+        self.num_threads = num_threads or Defaults.DEFAULT_NUM_THREADS
 
         self.lock = threading.Lock()
         self.input_queue = Queue()
         self.output_queue = Queue()
 
-        self.__threads = []
+        self._threads = []
         for i in range(self.num_threads):
             thread = InvokeThread(self.input_queue, self.output_queue)
             thread.start()
-            self.__threads.append(thread)
+            self._threads.append(thread)
 
     def put(self, agent: "Runnable", task: "Task", unit: "TaskUnit"):
         """Adds a task to the queue for execution
@@ -100,7 +102,7 @@ class InvokeThreadPool:
 
     def close(self):
         """Closes running threads"""
-        for t in self.__threads:
+        for t in self._threads:
             t.stop()
 
     def is_completed(self) -> bool:
@@ -111,7 +113,7 @@ class InvokeThreadPool:
         """
         self.lock.acquire()
 
-        in_process = any([t.state == InvokeThreadState.PROCESS for t in self.__threads])
+        in_process = any([t.state == InvokeThreadState.PROCESS for t in self._threads])
         empty_queue = bool(self.input_queue.empty() and self.output_queue.empty())
         is_completed = bool(not in_process and empty_queue)
 

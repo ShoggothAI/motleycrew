@@ -105,7 +105,7 @@ class LangchainMotleyAgent(MotleyAgentParent):
             llm = init_llm(llm_framework=LLMFramework.LANGCHAIN)
 
         if require_tools and not tools:
-            raise ValueError("You must provide at least one tool to the ReactMotleyAgent")
+            raise ValueError("You must provide at least one tool to the LangchainMotleyAgent")
 
         def agent_factory(tools: dict[str, MotleyTool]):
             langchain_tools = [t.to_langchain_tool() for t in tools.values()]

@@ -9,7 +9,7 @@ from motleycrew.tasks import Task, TaskUnit, SimpleTask
 from motleycrew.storage import MotleyGraphStore
 from motleycrew.storage.graph_store_utils import init_graph_store
 from motleycrew.tools import MotleyTool
-from motleycrew.common import logger, AsyncBackend
+from motleycrew.common import logger, AsyncBackend, Defaults
 from motleycrew.crew.crew_threads import InvokeThreadPool
 
 
@@ -140,11 +140,11 @@ class MotleyCrew:
 
         done_units = []
         not_allow_async_tasks = set()
-        thread_pull = InvokeThreadPool()
+        thread_pool = InvokeThreadPool(self.num_threads)
         try:
             while True:
 
-                for result_data in thread_pull.get_completed_tasks():
+                for result_data in thread_pool.get_completed_tasks():
                     task, unit, invoke_result = result_data
                     if task in not_allow_async_tasks:
                         not_allow_async_tasks.remove(task)
@@ -159,15 +159,15 @@ class MotleyCrew:
                     logger.info("Assigned unit %s to agent %s, dispatching", next_unit, agent)
                     next_unit.set_running()
                     next_task.register_started_unit(next_unit)
-                    thread_pull.put(agent, next_task, next_unit)
+                    thread_pool.put(agent, next_task, next_unit)
 
-                if thread_pull.is_completed():
+                if thread_pool.is_completed():
                     logger.info("Nothing left to do, exiting")
                     return done_units
 
-                time.sleep(3)
+                time.sleep(Defaults.DEFAULT_EVENT_LOOP_SLEEP)
         finally:
-            thread_pull.close()
+            thread_pool.close()
 
     async def async_agent_invoke(self, agent: MotleyAgentParent, unit: TaskUnit) -> Any:
         return await agent.ainvoke(unit.as_dict())
@@ -217,7 +217,7 @@ class MotleyCrew:
                 logger.info("Nothing left to do, exiting")
                 return done_units
 
-            await asyncio.sleep(3)
+            await asyncio.sleep(Defaults.DEFAULT_EVENT_LOOP_SLEEP)
 
     def _run_sync(self) -> list[TaskUnit]:
         """Synchronous execution start

@@ -90,20 +90,19 @@ class MotleyCrew:
                     label=Task.TASK_IS_UPSTREAM_LABEL,
                 )  # TODO: remove this workaround, https://github.com/kuzudb/kuzu/issues/3488
 
-    def __get_running_data(
+    def _get_running_data(
         self, not_allow_async_tasks: set
-    ) -> List[Tuple[MotleyAgentParent, Task, TaskUnit]]:
+    ) -> Tuple[MotleyAgentParent, Task, TaskUnit]:
         """
             Finds and returns tasks that are available to run
         Args:
             not_allow_async_tasks (set): Collection of running tasks that do not allow parallel execution
 
-        Returns:
-            list: List of objects to run a parallel task launch
+        Yields:
+            tuple: objects to run a parallel task launch
         """
         available_tasks = self.get_available_tasks()
         logger.info("Available tasks: %s", available_tasks)
-        running_data = []
 
         for task in available_tasks:
 
@@ -128,9 +127,7 @@ class MotleyCrew:
             extra_tools = self.get_extra_tools(task)
             agent = task.get_worker(extra_tools)
 
-            running_data.append((agent, task, next_unit))
-
-        return running_data
+            yield agent, task, next_unit
 
     async def async_agent_invoke(self, agent: MotleyAgentParent, unit: TaskUnit) -> Any:
         return await agent.ainvoke(unit.as_dict())
@@ -166,7 +163,7 @@ class MotleyCrew:
                     else:
                         logger.warning("Exception with invoke %s task", task)
 
-            for running_data in self.__get_running_data(not_allow_async_tasks):
+            for running_data in self._get_running_data(not_allow_async_tasks):
                 agent, next_task, next_unit = running_data
                 logger.info("Assigned unit %s to agent %s, dispatching", next_unit, agent)
                 next_unit.set_running()

@@ -9,6 +9,9 @@ class AgentMock:
         clear_dict = self.clear_input_dict(input_dict)
         return str(clear_dict)
 
+    async def ainvoke(self, input_dict) -> str:
+        return self.invoke(input_dict)
+
     @staticmethod
     def clear_input_dict(input_dict: dict) -> dict:
         clear_dict = {}

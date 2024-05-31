@@ -1,12 +1,14 @@
 """ Module description """
+
 from typing import List, Optional
 
 from langchain_core.runnables import Runnable
 
 from motleycrew.tasks import Task
-from ...tasks.task_unit import TaskUnitType
+from motleycrew.tasks.task_unit import TaskUnitType
 from motleycrew.tools import MotleyTool
 from motleycrew.crew import MotleyCrew
+from motleycrew.common import TaskUnitStatus
 from .question import Question, QuestionGenerationTaskUnit
 from .question_generator import QuestionGeneratorTool
 from .question_prioritizer import QuestionPrioritizerTool
@@ -20,9 +22,10 @@ class QuestionTask(Task):
         query_tool: MotleyTool,
         crew: MotleyCrew,
         max_iter: int = 10,
+        allow_async_units: bool = False,
         name: str = "QuestionTask",
     ):
-        """ Description
+        """Description
 
         Args:
             question (str):
@@ -33,7 +36,12 @@ class QuestionTask(Task):
         """
         # Need to supply the crew already at this stage
         # because need to use the graph store in constructor
-        super().__init__(name=name, task_unit_class=QuestionGenerationTaskUnit, crew=crew)
+        super().__init__(
+            name=name,
+            task_unit_class=QuestionGenerationTaskUnit,
+            crew=crew,
+            allow_async_units=allow_async_units,
+        )
 
         self.max_iter = max_iter
         self.n_iter = 0
@@ -45,31 +53,37 @@ class QuestionTask(Task):
         )
 
     def get_next_unit(self) -> QuestionGenerationTaskUnit | None:
-        """ Description
+        """Description
 
         Returns:
             QuestionGenerationTaskUnit
         """
-        if self.done:
+        if self.done or self.n_iter >= self.max_iter:
             return None
 
         unanswered_questions = self.get_unanswered_questions(only_without_children=True)
         logger.info("Loaded unanswered questions: %s", unanswered_questions)
 
-        if not len(unanswered_questions):
+        existing_units = self.get_units()
+        question_candidates = []
+        for question in unanswered_questions:
+            if not any(unit.question.question == question.question for unit in existing_units):
+                question_candidates.append(question)
+
+        if not len(question_candidates):
             return None
 
         most_pertinent_question = self.question_prioritization_tool.invoke(
             {
                 "original_question": self.question,
-                "unanswered_questions": unanswered_questions,
+                "unanswered_questions": question_candidates,
             }
         )
         logger.info("Most pertinent question according to the tool: %s", most_pertinent_question)
         return QuestionGenerationTaskUnit(question=most_pertinent_question)
 
-    def register_completed_unit(self, unit: TaskUnitType) -> None:
-        """ Description
+    def register_started_unit(self, unit: TaskUnitType) -> None:
+        """Description
 
         Args:
             unit (TaskUnitType):
@@ -77,13 +91,15 @@ class QuestionTask(Task):
         Returns:
 
         """
-        logger.info("==== Completed iteration %s of %s ====", self.n_iter + 1, self.max_iter)
+        logger.info("==== Started iteration %s of %s ====", self.n_iter + 1, self.max_iter)
         self.n_iter += 1
+
+    def register_completed_unit(self, unit: TaskUnitType) -> None:
         if self.n_iter >= self.max_iter:
             self.set_done(True)
 
     def get_worker(self, tools: Optional[List[MotleyTool]]) -> Runnable:
-        """ Description
+        """Description
 
         Args:
             tools (List[MotleyTool]):
@@ -94,7 +110,7 @@ class QuestionTask(Task):
         return self.question_generation_tool
 
     def get_unanswered_questions(self, only_without_children: bool = False) -> list[Question]:
-        """ Description
+        """Description
 
         Args:
             only_without_children (:obj:`bool`, optional):

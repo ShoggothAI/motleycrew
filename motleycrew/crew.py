@@ -1,24 +1,33 @@
-from typing import Collection, Sequence, Optional, Any
+from typing import Collection, Sequence, Optional, Any, List, Tuple
 import os
 import asyncio
+import threading
 
 from motleycrew.agents.parent import MotleyAgentParent
 from motleycrew.tasks import Task, TaskUnit, SimpleTask
 from motleycrew.storage import MotleyGraphStore
 from motleycrew.storage.graph_store_utils import init_graph_store
 from motleycrew.tools import MotleyTool
-from motleycrew.common import logger
+from motleycrew.common import logger, AsyncBackend
 
 
 class MotleyCrew:
-    def __init__(self, graph_store: Optional[MotleyGraphStore] = None):
+    _loop = None  # asyncio.AbstractEventLoop
+
+    def __init__(
+        self,
+        graph_store: Optional[MotleyGraphStore] = None,
+        async_backend: AsyncBackend = AsyncBackend.NONE,
+        num_threads: int = None,
+    ):
         if graph_store is None:
             graph_store = init_graph_store()
         self.graph_store = graph_store
 
-        self.single_thread = os.environ.get("MC_SINGLE_THREAD", False)
         self.tools = []
         self.tasks = []
+        self.async_backend = async_backend
+        self.num_threads = num_threads
 
     def create_simple_task(
         self,
@@ -39,10 +48,25 @@ class MotleyCrew:
         return task
 
     def run(self) -> list[TaskUnit]:
-        if not self.single_thread:
-            result = asyncio.run(self._run_async())
-        else:
+        if self.async_backend == AsyncBackend.NONE:
             result = self._run_sync()
+        elif self.async_backend == AsyncBackend.ASYNCIO:
+            try:
+                result = asyncio.run(self._run_async())
+            except RuntimeError:
+                if self._loop is None:
+                    MotleyCrew._loop = asyncio.new_event_loop()
+                    threading.Thread(target=self._loop.run_forever, daemon=True).start()
+
+                future: asyncio.Future = asyncio.run_coroutine_threadsafe(
+                    self._run_async(), self._loop
+                )
+                result = future.result()
+        elif self.async_backend == AsyncBackend.THREADING:
+            raise NotImplementedError()
+        else:
+            raise NotImplementedError()
+
         return result
 
     def add_dependency(self, upstream: Task, downstream: Task):
@@ -66,6 +90,48 @@ class MotleyCrew:
                     label=Task.TASK_IS_UPSTREAM_LABEL,
                 )  # TODO: remove this workaround, https://github.com/kuzudb/kuzu/issues/3488
 
+    def __get_running_data(
+        self, not_allow_async_tasks: set
+    ) -> List[Tuple[MotleyAgentParent, Task, TaskUnit]]:
+        """
+            Finds and returns tasks that are available to run
+        Args:
+            not_allow_async_tasks (set): Collection of running tasks that do not allow parallel execution
+
+        Returns:
+            list: List of objects to run a parallel task launch
+        """
+        available_tasks = self.get_available_tasks()
+        logger.info("Available tasks: %s", available_tasks)
+        running_data = []
+
+        for task in available_tasks:
+
+            if not task.allow_async_units:
+                if task in not_allow_async_tasks:
+                    continue
+
+            logger.info("Processing task: %s", task)
+
+            next_unit = task.get_next_unit()
+
+            if next_unit is None:
+                logger.info("Got no matching units for task %s", task)
+                continue
+
+            if not task.allow_async_units:
+                not_allow_async_tasks.add(task)
+
+            logger.info("Got a matching unit for task %s", task)
+            logger.info("Processing task: %s", next_unit)
+
+            extra_tools = self.get_extra_tools(task)
+            agent = task.get_worker(extra_tools)
+
+            running_data.append((agent, task, next_unit))
+
+        return running_data
+
     async def async_agent_invoke(self, agent: MotleyAgentParent, unit: TaskUnit) -> Any:
         return await agent.ainvoke(unit.as_dict())
 
@@ -81,7 +147,6 @@ class MotleyCrew:
         not_allow_async_tasks = set()
 
         while True:
-            did_something = False
 
             for async_task in list(async_tasks.keys()):
                 if async_task.done():
@@ -101,43 +166,17 @@ class MotleyCrew:
                     else:
                         logger.warning("Exception with invoke %s task", task)
 
-            available_tasks = self.get_available_tasks()
-            logger.info("Available tasks: %s", available_tasks)
-
-            for task in available_tasks:
-                logger.info("Processing task: %s", task)
-
-                next_unit = task.get_next_unit()
-
-                if next_unit is None:
-                    logger.info("Got no matching units for task %s", task)
-                    continue
-
-                if not task.allow_async_units:
-                    if task in not_allow_async_tasks:
-                        continue
-                    else:
-                        not_allow_async_tasks.add(task)
-
-                logger.info("Got a matching unit for task %s", task)
-                current_unit = next_unit
-                logger.info("Processing task: %s", current_unit)
-
-                extra_tools = self.get_extra_tools(task)
-
-                agent = task.get_worker(extra_tools)
-                logger.info("Assigned unit %s to agent %s, dispatching", current_unit, agent)
-                current_unit.set_running()
-                task.register_started_unit(current_unit)
+            for running_data in self.__get_running_data(not_allow_async_tasks):
+                agent, next_task, next_unit = running_data
+                logger.info("Assigned unit %s to agent %s, dispatching", next_unit, agent)
+                next_unit.set_running()
+                next_task.register_started_unit(next_unit)
 
                 # TODO: accept and handle some sort of return value? Or just the final state of the task?
-                async_task = asyncio.create_task(self.async_agent_invoke(agent, current_unit))
-                async_tasks[async_task] = (task, current_unit)
+                async_task = asyncio.create_task(self.async_agent_invoke(agent, next_unit))
+                async_tasks[async_task] = (next_task, next_unit)
 
-                did_something = True
-                continue
-
-            if not did_something and not async_tasks:
+            if not async_tasks:
                 logger.info("Nothing left to do, exiting")
                 return done_units
 

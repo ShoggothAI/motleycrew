@@ -2,13 +2,15 @@ from typing import Collection, Sequence, Optional, Any, List, Tuple
 import os
 import asyncio
 import threading
+import time
 
 from motleycrew.agents.parent import MotleyAgentParent
 from motleycrew.tasks import Task, TaskUnit, SimpleTask, TaskUnitType
 from motleycrew.storage import MotleyGraphStore
 from motleycrew.storage.graph_store_utils import init_graph_store
 from motleycrew.tools import MotleyTool
-from motleycrew.common import logger, AsyncBackend
+from motleycrew.common import logger, AsyncBackend, Defaults
+from motleycrew.crew.crew_threads import InvokeThreadPool
 
 
 class MotleyCrew:
@@ -63,7 +65,7 @@ class MotleyCrew:
                 )
                 result = future.result()
         elif self.async_backend == AsyncBackend.THREADING:
-            raise NotImplementedError()
+            result = self._run_thread()
         else:
             raise NotImplementedError()
 
@@ -129,6 +131,45 @@ class MotleyCrew:
 
             yield agent, task, next_unit
 
+    def _run_thread(self) -> list[TaskUnit]:
+        """Multi threading execution start
+
+        Returns:
+            :obj:`list` of :obj:`TaskUnit`:
+        """
+
+        done_units = []
+        not_allow_async_tasks = set()
+        thread_pool = InvokeThreadPool(self.num_threads)
+        try:
+            while True:
+
+                for result_data in thread_pool.get_completed_tasks():
+                    task, unit, invoke_result = result_data
+                    if task in not_allow_async_tasks:
+                        not_allow_async_tasks.remove(task)
+                    unit.output = invoke_result
+                    logger.info("Task unit %s completed, marking as done", unit)
+                    unit.set_done()
+                    task.register_completed_unit(unit)
+                    done_units.append(unit)
+
+                for running_data in self._get_running_data(not_allow_async_tasks):
+                    agent, next_task, next_unit = running_data
+                    logger.info("Assigned unit %s to agent %s, dispatching", next_unit, agent)
+                    next_unit.set_running()
+                    self.add_task_unit_to_graph(task=next_task, unit=next_unit)
+                    next_task.register_started_unit(next_unit)
+                    thread_pool.put(agent, next_task, next_unit)
+
+                if thread_pool.is_completed():
+                    logger.info("Nothing left to do, exiting")
+                    return done_units
+
+                time.sleep(Defaults.DEFAULT_EVENT_LOOP_SLEEP)
+        finally:
+            thread_pool.close()
+
     async def async_agent_invoke(self, agent: MotleyAgentParent, unit: TaskUnit) -> Any:
         return await agent.ainvoke(unit.as_dict())
 
@@ -144,7 +185,7 @@ class MotleyCrew:
         not_allow_async_tasks = set()
 
         while True:
-            print("async_tasks", async_tasks)
+
             for async_task in list(async_tasks.keys()):
                 if async_task.done():
                     task, unit = async_tasks.pop(async_task)
@@ -178,7 +219,7 @@ class MotleyCrew:
                 logger.info("Nothing left to do, exiting")
                 return done_units
 
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(Defaults.DEFAULT_EVENT_LOOP_SLEEP)
 
     def _run_sync(self) -> list[TaskUnit]:
         """Synchronous execution start

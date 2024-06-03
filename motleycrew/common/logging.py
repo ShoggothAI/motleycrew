@@ -7,11 +7,12 @@ import logging
 
 
 # init logger
-logger = logging.getLogger("motleycrew_logger")
+logger = logging.getLogger("motleycrew")
 stream_handler = logging.StreamHandler()
 formatter = logging.Formatter(fmt="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 stream_handler.setFormatter(formatter)
 logger.addHandler(stream_handler)
+logger.propagate = False
 
 
 def configure_logging(verbose: bool = False, debug: bool = False):

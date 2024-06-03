@@ -72,7 +72,7 @@ Motleycrew also comes with support for [Lunary](https://github.com/lunary-ai/lun
 To learn more about these features, see our [caching and observability](https://motleycrew.readthedocs.io/en/latest/caching_observability.html) docs.
 
 ### Examples
-We have a small but growing collection of examples in our [documentation](https://motleycrew.readthedocs.io/en/latest/examples/index.html). They cover a variety of use cases, from simple chains of tasks to complex workflows with knowledge graphs.
+We have a small but growing collection of examples in our [documentation](https://motleycrew.readthedocs.io/en/latest/examples/index.html).
 
 For a working example of agents, tools, crew, and SimpleTask, check out the [blog with images](https://motleycrew.readthedocs.io/en/latest/examples/blog_with_images.html).
 

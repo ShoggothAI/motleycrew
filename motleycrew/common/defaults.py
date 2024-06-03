@@ -30,4 +30,4 @@ class Defaults:
         "autogen": "pip install autogen",
     }
     DEFAULT_NUM_THREADS = 4
-    DEFAULT_EVENT_LOOP_SLEEP = 3
+    DEFAULT_EVENT_LOOP_SLEEP = 1

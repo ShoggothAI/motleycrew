@@ -5,8 +5,10 @@ Attributes:
     default_prompt (PromptTemplate):
 
 """
+
 from typing import Optional
 from pathlib import Path
+import time
 
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.runnables import (
@@ -70,7 +72,7 @@ class QuestionGeneratorTool(MotleyTool):
         llm: Optional[BaseLanguageModel] = None,
         prompt: str | BasePromptTemplate = None,
     ):
-        """ Description
+        """Description
 
         Args:
             query_tool (MotleyTool):
@@ -107,7 +109,7 @@ def create_question_generator_langchain_tool(
     llm: Optional[BaseLanguageModel] = None,
     prompt: str | BasePromptTemplate = None,
 ):
-    """ Description
+    """Description
 
     Args:
         query_tool (MotleyTool):

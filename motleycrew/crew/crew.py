@@ -5,7 +5,7 @@ import threading
 import time
 
 from motleycrew.agents.parent import MotleyAgentParent
-from motleycrew.tasks import Task, TaskUnit, SimpleTask
+from motleycrew.tasks import Task, TaskUnit, SimpleTask, TaskUnitType
 from motleycrew.storage import MotleyGraphStore
 from motleycrew.storage.graph_store_utils import init_graph_store
 from motleycrew.tools import MotleyTool
@@ -14,7 +14,7 @@ from motleycrew.crew.crew_threads import InvokeThreadPool
 
 
 class MotleyCrew:
-    _loop = None  # asyncio.AbstractEventLoop
+    _loop: Optional[asyncio.AbstractEventLoop] = None
 
     def __init__(
         self,
@@ -158,6 +158,7 @@ class MotleyCrew:
                     agent, next_task, next_unit = running_data
                     logger.info("Assigned unit %s to agent %s, dispatching", next_unit, agent)
                     next_unit.set_running()
+                    self.add_task_unit_to_graph(task=next_task, unit=next_unit)
                     next_task.register_started_unit(next_unit)
                     thread_pool.put(agent, next_task, next_unit)
 
@@ -207,6 +208,7 @@ class MotleyCrew:
                 agent, next_task, next_unit = running_data
                 logger.info("Assigned unit %s to agent %s, dispatching", next_unit, agent)
                 next_unit.set_running()
+                self.add_task_unit_to_graph(task=next_task, unit=next_unit)
                 next_task.register_started_unit(next_unit)
 
                 # TODO: accept and handle some sort of return value? Or just the final state of the task?
@@ -249,6 +251,7 @@ class MotleyCrew:
                     agent = task.get_worker(extra_tools)
                     logger.info("Assigned unit %s to agent %s, dispatching", current_unit, agent)
                     current_unit.set_running()
+                    self.add_task_unit_to_graph(task=task, unit=current_unit)
                     task.register_started_unit(current_unit)
 
                     # TODO: accept and handle some sort of return value? Or just the final state of the task?
@@ -281,6 +284,25 @@ class MotleyCrew:
         )
         available_task_nodes = self.graph_store.run_cypher_query(query, container=Task.NODE_CLASS)
         return [task for task in self.tasks if task.node in available_task_nodes]
+
+    def add_task_unit_to_graph(self, task: Task, unit: TaskUnitType) -> None:
+        """Add a task unit to the graph and connect it to its task
+
+        Args:
+            task (Task):
+            unit (TaskUnitType):
+
+        Returns:
+
+        """
+        assert isinstance(unit, task.task_unit_class)
+        assert not unit.done
+
+        self.graph_store.upsert_triplet(
+            from_node=unit,
+            to_node=task.node,
+            label=task.task_unit_belongs_label,
+        )
 
     # def _run_async(self):
     #     tasks = self.task_graph

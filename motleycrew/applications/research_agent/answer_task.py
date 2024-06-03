@@ -1,4 +1,5 @@
 """ Module description"""
+
 from typing import List, Optional
 from langchain_core.runnables import Runnable
 
@@ -19,20 +20,25 @@ class AnswerTask(Task):
         crew: MotleyCrew,
         answer_length: int = 1000,
     ):
-        """ Description
+        """Description
 
         Args:
             crew (MotleyCrew):
             answer_length (:obj:`int`, optional):
         """
-        super().__init__(name="AnswerTask", task_unit_class=QuestionAnsweringTaskUnit, crew=crew)
+        super().__init__(
+            name="AnswerTask",
+            task_unit_class=QuestionAnsweringTaskUnit,
+            crew=crew,
+            allow_async_units=True,
+        )
         self.answer_length = answer_length
         self.answerer = AnswerSubQuestionTool(
             graph=self.graph_store, answer_length=self.answer_length
         )
 
     def get_next_unit(self) -> QuestionAnsweringTaskUnit | None:
-        """ Description
+        """Description
 
         Returns:
             QuestionAnsweringTaskUnit | None:
@@ -47,13 +53,16 @@ class AnswerTask(Task):
 
         query_result = self.graph_store.run_cypher_query(query, container=Question)
         logger.info("Available questions: %s", query_result)
-        if not query_result:
-            return None
-        else:
-            return QuestionAnsweringTaskUnit(question=query_result[0])
+
+        existing_units = self.get_units()
+        for question in query_result:
+            if not any(unit.question.question == question.question for unit in existing_units):
+                return QuestionAnsweringTaskUnit(question=question)
+
+        return None
 
     def get_worker(self, tools: Optional[List[MotleyTool]]) -> Runnable:
-        """ Description
+        """Description
 
         Args:
             tools (List[MotleyTool]):

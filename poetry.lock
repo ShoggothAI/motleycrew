@@ -3656,6 +3656,22 @@ files = [
 ]
 
 [[package]]
+name = "pypandoc-binary"
+version = "1.13"
+description = "Thin wrapper for pandoc."
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "pypandoc_binary-1.13-py3-none-macosx_10_9_x86_64.whl", hash = "sha256:946666388eb79b307d7f497b3b33045ef807750f8e5ef3440e0ba3bbab698044"},
+    {file = "pypandoc_binary-1.13-py3-none-macosx_11_0_arm64.whl", hash = "sha256:21ef0345726d36fc45a50211320614daf2caede684b0d0963ce8738292809746"},
+    {file = "pypandoc_binary-1.13-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:67c0c7af811bcf3cd4f3221be756a4975ec35b2d7df89d8de4313a8caa2cd54f"},
+    {file = "pypandoc_binary-1.13-py3-none-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:9455fdd9521cbf4b56d79a56b806afa94c8c22f3c8ef878536e58d941a70f6d6"},
+    {file = "pypandoc_binary-1.13-py3-none-musllinux_1_1_aarch64.whl", hash = "sha256:2915f52e4632bd2d0a8fcd2f7e7dfc2ea19b4e1a280fcbc2ddcd142713c4ff12"},
+    {file = "pypandoc_binary-1.13-py3-none-musllinux_1_1_x86_64.whl", hash = "sha256:11a2497320eb3dccb74de3c67b6df3e5d3f66cdc2a36a67e9a871708f7e48412"},
+    {file = "pypandoc_binary-1.13-py3-none-win_amd64.whl", hash = "sha256:3881aa7c84faec2007c0ae4466d3a1cfc93171206b8540f2defa8ea971bf6fd6"},
+]
+
+[[package]]
 name = "pypdf"
 version = "4.2.0"
 description = "A pure-python PDF library capable of splitting, merging, cropping, and transforming PDF files"
@@ -5113,4 +5129,4 @@ llama-index = ["llama-index"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<=3.13"
-content-hash = "c563888b5df12c61ad22c3b2febf71e72a893b4fdf5374a349c6f0d76451517e"
+content-hash = "c69e3067bab941c2d890dc4f8fcca6b47a4550a4f38fd6ba934a59b6854b07aa"

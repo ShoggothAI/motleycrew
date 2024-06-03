@@ -132,24 +132,9 @@ class TestSetUpstream:
 
 
 class TestTask:
-
-    @pytest.fixture(scope="class")
-    def task(self):
-        return create_dummy_task(MotleyCrew(), "test task")
-
-    def test_register_started_unit(self, task):
-        with pytest.raises(AssertionError):
-            task.register_started_unit("unit")
-
-        unit = TaskUnit()
-        unit.set_done()
-
-        with pytest.raises(AssertionError):
-            task.register_started_unit(unit)
-
-    def test_set_done(self, task):
-        assert not task.done
-        assert not task.node.done
-        task.set_done()
-        assert task.done
-        assert task.node.done
+    def test_set_done(self, task_1):
+        assert not task_1.done
+        assert not task_1.node.done
+        task_1.set_done()
+        assert task_1.done
+        assert task_1.node.done

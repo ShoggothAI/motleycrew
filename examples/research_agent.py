@@ -1,7 +1,6 @@
 from pathlib import Path
 import shutil
-import os, sys
-import platform
+import os
 
 import kuzu
 from dotenv import load_dotenv
@@ -18,8 +17,10 @@ from motleycrew.applications.research_agent.question_task import QuestionTask
 from motleycrew.applications.research_agent.answer_task import AnswerTask
 from motleycrew.tools.simple_retriever_tool import SimpleRetrieverTool
 from motleycrew.common import AsyncBackend
+from motleycache import enable_cache
 
 configure_logging(verbose=True)
+enable_cache()
 
 DATA_DIR = os.path.realpath(os.path.join(WORKING_DIR, "mahabharata/text/TinyTales"))
 PERSIST_DIR = WORKING_DIR / "storage"

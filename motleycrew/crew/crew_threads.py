@@ -51,9 +51,14 @@ class InvokeThread(threading.Thread):
                 break
 
             agent, task, unit = running_data
-            result = agent.invoke(unit.as_dict())
-            self.output_queue.put((task, unit, result))
-            self._state = InvokeThreadState.WAITING
+            try:
+                result = agent.invoke(unit.as_dict())
+            except Exception as e:
+                self.output_queue.put(e)
+            else:
+                self.output_queue.put((task, unit, result))
+            finally:
+                self._state = InvokeThreadState.WAITING
 
 
 class InvokeThreadPool:
@@ -75,6 +80,7 @@ class InvokeThreadPool:
             thread = InvokeThread(self.input_queue, self.output_queue)
             thread.start()
             self._threads.append(thread)
+        self._in_process_tasks = []
 
     def put(self, agent: "Runnable", task: "Task", unit: "TaskUnit"):
         """Adds a task to the queue for execution
@@ -87,6 +93,7 @@ class InvokeThreadPool:
         Returns:
 
         """
+        self._in_process_tasks.append((task, unit))
         self.input_queue.put((agent, task, unit))
 
     def get_completed_tasks(self) -> List[Tuple["Task", "TaskUnit", Any]]:
@@ -97,7 +104,14 @@ class InvokeThreadPool:
         """
         completed_tasks = []
         while not self.output_queue.empty():
-            completed_tasks.append(self.output_queue.get())
+
+            task_result = self.output_queue.get()
+            if isinstance(task_result, Exception):
+                raise task_result
+
+            task, unit, result = task_result
+            completed_tasks.append((task, unit, result))
+            self._in_process_tasks.remove((task, unit))
         return completed_tasks
 
     def close(self):
@@ -111,11 +125,4 @@ class InvokeThreadPool:
         Returns:
             bool:
         """
-        self.lock.acquire()
-
-        in_process = any([t.state == InvokeThreadState.PROCESS for t in self._threads])
-        empty_queue = bool(self.input_queue.empty() and self.output_queue.empty())
-        is_completed = bool(not in_process and empty_queue)
-
-        self.lock.release()
-        return is_completed
+        return not bool(self._in_process_tasks)

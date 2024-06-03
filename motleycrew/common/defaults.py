@@ -12,7 +12,9 @@ class Defaults:
         DEFAULT_LLM_TEMPERATURE (float):
         LLM_MAP (dict):
         DEFAULT_GRAPH_STORE_TYPE (str):
-        MODULE_INSTALL_COMMANDS (dict)
+        MODULE_INSTALL_COMMANDS (dict):
+        DEFAULT_NUM_THREADS (int):
+        DEFAULT_EVENT_LOOP_SLEEP (int):
 
     """
     DEFAULT_LLM_FAMILY = LLMFamily.OPENAI
@@ -27,3 +29,5 @@ class Defaults:
         "llama_index": "pip install llama-index",
         "autogen": "pip install autogen",
     }
+    DEFAULT_NUM_THREADS = 4
+    DEFAULT_EVENT_LOOP_SLEEP = 1

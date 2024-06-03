@@ -76,3 +76,17 @@ class LunaryEventName:
     END = "end"
     UPDATE = "update"
     ERROR = "error"
+
+
+class AsyncBackend:
+    """ Backends for parallel launch
+
+    Attributes:
+        ASYNCIO (str): Asynchronous startup using asyncio
+        THREADING (str): Running using threads
+        NONE (str): Synchronous startup
+
+    """
+    ASYNCIO = "asyncio"
+    THREADING = "threading"
+    NONE = "none"

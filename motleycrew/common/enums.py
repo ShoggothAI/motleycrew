@@ -6,6 +6,7 @@ class LLMFamily:
 
     """
     OPENAI = "openai"
+    ANTHROPIC = "anthropic"
 
 
 class LLMFramework:

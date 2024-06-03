@@ -46,9 +46,32 @@ def llama_index_openai_llm(
     return OpenAI(model=llm_name, temperature=llm_temperature, **kwargs)
 
 
+def langchain_anthropic_llm(
+    llm_name: str = Defaults.DEFAULT_LLM_NAME,
+    llm_temperature: float = Defaults.DEFAULT_LLM_TEMPERATURE,
+    **kwargs,
+):
+    from langchain_anthropic import ChatAnthropic
+
+    return ChatAnthropic(model=llm_name, temperature=llm_temperature, **kwargs)
+
+
+def llama_index_anthropic_llm(
+    llm_name: str = Defaults.DEFAULT_LLM_NAME,
+    llm_temperature: float = Defaults.DEFAULT_LLM_TEMPERATURE,
+    **kwargs,
+):
+    ensure_module_is_installed("llama_index")
+    from llama_index.llms.anthropic import Anthropic
+
+    return Anthropic(model=llm_name, temperature=llm_temperature, **kwargs)
+
+
 Defaults.LLM_MAP = {
     (LLMFramework.LANGCHAIN, LLMFamily.OPENAI): langchain_openai_llm,
     (LLMFramework.LLAMA_INDEX, LLMFamily.OPENAI): llama_index_openai_llm,
+    (LLMFramework.LANGCHAIN, LLMFamily.ANTHROPIC): langchain_anthropic_llm,
+    (LLMFramework.LLAMA_INDEX, LLMFamily.ANTHROPIC): llama_index_anthropic_llm,
 }
 
 

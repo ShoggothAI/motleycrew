@@ -79,7 +79,7 @@ We have a small but growing collection of examples in our [documentation](https:
 
 
 ## Support and contributions
-We have a community [Discord server](https://discord.gg/ff2sJCGh) where you can ask questions, share your ideas, and get help with your projects.
+We have a community [Discord server](https://discord.gg/P4Pxqf9MEs) where you can ask questions, share your ideas, and get help with your projects.
 
 If you find a bug or have a feature request, feel free to [open an issue](https://github.com/ShoggothAI/motleycrew/issues/new) in this repository.
 Contributions of any kind are also welcome!

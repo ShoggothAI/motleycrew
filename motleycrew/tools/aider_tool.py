@@ -50,6 +50,8 @@ def create_aider_tool(coder: Coder):
     return Tool.from_function(
         func=coder.run,
         name="aider tool",
-        description="Tool for generating program code",
+        description="Tool for code generation that has access to the provided repository. "
+        "Ask it to make changes in the code: fix bugs, add features, write tests etc. "
+        "It doesn't run the code by itself.",
         args_schema=AiderToolInput,
     )

@@ -1,5 +1,11 @@
-from aider.coders import Coder
-from aider.models import Model
+from motleycrew.common.utils import ensure_module_is_installed
+
+try:
+    from aider.coders import Coder
+    from aider.models import Model
+except ImportError:
+    ensure_module_is_installed("aider-chat", "poetry run pip install aider-chat")
+
 from langchain.tools import Tool
 from langchain_core.pydantic_v1 import BaseModel, Field
 

@@ -1,10 +1,12 @@
 """ Module description """
+
 from typing import Any, Optional, Sequence, Callable
 
 from langchain.agents import AgentExecutor
 from langchain_core.runnables import RunnableConfig
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.prompts.chat import ChatPromptTemplate
+from langchain_core.messages import AIMessage, HumanMessage
 
 from motleycrew.agents.parent import MotleyAgentParent
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
@@ -25,8 +27,9 @@ class LangchainMotleyAgent(MotleyAgentParent):
         agent_factory: MotleyAgentFactory | None = None,
         tools: Sequence[MotleySupportedTool] | None = None,
         verbose: bool = False,
+        with_history: bool = False,
     ):
-        """ Description
+        """Description
 
         Args:
             description (str):
@@ -43,13 +46,16 @@ class LangchainMotleyAgent(MotleyAgentParent):
             verbose=verbose,
         )
 
+        self.with_history = with_history
+        self.chat_history = []
+
     def invoke(
         self,
         task_dict: dict,
         config: Optional[RunnableConfig] = None,
         **kwargs: Any,
     ) -> Any:
-        """ Description
+        """Description
 
         Args:
             task_dict (dict):
@@ -67,10 +73,23 @@ class LangchainMotleyAgent(MotleyAgentParent):
 
         config = add_default_callbacks_to_langchain_config(config)
 
-        result = self.agent.invoke({"input": prompt}, config, **kwargs)
+        agent_input = {"input": prompt}
+        if self.with_history:
+            agent_input["chat_history"] = self.chat_history
+
+        result = self.agent.invoke(agent_input, config, **kwargs)
         output = result.get("output")
         if output is None:
             raise Exception("Agent {} result does not contain output: {}".format(self, result))
+
+        if self.with_history:
+            self.chat_history.extend(
+                [
+                    HumanMessage(content=prompt),
+                    AIMessage(content=output),
+                ]
+            )
+
         return output
 
     @staticmethod
@@ -83,9 +102,10 @@ class LangchainMotleyAgent(MotleyAgentParent):
         tools: Sequence[MotleySupportedTool] | None = None,
         prompt: ChatPromptTemplate | Sequence[ChatPromptTemplate] | None = None,
         require_tools: bool = False,
+        with_history: bool = False,
         verbose: bool = False,
     ) -> "LangchainMotleyAgent":
-        """ Description
+        """Description
 
         Args:
             function (Callable):
@@ -123,6 +143,7 @@ class LangchainMotleyAgent(MotleyAgentParent):
             name=name,
             agent_factory=agent_factory,
             tools=tools,
+            with_history=with_history,
             verbose=verbose,
         )
 
@@ -133,7 +154,7 @@ class LangchainMotleyAgent(MotleyAgentParent):
         tools: Sequence[MotleySupportedTool] | None = None,
         verbose: bool = False,
     ) -> "LangchainMotleyAgent":
-        """ Description
+        """Description
 
         Args:
             agent (AgentExecutor):

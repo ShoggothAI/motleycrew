@@ -3,7 +3,7 @@ import pytest
 
 from langchain_community.tools import DuckDuckGoSearchRun
 from motleycrew.agents.crewai.crewai_agent import CrewAIMotleyAgent
-from motleycrew.agents.langchain.openai_tools_react import ReactOpenAIToolsAgent
+from motleycrew.agents.langchain.tool_calling_react import ReActToolCallingAgent
 from motleycrew.agents.llama_index.llama_index_react import ReActLlamaIndexMotleyAgent
 from motleycrew.common.exceptions import AgentNotMaterialized, CannotModifyMaterializedAgent
 from motleycrew.tools.python_repl import create_repl_tool
@@ -32,7 +32,7 @@ class TestAgents:
 
     @pytest.fixture(scope="class")
     def langchain_agent(self):
-        agent = ReactOpenAIToolsAgent(
+        agent = ReActToolCallingAgent(
             name="AI writer agent",
             tools=[DuckDuckGoSearchRun()],
             verbose=True,

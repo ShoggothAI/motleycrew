@@ -3,14 +3,17 @@ import os
 import sys
 
 from dotenv import load_dotenv
+import logging
+
 
 from langchain_community.tools import ShellTool
 from motleycrew.agents.crewai import CrewAIMotleyAgent
 from motleycrew.common import configure_logging, AsyncBackend
 from motleycrew.tasks import SimpleTask
-from motleycache import enable_cache, disable_cache, logger
+from motleycache import logger
 from motleycrew.tools.aider_tool import AiderTool
-import logging
+
+from aider.io import InputOutput
 
 logger.setLevel(logging.INFO)
 WORKING_DIR = Path(os.path.realpath("."))
@@ -24,6 +27,7 @@ except ImportError:
 
 
 # run instruction
+# to run the example, you need to clone the repository for the example at the same level as your project
 # cd ../../
 # git clone https://github.com/ShoggothAI/motleycrew-code-generation-example.git
 
@@ -32,16 +36,12 @@ def main():
     crew = MotleyCrew(async_backend=AsyncBackend.THREADING)
 
     git_dname = r"../../motleycrew-code-generation-example"  # aider coder git dir name
-    sys.path.insert(0, os.path.abspath(git_dname))
+    io = InputOutput(yes=True)
 
-    check_functions_file = os.path.join(git_dname, "math_functions.py")
-    unit_tests_file = os.path.join(git_dname, "test_math_functions.py")
-    fnames = [unit_tests_file, check_functions_file]
-
-    aider_tool = AiderTool(fnames=fnames, git_dname=git_dname, auto_commits=False)
+    aider_tool = AiderTool(io=io, git_dname=git_dname, auto_commits=False)
     shell_tool = ShellTool()
 
-    researcher = CrewAIMotleyAgent(
+    developer = CrewAIMotleyAgent(
         role="Software Engineer",
         goal="Writing unit tests",
         backstory="""You are a leading software engineer working in the field of computer technology""",
@@ -55,25 +55,22 @@ def main():
         crew=crew,
         name="Adding a unit test",
         description=f"""Generate unit tests for the module math_functions.py
-                        Using py test, you can also add checks for possible exceptions and comments to the tests.""",
-        agent=researcher,
+                        Using py test, you can also add checks for possible exceptions and comments to the tests
+                        and using parameterization for test functions .
+                        Go to the directory {git_dname} and run created unit tests for math_functions.
+                        If the tests were executed successfully, return the result of execution, 
+                        if not, rewrite the tests and restart them.
+                        If the command to run unit tests fails, try to run it one more time, 
+                        despite the fact that this command has already been executed. 
+                        """,
+        agent=developer,
     )
-
-    run_unit_tests_task = SimpleTask(
-        crew=crew,
-        name="Running unit tests",
-        description=f"""Run unit tests from the {unit_tests_file} file, using pytest 
-        from the current directory and return the execution results""",
-        agent=researcher
-    )
-
-    create_unit_tests_task >> run_unit_tests_task
 
     result = crew.run()
 
     # Get the outputs of the task
-    print(run_unit_tests_task.output)
-    return run_unit_tests_task.output
+    print(create_unit_tests_task.output)
+    return create_unit_tests_task.output
 
 
 if __name__ == "__main__":

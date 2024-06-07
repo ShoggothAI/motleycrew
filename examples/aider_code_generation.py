@@ -34,33 +34,31 @@ except ImportError:
 def main():
     crew = MotleyCrew()
 
-    git_dname = r"../../motleycrew-code-generation-example"  # aider coder git dir name
-    tests_file = os.path.join(git_dname, "test_math_functions.py")
-    fnames = [tests_file]
+    git_repo_path = r"../../motleycrew-code-generation-example"  # cloned repository path
+    tests_file = os.path.join(git_repo_path, "test_math_functions.py")
+    target_files = [tests_file]
 
-    aider_tool = AiderTool(fnames=fnames, git_dname=git_dname, auto_commits=False)
+    aider_tool = AiderTool(fnames=target_files, git_dname=git_repo_path, auto_commits=False)
     shell_tool = ShellTool()
 
     developer = CrewAIMotleyAgent(
         role="Software Engineer",
         goal="Writing unit tests",
-        backstory="""You are a leading software engineer working in the field of computer technology""",
+        backstory="You are a lead software engineer working in a big tech company.",
         delegation=False,
         verbose=True,
         tools=[aider_tool, shell_tool],
     )
 
-    # Create tasks for your agent
     create_unit_tests_task = SimpleTask(
         crew=crew,
         name="Adding a unit test",
-        description=f"""Generate unit tests for the module math_functions.py,
-                        using pytest, you can also add checks for possible exceptions and 
-                        comments to the tests and using parameterization for test functions.
-                        After go to the directory {git_dname} and run created unit tests for math_functions.
-                        If the tests were executed successfully, return the result of execution, 
-                        if not, rewrite the tests and restart them. 
-                        """,
+        description=f"Generate unit tests for the module math_functions.py using pytest. "
+        f"You should also add test cases for possible exceptions "
+        f"and write comments to the tests. You should also use test parameterization. "
+        f"After go to the directory {git_repo_path} and run created unit tests. "
+        f"If the tests were executed successfully, return the result of execution, "
+        f"if not, rewrite the tests and rerun them until they are working.",
         agent=developer,
     )
 

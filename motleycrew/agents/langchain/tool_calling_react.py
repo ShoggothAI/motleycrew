@@ -1,20 +1,13 @@
-""" Module description
-
-Attributes:
-    default_think_prompt:
-    default_act_prompt:
-
-"""
-
 from typing import Sequence, List, Union
 
-from langchain_core.messages import BaseMessage
+from langchain_core.messages import BaseMessage, HumanMessage, ChatMessage
 from langchain_core.language_models import BaseChatModel
 from langchain_core.prompts.chat import ChatPromptTemplate
 from langchain_core.runnables import Runnable, RunnablePassthrough, RunnableLambda
 from langchain_core.tools import BaseTool
 from langchain_core.agents import AgentFinish, AgentActionMessageLog
 from langchain_core.prompts import MessagesPlaceholder
+from langchain_core.messages.base import merge_content
 
 from langchain.agents.format_scratchpad.tools import format_to_tool_messages
 from langchain.agents.output_parsers.tools import ToolsAgentOutputParser
@@ -31,17 +24,16 @@ default_think_prompt = ChatPromptTemplate.from_messages(
         (
             "system",
             """
-Answer the following questions as best you can; think carefully, one step at a time, and outline the next step
-towards answering the question.
+Answer the following questions as best you can; think carefully, one step at a time, 
+and outline the next step towards answering the question.
 
-You will later have access to the following tools:
+You will later have access to the following tools, but you can't use them yet:
 {tools}
 
-Your reply must begin with "Thought:" and then
-describe what the next step should be, given the information so far - either to use one of the tools from
-the above list (and details on how to use it), or give the final answer like described below. ]
-Do NOT return a tool call, just a thought about what
-it should be.
+Your reply must begin with "Thought:" and then describe what the next step should be, 
+given the information so far - either to use one of the tools from the above list 
+(and details on how to use it), or give the final answer like described below.
+Do NOT return a tool call, just a single thought about what it should be.
 If the information so far is not sufficient to answer the question precisely and completely
 (rather than sloppily and approximately), don't hesitate to
 request to use tools again, until sufficient information is gathered. Don't stop this until
@@ -75,7 +67,7 @@ Your objective is to contribute to answering the below question, by using the to
 You have access to the following tools:
 {tools}
 
-Your response MUST be a tool call to one of these unless the last input
+Your response MUST be only a tool call to one of these unless the last input
 message contains the words "Final Answer"; if it does, just repeat it.
 
 """,
@@ -88,8 +80,7 @@ message contains the words "Final Answer"; if it does, just repeat it.
 
 
 def check_variables(prompt: ChatPromptTemplate):
-    """Description
-
+    """
     Args:
         prompt (ChatPromptTemplate):
 
@@ -115,11 +106,21 @@ def add_thought_to_background(x: dict):
     return out
 
 
+def cast_thought_to_human_message(thought: BaseMessage):
+    content = thought.content
+    if content:
+        # HACK: this cast to a HumanMessage is needed for Anthropic models to work
+        # because they will treat an AIMessage in input as their output prefill.
+        # Also, we remove tool_use messages from the content in case a model calls a tool.
+        if isinstance(content, list):
+            content = [chunk for chunk in content if chunk.get("type") != "tool_use"]
+    return HumanMessage(content=content)
+
+
 def add_messages_to_action(
     actions: List[AgentActionMessageLog] | AgentFinish, messages: List[BaseMessage]
 ) -> List[AgentActionMessageLog] | AgentFinish:
-    """Description
-
+    """
     Args:
         actions (:obj:`List[AgentActionMessageLog]`, :obj:`AgentFinish`):
         messages (List[BaseMessage]):
@@ -131,6 +132,28 @@ def add_messages_to_action(
         for action in actions:
             action.message_log = messages + list(action.message_log)
     return actions
+
+
+def merge_consecutive_messages(messages: Sequence[BaseMessage]) -> List[BaseMessage]:
+    """Tries to merge consecutive messages of the same type in the provided list.
+    This mainly serves as a workaround for Anthropic models that don't accept
+    multiple AIMessages in a row.
+
+    Args:
+        messages (Sequence[BaseMessage]): The list of messages to process.
+
+    Returns:
+        List[BaseMessage]: The list of messages with consecutive messages of the same type merged.
+    """
+    merged_messages = []
+    for message in messages:
+        if not merged_messages or type(merged_messages[-1]) != type(message):
+            merged_messages.append(message)
+        else:
+            merged_messages[-1].content = merge_content(
+                merged_messages[-1].content, message.content
+            )
+    return merged_messages
 
 
 def create_tool_calling_react_agent(
@@ -171,7 +194,7 @@ def create_tool_calling_react_agent(
 
     llm_with_tools = llm.bind_tools(tools=tools)
 
-    think_chain = think_prompt | llm
+    think_chain = think_prompt | llm_with_tools | RunnableLambda(cast_thought_to_human_message)
     act_chain = (
         RunnableLambda(add_thought_to_background)
         | act_prompt
@@ -181,7 +204,9 @@ def create_tool_calling_react_agent(
 
     agent = (
         RunnablePassthrough.assign(
-            agent_scratchpad=lambda x: format_to_tool_messages(x["intermediate_steps"])
+            agent_scratchpad=lambda x: merge_consecutive_messages(
+                format_to_tool_messages(x["intermediate_steps"])
+            )
         )
         | {"thought": think_chain, "background": RunnablePassthrough()}
         | RunnableLambda(print_passthrough)

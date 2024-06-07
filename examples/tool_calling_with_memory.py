@@ -5,7 +5,6 @@ from motleycrew import MotleyCrew
 from motleycrew.agents.langchain.tool_calling_react import ReActToolCallingAgent
 from motleycrew.common import configure_logging
 from motleycrew.tasks import SimpleTask
-from motleycache import enable_cache
 
 from motleycrew.common.llms import init_llm
 from motleycrew.common import LLMFramework, LLMFamily
@@ -55,7 +54,6 @@ def main():
 
 if __name__ == "__main__":
     configure_logging(verbose=True)
-    enable_cache()
 
     load_dotenv()
     main()

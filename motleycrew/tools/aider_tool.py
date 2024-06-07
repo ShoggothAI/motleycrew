@@ -4,7 +4,8 @@ try:
     from aider.coders import Coder
     from aider.models import Model
 except ImportError:
-    ensure_module_is_installed("aider-chat", "pip install aider-chat")
+    Coder = None
+    Model = None
 
 from langchain.tools import Tool
 from langchain_core.pydantic_v1 import BaseModel, Field
@@ -16,12 +17,13 @@ from motleycrew.tools import MotleyTool
 class AiderTool(MotleyTool):
 
     def __init__(self, model: str = None, **kwargs):
-        """ Tool for generating program code
+        """Tool for code generation using Aider.
 
         Args:
             model (str): model name
             **kwargs:
         """
+        ensure_module_is_installed("aider", "pip install aider-chat")
 
         model = model or Defaults.DEFAULT_LLM_NAME
         llm_model = Model(model=model)
@@ -42,7 +44,7 @@ class AiderToolInput(BaseModel):
 
 
 def create_aider_tool(coder: Coder):
-    """ Create langchain tool from aider coder
+    """Create langchain tool from Aider coder.run() method
 
     Returns:
         Tool:

@@ -8,6 +8,7 @@ Welcome to motleycrew's documentation!
 
 .. toctree::
    Home <self>
+   installation
    usage
    examples
    api

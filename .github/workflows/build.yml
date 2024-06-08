@@ -12,8 +12,8 @@ jobs:
   build:
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.12"]
+        os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
@@ -40,12 +40,18 @@ jobs:
         path: .venv
         key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
 
-    - name: Install dependencies
-      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-      run: poetry install --no-interaction --no-root
-
     - name: Install project
-      run: poetry install --no-interaction
+      run: poetry install --no-interaction --with dev --all-extras
 
-    - name: Run tests
+    - name: Run build
       run: poetry build
+
+    - name: Install pandoc
+      working-directory: ./docs/source
+      run: poetry run python install_pandoc.py
+
+    - name: Run docs build
+      env:
+        TZ: UTC
+      working-directory: ./docs
+      run: poetry run make html

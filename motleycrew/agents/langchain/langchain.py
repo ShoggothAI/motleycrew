@@ -4,9 +4,11 @@ from typing import Any, Optional, Sequence, Callable
 
 from langchain.agents import AgentExecutor
 from langchain_core.runnables import RunnableConfig
+from langchain_core.runnables.history import RunnableWithMessageHistory
+from langchain_core.chat_history import BaseChatMessageHistory, InMemoryChatMessageHistory
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.prompts.chat import ChatPromptTemplate
-from langchain_core.messages import AIMessage, HumanMessage
+
 
 from motleycrew.agents.parent import MotleyAgentParent
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
@@ -28,6 +30,7 @@ class LangchainMotleyAgent(MotleyAgentParent):
         tools: Sequence[MotleySupportedTool] | None = None,
         verbose: bool = False,
         with_history: bool = False,
+        chat_history: BaseChatMessageHistory | None = None,
     ):
         """Description
 
@@ -47,7 +50,23 @@ class LangchainMotleyAgent(MotleyAgentParent):
         )
 
         self.with_history = with_history
-        self.chat_history = []
+        self.chat_history = chat_history or InMemoryChatMessageHistory()
+
+    def materialize(self):
+        """Materialize the agent and wrap it in RunnableWithMessageHistory if needed."""
+        if self.is_materialized:
+            return
+
+        super().materialize()
+        if self.with_history:
+            if isinstance(self._agent, RunnableWithMessageHistory):
+                return
+            self._agent = RunnableWithMessageHistory(
+                runnable=self._agent,
+                get_session_history=lambda _: self.chat_history,
+                input_messages_key="input",
+                history_messages_key="chat_history",
+            )
 
     def invoke(
         self,
@@ -72,23 +91,16 @@ class LangchainMotleyAgent(MotleyAgentParent):
             raise ValueError("Task must have a prompt")
 
         config = add_default_callbacks_to_langchain_config(config)
-
-        agent_input = {"input": prompt}
         if self.with_history:
-            agent_input["chat_history"] = self.chat_history
+            config["configurable"] = config.get("configurable") or {}
+            config["configurable"]["session_id"] = (
+                config["configurable"].get("session_id") or "default"
+            )
 
-        result = self.agent.invoke(agent_input, config, **kwargs)
+        result = self.agent.invoke({"input": prompt}, config, **kwargs)
         output = result.get("output")
         if output is None:
             raise Exception("Agent {} result does not contain output: {}".format(self, result))
-
-        if self.with_history:
-            self.chat_history.extend(
-                [
-                    HumanMessage(content=prompt),
-                    AIMessage(content=output),
-                ]
-            )
 
         return output
 

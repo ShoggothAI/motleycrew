@@ -1,4 +1,4 @@
-import logging
+""" Module description"""
 import sys
 from typing import Optional, Sequence
 import hashlib
@@ -8,17 +8,15 @@ from langchain_core.messages import BaseMessage
 from motleycrew.common.exceptions import ModuleNotInstalled
 
 
-def configure_logging(verbose: bool = False, debug: bool = False):
-    if debug:
-        level = logging.DEBUG
-    elif verbose:
-        level = logging.INFO
-    else:
-        level = logging.WARNING
-    logging.basicConfig(format="%(asctime)s - %(levelname)s - %(message)s", level=level)
-
-
 def to_str(value: str | BaseMessage | Sequence[str] | Sequence[BaseMessage]) -> str:
+    """ Description
+
+    Args:
+        value (:obj:`str`, :obj:`BaseMessage`, :obj:`Sequence[str]`, :obj:`Sequence[BaseMessage]`):
+
+    Returns:
+        str:
+    """
     if isinstance(value, str):
         return value
     elif isinstance(value, BaseMessage):
@@ -31,6 +29,14 @@ def to_str(value: str | BaseMessage | Sequence[str] | Sequence[BaseMessage]) -> 
 
 
 def is_http_url(url):
+    """ Description
+
+    Args:
+        url (str):
+
+    Returns:
+        bool:
+    """
     try:
         parsed_url = urlparse(url)
         return parsed_url.scheme in ["http", "https"]
@@ -39,6 +45,15 @@ def is_http_url(url):
 
 
 def generate_hex_hash(data: str, length: Optional[int] = None):
+    """ Description
+
+    Args:
+        data (str):
+        length (:obj:`int`, optional):
+
+    Returns:
+
+    """
     hash_obj = hashlib.sha256()
     hash_obj.update(data.encode("utf-8"))
     hex_hash = hash_obj.hexdigest()
@@ -53,9 +68,14 @@ def print_passthrough(x):
 
 
 def ensure_module_is_installed(module_name: str, install_command: str = None) -> None:
-    """Checking the installation of the module
+    """ Checking the installation of the module
+
+    Args:
+        module_name (str):
+        install_command (:obj:`str`, optional):
+
     Raises:
-        ModuleNotInstalledException
+        ModuleNotInstalled:
     """
     module_path = sys.modules.get(module_name, None)
     if module_path is None:

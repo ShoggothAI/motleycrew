@@ -1,5 +1,8 @@
+"""
+The module contains callback handlers for sending data to the Lunary service
+"""
+
 from typing import List, Dict, Optional, Any, Union
-import logging
 import traceback
 
 try:
@@ -16,9 +19,17 @@ from lunary import event_queue_ctx
 
 from motleycrew.common.enums import LunaryRunType, LunaryEventName
 from motleycrew.common.utils import ensure_module_is_installed
+from motleycrew.common import logger
 
 
 def event_delegate_decorator(f):
+    """Decorator of llamaindex event handlers
+
+    It is used to transfer event data to a specific handler
+
+    Args:
+        f (callable):
+    """
     def wrapper(self, *args, **kwargs):
         ensure_module_is_installed("llama_index")
         run_type = "start" if "start" in f.__name__ else "end"
@@ -47,12 +58,12 @@ def event_delegate_decorator(f):
                 msg = "[Lunary] An error occurred in {}: {}\n{}".format(
                     handler_name, e, traceback.format_exc()
                 )
-                logging.warning(msg)
+                logger.warning(msg)
         else:
             msg = "No handler with the name of the {} was found for {}".format(
                 handler_name, self.__class__
             )
-            logging.warning(msg)
+            logger.warning(msg)
 
         return f(*args, **kwargs)
 
@@ -60,7 +71,13 @@ def event_delegate_decorator(f):
 
 
 def _message_to_dict(message: ChatMessage) -> Dict[str, Any]:
-    """Creates and returns a dict based on the message"""
+    """Creates and returns a dict based on the message
+
+    Args (ChatMessage): llamaindex chat message
+
+    Returns:
+        dict: dict chat message data
+    """
     keys = ["function_call", "tool_calls", "tool_call_id", "name"]
     output = {"content": message.content, "role": message.role.value}
     output.update(
@@ -83,6 +100,14 @@ class LlamaIndexLunaryCallbackHandler(BaseCallbackHandler):
         event_starts_to_ignore: List[CBEventType] = None,
         event_ends_to_ignore: List[CBEventType] = None,
     ):
+        """
+        Lamaindex event handler class for sending data to lunary
+
+        Args:
+            app_id (str): lunary app id
+            event_starts_to_ignore (List[CBEventType]): List of events for which the start of the event is ignored
+            event_ends_to_ignore (List[CBEventType]): List of events for which event completion processing is ignored
+        """
         ensure_module_is_installed("llama_index")
         super(LlamaIndexLunaryCallbackHandler, self).__init__(
             event_starts_to_ignore=event_starts_to_ignore or [],
@@ -98,7 +123,15 @@ class LlamaIndexLunaryCallbackHandler(BaseCallbackHandler):
     def _get_initial_track_event_params(
         self, run_type: LunaryRunType, event_name: LunaryEventName, run_id: str = None
     ) -> dict:
-        """Return initial params for track event"""
+        """Return initial params for track event
+
+        Args:
+            run_type (LunaryRunType): event run type (llm, agent, tool, chain, embed)
+            event_name (LunaryEventName): event name (start, end, update, error)
+
+        Returns:
+            dict:
+        """
         params = {
             "run_type": run_type,
             "event_name": event_name,
@@ -116,6 +149,17 @@ class LlamaIndexLunaryCallbackHandler(BaseCallbackHandler):
         parent_id: str = "",
         **kwargs: Any,
     ) -> dict:
+        """Llm start event handler
+
+        Args:
+            payload (dict): related event data
+            event_id (str): event id (uuid)
+            parent_id (str): parent event id (uuid)
+            **kwargs:
+
+        Returns:
+            dict: dictionary of data to send to lunary
+        """
         messages = payload.get(EventPayload.MESSAGES)
         serialized = payload.get(EventPayload.SERIALIZED)
 
@@ -138,6 +182,16 @@ class LlamaIndexLunaryCallbackHandler(BaseCallbackHandler):
         event_id: str = "",
         **kwargs: Any,
     ) -> dict:
+        """Llm end event handler
+
+        Args:
+            payload (dict): related event data
+            event_id (str): event id (uuid)
+            **kwargs:
+
+        Returns:
+            dict: dictionary of data to send to lunary
+        """
         response = payload.get(EventPayload.RESPONSE)
 
         params = self._get_initial_track_event_params(
@@ -153,6 +207,17 @@ class LlamaIndexLunaryCallbackHandler(BaseCallbackHandler):
         parent_id: str = "",
         **kwargs: Any,
     ) -> dict:
+        """Tool start event handler
+
+        Args:
+            payload (dict): related event data
+            event_id (str): event id (uuid)
+            parent_id (str): parent event id (uuid)
+            **kwargs:
+
+        Returns:
+            dict: dictionary of data to send to lunary
+        """
         tool = payload.get(EventPayload.TOOL)
         function_call = payload.get(EventPayload.FUNCTION_CALL)
 
@@ -172,6 +237,16 @@ class LlamaIndexLunaryCallbackHandler(BaseCallbackHandler):
         event_id: str = "",
         **kwargs: Any,
     ) -> dict:
+        """Tool end event handler
+
+        Args:
+            payload (dict): related event data
+            event_id (str): event id (uuid)
+            **kwargs:
+
+        Returns:
+            dict: dictionary of data to send to lunary
+        """
         params = self._get_initial_track_event_params(
             LunaryRunType.TOOL, LunaryEventName.END, event_id
         )
@@ -185,6 +260,17 @@ class LlamaIndexLunaryCallbackHandler(BaseCallbackHandler):
         parent_id: str = "",
         **kwargs: Any,
     ) -> dict:
+        """Agent start event handler
+
+        Args:
+            payload (dict): related event data
+            event_id (str): event id (uuid)
+            parent_id (str): parent event id (uuid)
+            **kwargs:
+
+        Returns:
+            dict: dictionary of data to send to lunary
+        """
         messages = payload.get(EventPayload.MESSAGES)
 
         params = self._get_initial_track_event_params(
@@ -202,6 +288,16 @@ class LlamaIndexLunaryCallbackHandler(BaseCallbackHandler):
         event_id: str = "",
         **kwargs: Any,
     ) -> dict:
+        """Llm end event handler
+
+        Args:
+            payload (dict): related event data
+            event_id (str): event id (uuid)
+            **kwargs:
+
+        Returns:
+            dict: dictionary of data to send to lunary
+        """
         response = payload.get(EventPayload.RESPONSE)
         params = self._get_initial_track_event_params(
             LunaryRunType.AGENT, LunaryEventName.END, event_id
@@ -217,6 +313,17 @@ class LlamaIndexLunaryCallbackHandler(BaseCallbackHandler):
         parent_id: str = "",
         **kwargs: Any,
     ) -> dict:
+        """Exception start event handler
+
+        Args:
+            payload (dict): related event data
+            event_id (str): event id (uuid)
+            parent_id (str): parent event id (uuid)
+            **kwargs:
+
+        Returns:
+            dict: dictionary of data to send to lunary
+        """
 
         if self._event_run_type_ids:
             run_type, run_id = self._event_run_type_ids[-1]
@@ -231,6 +338,7 @@ class LlamaIndexLunaryCallbackHandler(BaseCallbackHandler):
         return params
 
     def start_trace(self, trace_id: Optional[str] = None) -> None:
+        """Run when an overall trace is launched."""
         pass
 
     def end_trace(
@@ -238,6 +346,7 @@ class LlamaIndexLunaryCallbackHandler(BaseCallbackHandler):
         trace_id: Optional[str] = None,
         trace_map: Optional[Dict[str, List[str]]] = None,
     ) -> None:
+        """Run when an overall trace is exited."""
         pass
 
     @event_delegate_decorator
@@ -249,6 +358,18 @@ class LlamaIndexLunaryCallbackHandler(BaseCallbackHandler):
         parent_id: str = "",
         **kwargs: Any,
     ) -> str:
+        """Start event handler
+
+        Args:
+            event_type (CBEventType): llamaindex event type
+            payload (dict): related event data
+            event_id (str): event id (uuid)
+            parent_id (str): parent event id (uuid)
+            **kwargs:
+
+        Returns:
+            str: event id (uuid)
+        """
         return event_id
 
     @event_delegate_decorator
@@ -259,11 +380,26 @@ class LlamaIndexLunaryCallbackHandler(BaseCallbackHandler):
         event_id: str = "",
         **kwargs: Any,
     ) -> None:
+        """Start event handler
+
+        Args:
+            event_type (CBEventType): llamaindex event type
+            payload (dict): related event data
+            event_id (str): event id (uuid)
+            **kwargs:
+       """
         return
 
     @staticmethod
     def check_parent_id(parent_id: str) -> Union[str, None]:
-        """Checking the occurrence of a value in the ignored list"""
+        """Checking the occurrence of a value in the ignored list
+
+        Args:
+            parent_id (str): parent id (uuid)
+
+        Returns:
+            str: return parent id or None
+        """
         if parent_id in ["root"]:
             return None
         return parent_id

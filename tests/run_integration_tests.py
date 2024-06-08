@@ -16,9 +16,9 @@ import nbformat
 from nbconvert.preprocessors import ExecutePreprocessor
 
 from motleycrew.common.exceptions import IntegrationTestException
-from motleycrew.common.utils import configure_logging
+from motleycrew.common import logger, configure_logging
 
-from motleycrew.caching import (
+from motleycache import (
     enable_cache,
     set_cache_location,
     set_strong_cache,
@@ -82,7 +82,7 @@ def get_args_parser():
         help="Update reference data together with the cache",
     )
     parser.add_argument(
-        "--minimal_only", default=False, action="store_true", help="Run minimal tests"
+        "--minimal-only", default=False, action="store_true", help="Run minimal tests"
     )
 
     return parser
@@ -158,7 +158,7 @@ def build_ipynb_integration_tests(is_minimal: bool = False) -> dict:
     tests = MINIMAL_IPYNB_INTEGRATION_TESTS if is_minimal else IPYNB_INTEGRATION_TESTS
     for test_name, nb_path in tests.items():
         if not os.path.exists(nb_path):
-            logging.info("Ipynb test notebook {} not found".format(test_name))
+            logger.info("Ipynb test notebook {} not found".format(test_name))
             continue
 
         test_functions[test_name] = partial(run_ipynb, nb_path)
@@ -194,11 +194,11 @@ def run_integration_tests(
         if test_name is not None and test_name != current_test_name:
             continue
 
-        logging.info("Running test: %s", current_test_name)
+        logger.info("Running test: %s", current_test_name)
 
         cache_sub_dir = os.path.join(cache_dir, current_test_name)
         if update_golden:
-            logging.info("Update-golden flag is set. Cleaning cache directory %s", cache_sub_dir)
+            logger.info("Update-golden flag is set. Cleaning cache directory %s", cache_sub_dir)
             shutil.rmtree(cache_sub_dir, ignore_errors=True)
             os.makedirs(cache_sub_dir, exist_ok=True)
             os.makedirs(golden_dir, exist_ok=True)
@@ -211,7 +211,7 @@ def run_integration_tests(
             test_result = test_fn()
             if current_test_name in INTEGRATION_TESTS:
                 if update_golden:
-                    logging.info(
+                    logger.info(
                         "Skipping check and updating golden data for test: %s", current_test_name
                     )
                     write_content(golden_dir, current_test_name, test_result)
@@ -220,17 +220,17 @@ def run_integration_tests(
                     compare_results(test_result, excepted_result)
 
         except Exception as e:
-            logging.error("Test %s failed: %s", current_test_name, str(e))
+            logger.error("Test %s failed: %s", current_test_name, str(e))
             failed_tests[current_test_name] = traceback.format_exc()
 
     for t, exception in failed_tests.items():
-        logging.error("Test %s failed", t)
-        logging.error(exception)
+        logger.error("Test %s failed", t)
+        logger.error(exception)
 
     if failed_tests:
         raise IntegrationTestException(test_names=list(failed_tests.keys()))
 
-    logging.info("All tests passed!")
+    logger.info("All tests passed!")
     unset_tiktoken_cache_dir(old_tiktoken_cache_dir)
 
 

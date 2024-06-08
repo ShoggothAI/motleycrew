@@ -1,3 +1,10 @@
+""" Module description
+
+Attributes:
+    MotleyGraphNodeType (TypeVar):
+
+"""
+
 from typing import Optional, Any, TypeVar, TYPE_CHECKING
 from pydantic import BaseModel
 
@@ -6,6 +13,8 @@ if TYPE_CHECKING:
 
 
 class MotleyGraphNode(BaseModel):
+    """Description"""
+
     # Q: KuzuGraphNode a better name? Because def id is specific?
     # A: No, I think _id attribute is pretty universal
     __label__: Optional[str] = None
@@ -21,6 +30,11 @@ class MotleyGraphNode(BaseModel):
 
     @classmethod
     def get_label(cls) -> str:
+        """Description
+
+        Returns:
+            str:
+        """
         # Q: why not @property def label(cls) -> str: return cls.__label__ or cls.__name__ ?
         # A: Because we want to be able to call this method without an instance
         #    and properties can't be class methods since Python 3.12
@@ -38,6 +52,9 @@ class MotleyGraphNode(BaseModel):
 
         if self.__graph_store__ and self.is_inserted:
             self.__graph_store__.update_property(self, name)
+
+    def __eq__(self, other):
+        return self.is_inserted and self.get_label() == other.get_label() and self.id == other.id
 
 
 MotleyGraphNodeType = TypeVar("MotleyGraphNodeType", bound=MotleyGraphNode)

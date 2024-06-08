@@ -35,7 +35,9 @@ class TestMotleyKuzuGraphStore:
     def test_insert_node_and_retrieve(self, database):
         graph_store = MotleyKuzuGraphStore(database)
 
-        entity = Entity(int_param=1, optional_str_param="test", optional_list_str_param=["a", "b"])
+        entity = Entity(
+            int_param=1, optional_str_param="test", optional_list_str_param=["a", "b"]
+        )
         inserted_entity = graph_store.insert_node(entity)
         assert inserted_entity.id is not None
 
@@ -79,8 +81,12 @@ class TestMotleyKuzuGraphStore:
         graph_store.create_relation(from_node=entity1, to_node=entity2, label="p")
 
         assert graph_store.check_relation_exists(from_node=entity1, to_node=entity2)
-        assert graph_store.check_relation_exists(from_node=entity1, to_node=entity2, label="p")
-        assert not graph_store.check_relation_exists(from_node=entity1, to_node=entity2, label="q")
+        assert graph_store.check_relation_exists(
+            from_node=entity1, to_node=entity2, label="p"
+        )
+        assert not graph_store.check_relation_exists(
+            from_node=entity1, to_node=entity2, label="q"
+        )
         assert not graph_store.check_relation_exists(from_node=entity2, to_node=entity1)
 
     def test_upsert_triplet(self, database):
@@ -93,8 +99,12 @@ class TestMotleyKuzuGraphStore:
         assert graph_store.check_node_exists(entity2)
 
         assert graph_store.check_relation_exists(from_node=entity1, to_node=entity2)
-        assert graph_store.check_relation_exists(from_node=entity1, to_node=entity2, label="p")
-        assert not graph_store.check_relation_exists(from_node=entity1, to_node=entity2, label="q")
+        assert graph_store.check_relation_exists(
+            from_node=entity1, to_node=entity2, label="p"
+        )
+        assert not graph_store.check_relation_exists(
+            from_node=entity1, to_node=entity2, label="q"
+        )
         assert not graph_store.check_relation_exists(from_node=entity2, to_node=entity1)
 
     def test_nodes_do_not_exist(self, database):
@@ -106,7 +116,9 @@ class TestMotleyKuzuGraphStore:
         assert not graph_store.check_node_exists(entity2)
 
         assert not graph_store.check_relation_exists(from_node=entity1, to_node=entity2)
-        assert not graph_store.check_relation_exists(from_node=entity2, to_node=entity1, label="p")
+        assert not graph_store.check_relation_exists(
+            from_node=entity2, to_node=entity1, label="p"
+        )
 
     def test_relation_does_not_exist(self, database):
         graph_store = MotleyKuzuGraphStore(database)
@@ -141,25 +153,39 @@ class TestMotleyKuzuGraphStore:
         graph_store.insert_node(entity1)
         graph_store.insert_node(entity2)
         graph_store.create_relation(from_node=entity1, to_node=entity2, label="p")
-        assert graph_store.check_relation_exists(from_node=entity1, to_node=entity2) is True
+        assert (
+            graph_store.check_relation_exists(from_node=entity1, to_node=entity2)
+            is True
+        )
 
         graph_store.delete_node(entity1)
         assert graph_store.check_node_exists(entity1) is False
         assert graph_store.check_node_exists(entity2) is True
-        assert graph_store.check_relation_exists(from_node=entity1, to_node=entity2) is False
+        assert (
+            graph_store.check_relation_exists(from_node=entity1, to_node=entity2)
+            is False
+        )
 
     def test_set_property(self, database):
         graph_store = MotleyKuzuGraphStore(database)
         entity = Entity(int_param=1)
         graph_store.insert_node(entity)
         assert entity.optional_str_param is None
-        assert graph_store.get_node_by_class_and_id(Entity, entity.id).optional_str_param is None
+        assert (
+            graph_store.get_node_by_class_and_id(Entity, entity.id).optional_str_param
+            is None
+        )
 
         entity.optional_str_param = "test"
-        assert graph_store.get_node_by_class_and_id(Entity, entity.id).optional_str_param == "test"
+        assert (
+            graph_store.get_node_by_class_and_id(Entity, entity.id).optional_str_param
+            == "test"
+        )
 
         entity.optional_list_str_param = ["a", "b"]
-        assert graph_store.get_node_by_class_and_id(Entity, entity.id).optional_list_str_param == [
+        assert graph_store.get_node_by_class_and_id(
+            Entity, entity.id
+        ).optional_list_str_param == [
             "a",
             "b",
         ]

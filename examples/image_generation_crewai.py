@@ -1,9 +1,9 @@
 from dotenv import load_dotenv
 
-from motleycrew import MotleyCrew, Task
+from motleycrew import MotleyCrew
 from motleycrew.agents.crewai import CrewAIMotleyAgent
-from motleycrew.tools.image_generation import DallEImageGeneratorTool
-from motleycrew.common.utils import configure_logging
+from motleycrew.tools.image.dall_e import DallEImageGeneratorTool
+from motleycrew.common import configure_logging
 
 
 def main():

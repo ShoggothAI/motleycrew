@@ -1,4 +1,4 @@
-import logging
+""" Module description """
 from typing import TYPE_CHECKING, Optional, Sequence
 
 from langchain_core.tools import Tool
@@ -9,6 +9,7 @@ from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
 from motleycrew.tools import MotleyTool
 from motleycrew.common import MotleyAgentFactory, MotleySupportedTool
 from motleycrew.common.exceptions import AgentNotMaterialized, CannotModifyMaterializedAgent
+from motleycrew.common import logger
 
 if TYPE_CHECKING:
     from motleycrew import MotleyCrew
@@ -23,6 +24,15 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
         tools: Sequence[MotleySupportedTool] | None = None,
         verbose: bool = False,
     ):
+        """ Description
+
+        Args:
+            description (str):
+            name (:obj:`str`, optional):
+            agent_factory (:obj:`MotleyAgentFactory`, optional):
+            tools (:obj:`Sequence[MotleySupportedTool]`, optional):
+            verbose (:obj:`bool', optional):
+        """
         self.name = name or description
         self.description = description  # becomes tool description
         self.agent_factory = agent_factory
@@ -57,12 +67,20 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
 
     def materialize(self):
         if self.is_materialized:
-            logging.info("Agent is already materialized, skipping materialization")
+            logger.info("Agent is already materialized, skipping materialization")
             return
         assert self.agent_factory, "Cannot materialize agent without a factory provided"
         self._agent = self.agent_factory(tools=self.tools)
 
     def add_tools(self, tools: Sequence[MotleySupportedTool]):
+        """ Description
+
+        Args:
+            tools (Sequence[MotleySupportedTool]):
+
+        Returns:
+
+        """
         if self.is_materialized and tools:
             raise CannotModifyMaterializedAgent(agent_name=self.name)
 
@@ -72,6 +90,14 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
                 self.tools[motley_tool.name] = motley_tool
 
     def as_tool(self, input_schema: Optional[BaseModel] = None) -> MotleyTool:
+        """ Description
+
+        Args:
+            input_schema (:obj:`BaseModel`, optional):
+
+        Returns:
+            MotleyTool:
+        """
         def call_agent(*args, **kwargs):
             # TODO: this thing is hacky, we should have a better way to pass structured input
             if args:
@@ -91,7 +117,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
         )
 
     # def call_as_tool(self, *args, **kwargs) -> Any:
-    #     logging.info("Entering delegation for %s", self.name)
+    #     logger.info("Entering delegation for %s", self.name)
     #     assert self.crew, "can't accept delegated task outside of a crew"
     #
     #     if len(args) > 0:
@@ -102,7 +128,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
     #     else:
     #         input_ = json.dumps(kwargs)
     #
-    #     logging.info("Made the args: %s", input_)
+    #     logger.info("Made the args: %s", input_)
     #
     #     # TODO: pass context of parent task to agent nicely?
     #     # TODO: mark the current task as depending on the new task
@@ -117,11 +143,11 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
     #     )
     #
     #     # TODO: make sure tools return task objects, which are properly used by callers
-    #     logging.info("Executing subtask '%s'", task.name)
+    #     logger.info("Executing subtask '%s'", task.name)
     #     self.crew.task_graph.set_task_running(task=task)
     #     result = self.crew.execute(task, return_result=True)
     #
-    #     logging.info("Finished subtask '%s' - %s", task.name, result)
+    #     logger.info("Finished subtask '%s' - %s", task.name, result)
     #     self.crew.task_graph.set_task_done(task=task)
     #
     #     return result

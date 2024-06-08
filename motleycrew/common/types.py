@@ -1,5 +1,5 @@
+""" Module description"""
 from typing import TYPE_CHECKING, Any, Union, Protocol, TypeVar
-
 
 if TYPE_CHECKING:
     from langchain.tools import BaseTool

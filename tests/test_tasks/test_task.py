@@ -2,13 +2,12 @@ from typing import List, Optional
 
 import pytest
 
-import kuzu
 from langchain_core.runnables import Runnable
 
 from motleycrew import MotleyCrew
 from motleycrew.tools import MotleyTool
 from motleycrew.tasks import Task, TaskUnitType, TaskUnit
-from motleycrew.storage import MotleyKuzuGraphStore
+from motleycrew.storage.graph_store_utils import init_graph_store
 from motleycrew.common.exceptions import TaskDependencyCycleError
 
 
@@ -23,15 +22,14 @@ class TaskMock(Task):
 def create_dummy_task(crew: MotleyCrew, name: str):
     return TaskMock(
         name=name,
+        task_unit_class=TaskUnit,
         crew=crew,
     )
 
 
-@pytest.fixture
-def graph_store(tmpdir):
-    db_path = tmpdir / "test_db"
-    db = kuzu.Database(str(db_path))
-    graph_store = MotleyKuzuGraphStore(db)
+@pytest.fixture(scope="session")
+def graph_store():
+    graph_store = init_graph_store()
     return graph_store
 
 
@@ -134,24 +132,9 @@ class TestSetUpstream:
 
 
 class TestTask:
-
-    @pytest.fixture(scope="class")
-    def task(self):
-        return create_dummy_task(MotleyCrew(), "test task")
-
-    def test_register_started_unit(self, task):
-        with pytest.raises(AssertionError):
-            task.register_started_unit("unit")
-
-        unit = TaskUnit()
-        unit.set_done()
-
-        with pytest.raises(AssertionError):
-            task.register_started_unit(unit)
-
-    def test_set_done(self, task):
-        assert not task.done
-        assert not task.node.done
-        task.set_done()
-        assert task.done
-        assert task.node.done
+    def test_set_done(self, task_1):
+        assert not task_1.done
+        assert not task_1.node.done
+        task_1.set_done()
+        assert task_1.done
+        assert task_1.node.done

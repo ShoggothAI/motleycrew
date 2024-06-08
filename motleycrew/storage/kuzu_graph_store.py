@@ -4,17 +4,25 @@ Kùzu graph store index.
 """
 
 from typing import Any, Dict, List, Optional, Type, TypeVar
-import logging
 
 from kuzu import Connection, PreparedStatement, QueryResult
 import json
+import os
 
 from motleycrew.storage import MotleyGraphStore
 from motleycrew.storage import MotleyGraphNode
 from motleycrew.storage import MotleyGraphNodeType
+from motleycrew.common import logger
 
 
 class MotleyKuzuGraphStore(MotleyGraphStore):
+    """
+    Attributes:
+        ID_ATTR (str): _id
+        JSON_CONTENT_PREFIX (str): "JSON__"
+        PYTHON_TO_CYPHER_TYPES_MAPPING (dict)
+
+    """
     ID_ATTR = "_id"
 
     JSON_CONTENT_PREFIX = "JSON__"
@@ -31,6 +39,11 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
     }
 
     def __init__(self, database: Any) -> None:
+        """ Description
+
+        Args:
+            database (Any):
+        """
         self.database = database
         self.connection = Connection(database)
         # Workaround for Kuzu requiring at least one relation table
@@ -38,20 +51,44 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
         self.ensure_node_table(MotleyGraphNode)
         self.ensure_relation_table(MotleyGraphNode, MotleyGraphNode, "dummy")
 
+    def __repr__(self):
+        return f"{self.__class__.__name__}(path={self.database_path})"
+
+    def __str__(self):
+        return self.__repr__()
+
+    @property
+    def database_path(self) -> str:
+        return os.path.abspath(self.database.database_path)
+
     def _execute_query(
         self, query: str | PreparedStatement, parameters: Optional[dict[str, Any]] = None
     ) -> QueryResult:
+        """ Execute a query, logging it for debugging purposes
+
+        Args:
+            query (:obj:`str`, :obj:`PreparedStatement`):
+            parameters (:obj:`dict` of :obj:`str` , :obj:`Any`):
+
+        Returns:
+            QueryResult:
         """
-        Execute a query, logging it for debugging purposes
-        """
-        logging.debug("Executing query: %s", query)
+        logger.debug("Executing query: %s", query)
         if parameters:
-            logging.debug("with parameters: %s", parameters)
+            logger.debug("with parameters: %s", parameters)
 
         # TODO: retries?
         return self.connection.execute(query=query, parameters=parameters)
 
     def _check_node_table_exists(self, label: str):
+        """ Description
+
+        Args:
+            label (str):
+
+        Returns:
+
+        """
         return label in self.connection._get_node_table_names()
 
     def _check_rel_table_exists(
@@ -60,6 +97,16 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
         to_label: Optional[str] = None,
         rel_label: Optional[str] = None,
     ):
+        """ Description
+
+        Args:
+            from_label (:obj:`str`, optional):
+            to_label (:obj:`str`, optional):
+            rel_label (:obj:`str`, optional):
+
+        Returns:
+
+        """
         for row in self.connection._get_rel_table_names():
             if (
                 (rel_label is None or row["name"] == rel_label)
@@ -70,17 +117,29 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
         return False
 
     def _get_node_property_names(self, label: str):
+        """ Description
+
+        Args:
+            label (str):
+
+        Returns:
+
+        """
         return self.connection._get_node_property_names(table_name=label)
 
     def ensure_node_table(self, node_class: Type[MotleyGraphNode]) -> str:
-        """
-        Create a table for storing nodes of that class if such does not already exist.
+        """ Create a table for storing nodes of that class if such does not already exist.
         If it does exist, create all missing columns.
-        Return the table name.
+
+         Args:
+            node_class (Type[MotleyGraphNode]):
+        Returns:
+            str: Table name
+
         """
         table_name = node_class.get_label()
         if not self._check_node_table_exists(table_name):
-            logging.info("Node table %s does not exist in the database, creating", table_name)
+            logger.info("Node table %s does not exist in the database, creating", table_name)
             self._execute_query(
                 "CREATE NODE TABLE {} (id SERIAL, PRIMARY KEY(id))".format(table_name)
             )
@@ -89,7 +148,7 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
         existing_property_names = self._get_node_property_names(node_class.get_label())
         for field_name, field in node_class.model_fields.items():
             if field_name not in existing_property_names:
-                logging.info(
+                logger.info(
                     "Property %s not present in table for label %s, creating",
                     field_name,
                     node_class.get_label(),
@@ -108,14 +167,21 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
     def ensure_relation_table(
         self, from_class: Type[MotleyGraphNode], to_class: Type[MotleyGraphNode], label: str
     ):
-        """
-        Create a table for storing relations from from_node-like nodes to to_node-like nodes,
+        """ Create a table for storing relations from from_node-like nodes to to_node-like nodes,
         if such does not already exist.
+
+        Args:
+            from_class (Type[MotleyGraphNode]):
+            to_class (Type[MotleyGraphNode]):
+            label (str):
+
+        Returns:
+
         """
         if not self._check_rel_table_exists(
             from_label=from_class.get_label(), to_label=to_class.get_label(), rel_label=label
         ):
-            logging.info(
+            logger.info(
                 "Relation table %s from %s to %s does not exist in the database, creating",
                 label,
                 from_class.get_label(),
@@ -131,8 +197,14 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
     def check_node_exists_by_class_and_id(
         self, node_class: Type[MotleyGraphNode], node_id: int
     ) -> bool:
-        """
-        Check if a node of given class with given id is present in the database.
+        """ Check if a node of given class with given id is present in the database.
+
+        Args:
+            node_class (Type[MotleyGraphNode]):
+            node_id (int):
+
+        Returns:
+            bool:
         """
         if not self._check_node_table_exists(node_class.get_label()):
             return False
@@ -144,8 +216,13 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
         return is_exists_result.has_next()
 
     def check_node_exists(self, node: MotleyGraphNode) -> bool:
-        """
-        Check if the given node is present in the database.
+        """ Check if the given node is present in the database.
+
+        Args:
+            node (MotleyGraphNode):
+
+        Returns:
+            bool:
         """
         if node.id is None:
             return False  # for cases when id attribute is not set => node does not exist
@@ -155,8 +232,15 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
     def check_relation_exists(
         self, from_node: MotleyGraphNode, to_node: MotleyGraphNode, label: Optional[str] = None
     ) -> bool:
-        """
-        Check if a relation exists between two nodes with given label.
+        """ Check if a relation exists between two nodes with given label.
+
+        Args:
+            from_node (MotleyGraphNode):
+            to_node (MotleyGraphNode):
+            label (:obj:`str`, None):
+
+        Returns:
+            bool:
         """
         if from_node.id is None or to_node.id is None:
             return False
@@ -190,9 +274,15 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
     def get_node_by_class_and_id(
         self, node_class: Type[MotleyGraphNodeType], node_id: int
     ) -> Optional[MotleyGraphNodeType]:
-        """
-        Retrieve the node of given class with given id if it is present in the database.
+        """ Retrieve the node of given class with given id if it is present in the database.
         Otherwise, return None.
+
+        Args:
+            node_class (Type[MotleyGraphNodeType]):
+            node_id (int):
+
+        Returns:
+            :obj:`MotleyGraphNodeType`, None:
         """
         if not self._check_node_table_exists(node_class.get_label()):
             return None
@@ -211,14 +301,19 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
             return self._deserialize_node(node_dict=row[0], node_class=node_class)
 
     def insert_node(self, node: MotleyGraphNodeType) -> MotleyGraphNodeType:
-        """
-        Insert a new node and populate its id.
+        """ Insert a new node and populate its id.
         If node table or some columns do not exist, this method also creates them.
+
+        Args:
+            node (MotleyGraphNodeType):
+
+        Returns:
+            MotleyGraphNodeType
         """
         assert node.id is None, "Entity has its id set, looks like it is already in the DB"
 
         self.ensure_node_table(type(node))
-        logging.info("Inserting new node with label %s: %s", node.get_label(), node)
+        logger.info("Inserting new node with label %s: %s", node.get_label(), node)
 
         cypher_mapping, parameters = MotleyKuzuGraphStore._node_to_cypher_mapping_with_parameters(
             node
@@ -228,7 +323,7 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
             parameters=parameters,
         )
         assert create_result.has_next()
-        logging.info("Node created OK")
+        logger.info("Node created OK")
 
         created_object = create_result.get_next()[0]
         created_object_id = created_object.get("id")
@@ -243,9 +338,16 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
     def create_relation(
         self, from_node: MotleyGraphNode, to_node: MotleyGraphNode, label: str
     ) -> None:
-        """
-        Create a relation between existing nodes.
-        If relation table does not exist, this method also creates them.
+        """ Create a relation between existing nodes.
+        If relation table does not exist, this method also creates them
+
+        Args:
+            from_node (MotleyGraphNode):
+            to_node (MotleyGraphNode):
+            label (str):
+
+        Returns:
+
         """
         assert self.check_node_exists(from_node), (
             "From-node is not present in the database, "
@@ -258,7 +360,7 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
 
         self.ensure_relation_table(from_class=type(from_node), to_class=type(to_node), label=label)
 
-        logging.info(
+        logger.info(
             "Creating relation %s from %s:%s to %s:%s",
             label,
             from_node.get_label(),
@@ -279,29 +381,41 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
             },
         )
         assert create_result.has_next()
-        logging.info("Relation created OK")
+        logger.info("Relation created OK")
 
     def upsert_triplet(self, from_node: MotleyGraphNode, to_node: MotleyGraphNode, label: str):
-        """
-        Create a relation with a given label between nodes, if such does not already exist.
+        """ Create a relation with a given label between nodes, if such does not already exist.
         If the nodes do not already exist, create them too.
-        This method also creates and/or updates all necessary tables.
+        This method also creates and/or updates all necessary tables
+
+        Args:
+            from_node (MotleyGraphNode):
+            to_node (MotleyGraphNode):
+            label (str):
+
+        Returns:
+
         """
         if not self.check_node_exists(from_node):
-            logging.info("Node %s does not exist, creating", from_node)
+            logger.info("Node %s does not exist, creating", from_node)
             self.insert_node(from_node)
 
         if not self.check_node_exists(to_node):
-            logging.info("Node %s does not exist, creating", to_node)
+            logger.info("Node %s does not exist, creating", to_node)
             self.insert_node(to_node)
 
         if not self.check_relation_exists(from_node=from_node, to_node=to_node, label=label):
-            logging.info("Relation from %s to %s does not exist, creating", from_node, to_node)
+            logger.info("Relation from %s to %s does not exist, creating", from_node, to_node)
             self.create_relation(from_node=from_node, to_node=to_node, label=label)
 
     def delete_node(self, node: MotleyGraphNode) -> None:
-        """
-        Delete a given node and its relations.
+        """ Delete a given node and its relations.
+
+        Args:
+            node (MotleyGraphNode):
+
+        Returns:
+
         """
 
         def inner_delete_relations(node_label: str, node_id: int) -> None:
@@ -335,8 +449,14 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
         MotleyKuzuGraphStore._set_node_id(node, None)
 
     def update_property(self, node: MotleyGraphNode, property_name: str) -> MotleyGraphNode:
-        """
-        Update a graph node's property with the corresponding value from the node object.
+        """ Update a graph node's property with the corresponding value from the node object.
+
+        Args:
+            node (MotleyGraphNode):
+            property_name (str):
+
+        Returns:
+
         """
         property_value = getattr(node, property_name)
         if property_value is None:
@@ -391,9 +511,16 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
         parameters: Optional[dict] = None,
         container: Optional[Type[MotleyGraphNodeType]] = None,
     ) -> list[list | MotleyGraphNodeType]:
-        """
-        Run a Cypher query and return the results.
+        """ Run a Cypher query and return the results.
         If container class is provided, deserialize the results into objects of that class.
+
+        Args:
+            query (:obj:`dict`, None):
+            parameters (:obj:`dict`, optional):
+            container (:obj:`Type[MotleyGraphNodeType]`, optional):
+
+        Returns:
+
         """
         query_result = self._execute_query(query=query, parameters=parameters)
         retval = []
@@ -409,11 +536,20 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
     def _deserialize_node(
         self, node_dict: dict, node_class: Type[MotleyGraphNode]
     ) -> MotleyGraphNode:
+        """ Description
+
+        Args:
+            node_dict (dict):
+            node_class (Type[MotleyGraphNode]):
+
+        Returns:
+            MotleyGraphNode
+        """
         for field_name, value in node_dict.copy().items():
             if isinstance(value, str) and value.startswith(
                 MotleyKuzuGraphStore.JSON_CONTENT_PREFIX
             ):
-                logging.debug(
+                logger.debug(
                     "Value for field %s is marked as JSON, attempting to deserialize: %s",
                     field_name,
                     value,
@@ -422,7 +558,7 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
                     value[len(MotleyKuzuGraphStore.JSON_CONTENT_PREFIX) :]
                 )
 
-        node = node_class.parse_obj(node_dict)
+        node = node_class.model_validate(node_dict)
         node._id = node_dict["id"]
         node.__graph_store__ = self
         if "id" in node_dict:
@@ -431,10 +567,27 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
 
     @staticmethod
     def _set_node_id(node: MotleyGraphNode, node_id: Optional[int]) -> None:
+        """ Description
+
+        Args:
+            node (MotleyGraphNode):
+            node_id (:obj:`int`, optional):
+
+        Returns:
+
+        """
         setattr(node, MotleyKuzuGraphStore.ID_ATTR, node_id)
 
     @staticmethod
     def _node_to_cypher_mapping_with_parameters(node: MotleyGraphNode) -> tuple[str, dict]:
+        """ Description
+
+        Args:
+            node (MotleyGraphNode):
+
+        Returns:
+            :obj:`tuple` of :obj:`str`, :obj:`dict`:
+        """
         node_dict = node.model_dump()
 
         parameters = {}
@@ -466,13 +619,18 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
     def _get_cypher_type_and_is_json_by_python_type_annotation(
         annotation: Type,
     ) -> tuple[str, bool]:
-        """
-        Determine suitable Cypher data type by Python/Pydantic type annotation,
+        """ Determine suitable Cypher data type by Python/Pydantic type annotation,
         and whether the data should be stored in JSON-serialized strings.
+
+        Args:
+            annotation (Type):
+
+        Returns:
+            :obj:`tuple` of :obj:`str`, :obj:`bool`:
         """
         cypher_type = MotleyKuzuGraphStore.PYTHON_TO_CYPHER_TYPES_MAPPING.get(annotation)
         if not cypher_type:
-            logging.warning(
+            logger.warning(
                 "No known Cypher type matching annotation %s, will use JSON string",
                 annotation,
             )
@@ -484,7 +642,14 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
         cls,
         persist_dir: str,
     ) -> "MotleyKuzuGraphStore":
-        """Load from persist dir."""
+        """ Load from persist dir.
+
+        Args:
+            persist_dir (str):
+
+        Returns:
+            MotleyKuzuGraphStore:
+        """
         try:
             import kuzu
         except ImportError:
@@ -497,10 +662,10 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
         """Initialize graph store from configuration dictionary.
 
         Args:
-            config_dict: Configuration dictionary.
+            config_dict (dict): Configuration dictionary.
 
         Returns:
-            Graph store.
+            MotleyKuzuGraphStore:Graph store.
         """
         return cls(**config_dict)
 

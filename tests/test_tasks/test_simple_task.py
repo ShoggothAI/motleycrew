@@ -3,7 +3,7 @@ import pytest
 from langchain_community.tools import DuckDuckGoSearchRun
 
 from motleycrew.crew import MotleyCrew
-from motleycrew.agents.langchain.openai_tools_react import ReactOpenAIToolsAgent
+from motleycrew.agents.langchain.tool_calling_react import ReActToolCallingAgent
 from motleycrew.storage.graph_store_utils import init_graph_store
 from motleycrew.tasks.simple import (
     SimpleTask,
@@ -25,7 +25,7 @@ def crew(graph_store):
 
 @pytest.fixture
 def agent():
-    agent = ReactOpenAIToolsAgent(
+    agent = ReActToolCallingAgent(
         name="AI writer agent",
         tools=[DuckDuckGoSearchRun()],
         verbose=True,
@@ -61,9 +61,7 @@ class TestSimpleTask:
         task1, task2 = tasks
         crew.add_dependency(task1, task2)
         assert task2.get_next_unit() is None
-        prompt = compose_simple_task_prompt_with_dependencies(
-            task1.description, task1.get_units()
-        )
+        prompt = compose_simple_task_prompt_with_dependencies(task1.description, task1.get_units())
         expected_unit = SimpleTaskUnit(
             name=task1.name,
             prompt=prompt,

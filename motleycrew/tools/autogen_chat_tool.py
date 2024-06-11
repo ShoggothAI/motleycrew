@@ -1,3 +1,4 @@
+""" Module description """
 from typing import Optional, Type, Callable, Any
 
 from langchain_core.tools import StructuredTool
@@ -16,6 +17,14 @@ from motleycrew.common.utils import ensure_module_is_installed
 
 
 def get_last_message(chat_result: ChatResult) -> str:
+    """ Description
+
+    Args:
+        chat_result (ChatResult):
+
+    Returns:
+        str:
+    """
     for message in reversed(chat_result.chat_history):
         if message.get("content") and "TERMINATE" not in message["content"]:
             return message["content"]
@@ -32,6 +41,17 @@ class AutoGenChatTool(MotleyTool):
         result_extractor: Callable[[ChatResult], Any] = get_last_message,
         input_schema: Optional[Type[BaseModel]] = None,
     ):
+        """ Description
+
+        Args:
+            name (str):
+            description (str):
+            prompt (:obj:`str`, :obj:`BasePromptTemplate`):
+            initiator (ConversableAgent):
+            recipient (ConversableAgent):
+            result_extractor (:obj:`Callable[[ChatResult]`, :obj:`Any`, optional):
+            input_schema (:obj:`Type[BaseModel]`, optional):
+        """
         ensure_module_is_installed("autogen")
         langchain_tool = create_autogen_chat_tool(
             name=name,
@@ -54,6 +74,20 @@ def create_autogen_chat_tool(
     result_extractor: Callable[[ChatResult], Any],
     input_schema: Optional[Type[BaseModel]] = None,
 ):
+    """ Description
+
+    Args:
+        name (str):
+        description (str):
+        prompt (:obj:`str`, :obj:`BasePromptTemplate`):
+        initiator (ConversableAgent):
+        recipient (ConversableAgent):
+        result_extractor (:obj:`Callable[[ChatResult]`, :obj:`Any`, optional):
+        input_schema (:obj:`Type[BaseModel]`, optional):
+
+    Returns:
+
+    """
     if not isinstance(prompt, BasePromptTemplate):
         prompt = PromptTemplate.from_template(prompt)
 

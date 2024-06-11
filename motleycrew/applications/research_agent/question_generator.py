@@ -1,5 +1,14 @@
+""" Module description
+
+Attributes:
+    IS_SUBQUESTION_PREDICATE (str):
+    default_prompt (PromptTemplate):
+
+"""
+
 from typing import Optional
 from pathlib import Path
+import time
 
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.runnables import (
@@ -63,6 +72,15 @@ class QuestionGeneratorTool(MotleyTool):
         llm: Optional[BaseLanguageModel] = None,
         prompt: str | BasePromptTemplate = None,
     ):
+        """Description
+
+        Args:
+            query_tool (MotleyTool):
+            graph (MotleyGraphStore):
+            max_questions (:obj:`int`, optional):
+            llm (:obj:`BaseLanguageModel`, optional:
+            prompt (:obj:`str`, :obj:`BasePromptTemplate`, optional):
+        """
         langchain_tool = create_question_generator_langchain_tool(
             query_tool=query_tool,
             graph=graph,
@@ -75,7 +93,11 @@ class QuestionGeneratorTool(MotleyTool):
 
 
 class QuestionGeneratorToolInput(BaseModel, arbitrary_types_allowed=True):
-    """Input for the Question Generator Tool."""
+    """Input for the Question Generator Tool.
+
+    Attributes:
+        question (Question):
+    """
 
     question: Question = Field(description="The input question for which to generate subquestions.")
 
@@ -87,6 +109,18 @@ def create_question_generator_langchain_tool(
     llm: Optional[BaseLanguageModel] = None,
     prompt: str | BasePromptTemplate = None,
 ):
+    """Description
+
+    Args:
+        query_tool (MotleyTool):
+        graph (MotleyGraphStore):
+        max_questions (:obj:`int`, optional):
+        llm (:obj:`BaseLanguageModel`, optional:
+        prompt (:obj:`str`, :obj:`BasePromptTemplate`, optional):
+
+    Returns:
+
+    """
     if llm is None:
         llm = init_llm(llm_framework=LLMFramework.LANGCHAIN)
 

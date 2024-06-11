@@ -1,3 +1,5 @@
+"""The module contains additional utilities for working with callback handlers for tracking"""
+
 import os
 from typing import List, Optional
 
@@ -11,7 +13,11 @@ from motleycrew.common import logger
 
 
 def get_lunary_public_key():
-    """Return lunary public key or None"""
+    """Return lunary public key or None.
+
+    Returns:
+        str: lynary public key if it is found in the environment variables.
+    """
     key = (
         os.environ.get("LUNARY_PUBLIC_KEY")
         or os.getenv("LUNARY_APP_ID")
@@ -23,14 +29,22 @@ def get_lunary_public_key():
 
 
 def create_lunary_callback() -> LunaryCallbackHandler:
-    """Creation new LunaryCallbackHandler object"""
+    """Creation new LunaryCallbackHandler object.
+
+    Returns:
+        LunaryCallBackHandler: if found lunary public key.
+    """
     lunary_public_key = get_lunary_public_key()
     if lunary_public_key is not None:
         return LunaryCallbackHandler(app_id=lunary_public_key)
 
 
 def get_llamaindex_default_callbacks():
-    """Return tracking for llamaindex platform"""
+    """Return tracking for llamaindex platform.
+
+    Returns:
+        list: list of event handlers for llamaindex.
+    """
     _default_callbacks = []
 
     # init lunary callback
@@ -42,7 +56,11 @@ def get_llamaindex_default_callbacks():
 
 
 def get_langchain_default_callbacks():
-    """Return tracking for langchain platform"""
+    """Return tracking for langchain platform.
+
+    Returns:
+        list: list of event handlers for langchain.
+    """
     _default_callbacks = []
 
     # init lunary callback
@@ -62,7 +80,14 @@ DEFAULT_CALLBACKS_MAP = {
 def get_default_callbacks_list(
     framework_name: str = LLMFramework.LANGCHAIN,
 ) -> List[BaseCallbackHandler]:
-    """Return list of defaults tracking"""
+    """Return list of defaults tracking handlers
+
+    Args:
+        framework_name (str): the name of the framework.
+
+    Returns:
+        list: list of defaults tracking handlers.
+    """
     _default_callbacks = []
     dc_factory = DEFAULT_CALLBACKS_MAP.get(framework_name, None)
 
@@ -80,10 +105,15 @@ def add_callback_handlers_to_config(
     handlers: List[BaseCallbackHandler],
     unique_cls: bool = True,
 ) -> RunnableConfig:
-    """
-    Add callback handlers to langchain config
-    unique_cls: bool - flag adding callback with a unique class
-    return : modified config
+    """Add callback handlers to langchain config
+
+    Args:
+        config (RunnableConfig): langchain config
+        handlers (List[BaseCallbackHandler]): list event handlers
+        unique_cls (bool): flag adding callback with a unique class
+
+    Returns:
+        RunnableConfig: modified config
     """
     if isinstance(config.get("callbacks"), BaseCallbackManager):
         callback_manager = config.get("callbacks")
@@ -114,7 +144,12 @@ def add_default_callbacks_to_langchain_config(
     config: Optional[RunnableConfig] = None,
 ) -> RunnableConfig:
     """Add default callback to langchain config
-    return: modified config
+
+    Args:
+        config (RunnableConfig): langchain config
+
+    Returns:
+        RunnableConfig: modified config
     """
     if config is None:
         config = ensure_config(config)

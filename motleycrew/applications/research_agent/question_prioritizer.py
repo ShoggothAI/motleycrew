@@ -1,3 +1,8 @@
+""" Module description
+
+Attributes:
+    _default_prompt (PromptTemplate):
+"""
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain.prompts import PromptTemplate
 from langchain_core.prompts.base import BasePromptTemplate
@@ -20,6 +25,11 @@ class QuestionPrioritizerTool(MotleyTool):
         self,
         prompt: str | BasePromptTemplate = None,
     ):
+        """ Description
+
+        Args:
+            prompt (:obj:`str`, :obj:`BasePromptTemplate`, optional):
+        """
         langchain_tool = create_question_prioritizer_langchain_tool(prompt=prompt)
 
         super().__init__(langchain_tool)
@@ -40,6 +50,13 @@ _default_prompt = PromptTemplate(
 
 
 class QuestionPrioritizerInput(BaseModel, arbitrary_types_allowed=True):
+    """ Description
+
+    Attributes:
+        original_question (Question):
+        unanswered_questions (list[Question]):
+
+    """
     original_question: Question = Field(description="The original question.")
     unanswered_questions: list[Question] = Field(
         description="Questions to pick the most pertinent to the original question from.",
@@ -49,8 +66,13 @@ class QuestionPrioritizerInput(BaseModel, arbitrary_types_allowed=True):
 def create_question_prioritizer_langchain_tool(
     prompt: str | BasePromptTemplate = None,
 ) -> StructuredTool:
-    """
-    Creates a LangChainTool for the AnswerSubQuestionTool.
+    """ Creates a LangChainTool for the AnswerSubQuestionTool.
+
+    Args:
+        prompt (:obj:`str`, :obj:`BasePromptTemplate`, optional):
+
+    Returns:
+        StructuredTool
     """
     if prompt is None:
         prompt = _default_prompt

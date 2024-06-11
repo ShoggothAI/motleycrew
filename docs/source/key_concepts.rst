@@ -77,10 +77,10 @@ For describing more complex tasks, you should subclass the `Task` class. It has 
 methods that you should implement: ``get_next_unit`` and ``get_worker``, as well as some optional methods
 that you can override to customize the task's behavior.
 
-#. ``get_next_unit`` should return the next task unit to be processed. If there are no units to do at the moment, it should return `None`.
-#. ``get_worker`` should return the worker (typically an agent) that will process the task's units.
-#. `optional` ``register_started_unit`` is called by the crew when a task unit is dispatched. By default, it just connects the unit to the task in the graph.
-#. `optional` ``register_completed_unit`` is called by the crew when a task unit is completed. By default, it does nothing.
+#. ``get_next_unit()`` should return the next task unit to be processed. If there are no units to do at the moment, it should return `None`.
+#. ``get_worker()`` should return the worker (typically an agent) that will process the task's units.
+#. `optional` ``register_started_unit(unit)`` is called by the crew when a task unit is dispatched.
+#. `optional` ``register_completed_unit(unit)`` is called by the crew when a task unit is completed.
 
 
 Task hierarchy

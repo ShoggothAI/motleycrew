@@ -1,3 +1,4 @@
+""" Module description """
 from typing import TYPE_CHECKING, Optional, Sequence
 
 from langchain_core.tools import Tool
@@ -23,6 +24,15 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
         tools: Sequence[MotleySupportedTool] | None = None,
         verbose: bool = False,
     ):
+        """ Description
+
+        Args:
+            description (str):
+            name (:obj:`str`, optional):
+            agent_factory (:obj:`MotleyAgentFactory`, optional):
+            tools (:obj:`Sequence[MotleySupportedTool]`, optional):
+            verbose (:obj:`bool', optional):
+        """
         self.name = name or description
         self.description = description  # becomes tool description
         self.agent_factory = agent_factory
@@ -63,6 +73,14 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
         self._agent = self.agent_factory(tools=self.tools)
 
     def add_tools(self, tools: Sequence[MotleySupportedTool]):
+        """ Description
+
+        Args:
+            tools (Sequence[MotleySupportedTool]):
+
+        Returns:
+
+        """
         if self.is_materialized and tools:
             raise CannotModifyMaterializedAgent(agent_name=self.name)
 
@@ -72,6 +90,14 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
                 self.tools[motley_tool.name] = motley_tool
 
     def as_tool(self, input_schema: Optional[BaseModel] = None) -> MotleyTool:
+        """ Description
+
+        Args:
+            input_schema (:obj:`BaseModel`, optional):
+
+        Returns:
+            MotleyTool:
+        """
         def call_agent(*args, **kwargs):
             # TODO: this thing is hacky, we should have a better way to pass structured input
             if args:

@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 from langchain_community.tools import DuckDuckGoSearchRun
 
 from motleycrew import MotleyCrew
-from motleycrew.agents.langchain.openai_tools_react import ReactOpenAIToolsAgent
+from motleycrew.agents.langchain.tool_calling_react import ReActToolCallingAgent
 from motleycrew.agents.langchain.react import ReactMotleyAgent
 from motleycrew.common import configure_logging
 from motleycrew.tasks import SimpleTask
@@ -14,7 +14,7 @@ def main():
 
     tools = [search_tool]
 
-    researcher = ReactOpenAIToolsAgent(tools=tools, verbose=True)
+    researcher = ReActToolCallingAgent(tools=tools, verbose=True)
     researcher2 = ReactMotleyAgent(tools=tools, verbose=True)
 
     outputs = []

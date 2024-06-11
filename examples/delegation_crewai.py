@@ -1,15 +1,10 @@
 from pathlib import Path
 import os
 import sys
-import platform
 
 from dotenv import load_dotenv
 from langchain_community.tools import DuckDuckGoSearchRun
 
-import kuzu
-from motleycrew.storage import MotleyKuzuGraphStore
-
-from motleycrew import MotleyCrew
 from motleycrew.agents.crewai import CrewAIMotleyAgent
 from motleycrew.agents.langchain.react import ReactMotleyAgent
 from motleycrew.common import configure_logging

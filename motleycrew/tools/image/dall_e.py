@@ -1,3 +1,9 @@
+""" Module description
+
+Attributes:
+    prompt_template (str):
+    dall_e_template (str):
+"""
 from typing import Optional
 
 import os
@@ -17,6 +23,15 @@ from langchain.prompts import PromptTemplate
 
 
 def download_image(url: str, file_path: str) -> Optional[str]:
+    """ Description
+
+    Args:
+        url (str):
+        file_path (str):
+
+    Returns:
+        :obj:`str`, None:
+    """
     response = requests.get(url, stream=True)
     if response.status_code == requests.codes.ok:
         content_type = response.headers.get("content-type")
@@ -46,6 +61,16 @@ class DallEImageGeneratorTool(MotleyTool):
         size: str = "1024x1024",
         style: Optional[str] = None,
     ):
+        """ Description
+
+        Args:
+            images_directory (:obj:`str`, optional):
+            refine_prompt_with_llm (:obj:`bool`, optional):
+            model (:obj:`str`, optional):
+            quality (:obj:`str`, optional):
+            size (:obj:`str`, optional):
+            style (:obj:`str`, optional):
+        """
         langchain_tool = create_dalle_image_generator_langchain_tool(
             images_directory=images_directory,
             refine_prompt_with_llm=refine_prompt_with_llm,
@@ -58,7 +83,11 @@ class DallEImageGeneratorTool(MotleyTool):
 
 
 class DallEToolInput(BaseModel):
-    """Input for the Dall-E tool."""
+    """Input for the Dall-E tool.
+
+    Attributes:
+        description (str):
+    """
 
     description: str = Field(description="image description")
 
@@ -83,6 +112,21 @@ def run_dalle_and_save_images(
     style: Optional[str] = None,
     file_name_length: int = 8,
 ) -> Optional[list[str]]:
+    """ Description
+
+    Args:
+        description (str):
+        images_directory (:obj:`str`, optional):
+        refine_prompt_with_llm(:obj:`bool`, optional):
+        model (:obj:`str`, optional):
+        quality (:obj:`str`, optional):
+        size (:obj:`str`, optional):
+        style (:obj:`str`, optional):
+        file_name_length (:obj:`int`, optional):
+
+    Returns:
+        :obj:`list` of :obj:`str`:
+    """
 
     dall_e_prompt = PromptTemplate.from_template(dall_e_template)
 
@@ -133,6 +177,19 @@ def create_dalle_image_generator_langchain_tool(
     size: str = "1024x1024",
     style: Optional[str] = None,
 ):
+    """ Description
+
+    Args:
+        images_directory (:obj:`str`, optional):
+        refine_prompt_with_llm (:obj:`bool`, optional):
+        model (:obj:`str`, optional):
+        quality (:obj:`str`, optional):
+        size (:obj:`str`, optional):
+        style (:obj:`str`, optional):
+
+    Returns:
+        Tool:
+    """
     def run_dalle_and_save_images_partial(description: str):
         return run_dalle_and_save_images(
             description=description,

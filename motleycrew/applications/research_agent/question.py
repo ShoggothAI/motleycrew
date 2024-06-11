@@ -1,3 +1,4 @@
+""" Module description"""
 from typing import Optional
 from dataclasses import dataclass
 import json
@@ -9,6 +10,14 @@ REPR_CONTEXT_LENGTH_LIMIT = 30
 
 
 class Question(MotleyGraphNode):
+    """ Description
+
+    Attributes:
+        question (str):
+        answer (:obj:`str`, optional):
+        context (:obj:`List[str]`, optional)
+
+    """
     question: str
     answer: Optional[str] = None
     context: Optional[list[str]] = None

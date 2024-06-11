@@ -1,3 +1,4 @@
+""" Module description """
 from typing import Any, Optional, Sequence
 
 try:
@@ -24,6 +25,15 @@ class LlamaIndexMotleyAgent(MotleyAgentParent):
         tools: Sequence[MotleySupportedTool] | None = None,
         verbose: bool = False,
     ):
+        """ Description
+
+        Args:
+            description (str):
+            name (:obj:`str`, optional):
+            agent_factory (:obj:`MotleyAgentFactory`, optional):
+            tools (:obj:`Sequence[MotleySupportedTool]`, optional):
+            verbose (:obj:`bool`, optional):
+        """
         super().__init__(
             description=description,
             name=name,
@@ -38,6 +48,16 @@ class LlamaIndexMotleyAgent(MotleyAgentParent):
         config: Optional[RunnableConfig] = None,
         **kwargs: Any,
     ) -> Any:
+        """ Description
+
+        Args:
+            task_dict (dict):
+            config (:obj:`RunnableConfig`, optional):
+            **kwargs:
+
+        Returns:
+            Any:
+        """
         self.materialize()
 
         prompt = task_dict.get("prompt")
@@ -54,6 +74,17 @@ class LlamaIndexMotleyAgent(MotleyAgentParent):
         tools: Sequence[MotleySupportedTool] | None = None,
         verbose: bool = False,
     ) -> "LlamaIndexMotleyAgent":
+        """ Description
+
+        Args:
+            agent (AgentRunner):
+            goal (str):
+            tools (:obj:`Sequence[MotleySupportedTool]`, optional):
+            verbose (:obj:`bool`, optional):
+
+        Returns:
+            LlamaIndexMotleyAgent:
+        """
         ensure_module_is_installed("llama_index")
         wrapped_agent = LlamaIndexMotleyAgent(description=goal, tools=tools, verbose=verbose)
         wrapped_agent._agent = agent

@@ -1,3 +1,4 @@
+""" Module description """
 import tempfile
 from typing import Optional
 import os
@@ -12,6 +13,15 @@ def init_graph_store(
     graph_store_type: str = Defaults.DEFAULT_GRAPH_STORE_TYPE,
     db_path: Optional[str] = None,
 ):
+    """ Description
+
+    Args:
+        graph_store_type (:obj:`str`, optional):
+        db_path (:obj:`str`, optional):
+
+    Returns:
+
+    """
     if graph_store_type == GraphStoreType.KUZU:
         import kuzu
 

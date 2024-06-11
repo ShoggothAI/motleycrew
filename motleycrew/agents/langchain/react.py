@@ -1,3 +1,4 @@
+""" Module description"""
 from typing import Sequence
 
 from langchain import hub
@@ -19,6 +20,16 @@ class ReactMotleyAgent(LangchainMotleyAgent):
         llm: BaseLanguageModel | None = None,
         verbose: bool = False,
     ):
+        """ Description
+
+        Args:
+            tools (Sequence[MotleySupportedTool]):
+            description (:obj:`str`, optional):
+            name (:obj:`str`, optional):
+            prompt (:obj:`str`, optional):
+            llm (:obj:`BaseLanguageModel`, optional):
+            verbose (:obj:`bool`, optional):
+        """
         if prompt is None:
             # TODO: feed description into the agent's prompt
             prompt = hub.pull("hwchase17/react")

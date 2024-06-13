@@ -10,7 +10,7 @@ from motleycrew.agents.langchain.react import ReactMotleyAgent
 from motleycrew.common import configure_logging
 from motleycrew.tasks import SimpleTask
 
-WORKING_DIR = Path(os.path.realpath("."))
+WORKING_DIR = Path(os.path.realpath(".."))
 
 try:
     from motleycrew import MotleyCrew

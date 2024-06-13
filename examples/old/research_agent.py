@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 # This assumes you have a .env file in the examples folder, containing your OpenAI key
 load_dotenv()
 
-WORKING_DIR = Path(os.path.realpath("."))
+WORKING_DIR = Path(os.path.realpath(".."))
 
 from motleycrew import MotleyCrew
 from motleycrew.storage import MotleyKuzuGraphStore

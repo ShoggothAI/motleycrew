@@ -1,1 +1,1 @@
-from runnable import MotleyRunnable
+from .runnable import MotleyRunnable

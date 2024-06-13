@@ -1,4 +1,5 @@
 """ Module description"""
+
 from typing import Sequence
 
 from langchain import hub
@@ -6,7 +7,7 @@ from langchain_core.language_models import BaseLanguageModel
 from langchain.agents import create_react_agent
 
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
-from motleycrew.agents.langchain.langchain import LangchainMotleyAgent
+from motleycrew.agents.langchain.langchain_agent import LangchainMotleyAgent
 from motleycrew.common import MotleySupportedTool
 
 
@@ -20,7 +21,7 @@ class ReactMotleyAgent(LangchainMotleyAgent):
         llm: BaseLanguageModel | None = None,
         verbose: bool = False,
     ):
-        """ Description
+        """Description
 
         Args:
             tools (Sequence[MotleySupportedTool]):

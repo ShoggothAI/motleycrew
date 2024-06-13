@@ -14,10 +14,10 @@ from langchain.agents.output_parsers.tools import ToolsAgentOutputParser
 
 from langchain.tools.render import render_text_description
 
-from motleycrew.agents.langchain.langchain import LangchainMotleyAgent
+from motleycrew.agents.langchain.langchain_agent import LangchainMotleyAgent
 from motleycrew.common import MotleySupportedTool
 from motleycrew.common.utils import print_passthrough
-
+from motleycrew.tools import MotleyTool
 
 default_think_prompt = ChatPromptTemplate.from_messages(
     [
@@ -220,7 +220,7 @@ class ReActToolCallingAgent(LangchainMotleyAgent):
     def __new__(
         cls,
         tools: Sequence[MotleySupportedTool],
-        goal: str = "",  # gets ignored at the moment
+        description: str = "",  # gets ignored at the moment
         name: str | None = None,
         prompt: ChatPromptTemplate | Sequence[ChatPromptTemplate] | None = None,
         with_history: bool = False,
@@ -231,14 +231,14 @@ class ReActToolCallingAgent(LangchainMotleyAgent):
 
         Args:
             tools (Sequence[MotleySupportedTool]):
-            goal (:obj:`str`, optional):
+            description (:obj:`str`, optional):
             name (:obj:`str`, optional):
             prompt (:obj:ChatPromptTemplate`, :obj:`Sequence[ChatPromptTemplate]', optional):
             llm (:obj:`BaseLanguageModel`, optional):
             verbose (:obj:`bool`, optional):
         """
         return cls.from_function(
-            description=goal,
+            description=description,
             name=name,
             llm=llm,
             tools=tools,
@@ -248,3 +248,28 @@ class ReActToolCallingAgent(LangchainMotleyAgent):
             with_history=with_history,
             verbose=verbose,
         )
+
+
+if __name__ == "__main__":
+    from motleycrew.tools import DallEImageGeneratorTool
+
+    description = "Your only task is to call the tool you're given, {blah}, and return the result."
+
+    class TestTool(MotleyTool):
+        def invoke(self, *args, **kwargs):
+            out = self.agent_input("foo")
+            return out
+
+    test_tool = TestTool()  # TODO: how to instantiate this nicely?
+    # wants its own constructor, without relying on langchain's?
+    # Or do we want to inherit from LC after all?
+
+    agent = ReActToolCallingAgent(description=description, tools=[test_tool])
+
+    agent.invoke(
+        {
+            "prompt": ChatPromptTemplate.from_template("Don't forget about {foo}"),
+            "blah": "blah",
+            "foo": "bar",
+        }
+    )

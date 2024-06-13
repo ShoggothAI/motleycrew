@@ -8,6 +8,7 @@ Welcome to motleycrew's documentation!
 
 .. toctree::
    Home <self>
+   why_motleycrew
    installation
    usage
    examples

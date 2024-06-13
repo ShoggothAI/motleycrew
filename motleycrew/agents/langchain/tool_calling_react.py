@@ -237,13 +237,13 @@ class ReActToolCallingAgent(LangchainMotleyAgent):
             llm (:obj:`BaseLanguageModel`, optional):
             verbose (:obj:`bool`, optional):
         """
-        return cls.from_function(
+        return cls.from_creating_function(
             description=goal,
             name=name,
             llm=llm,
             tools=tools,
             prompt=prompt,
-            function=create_tool_calling_react_agent,
+            creating_function=create_tool_calling_react_agent,
             require_tools=True,
             with_history=with_history,
             verbose=verbose,

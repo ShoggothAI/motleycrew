@@ -5,7 +5,7 @@ import hashlib
 from urllib.parse import urlparse
 from langchain_core.messages import BaseMessage
 
-from motleycrew.common.exceptions import ModuleNotInstalledException
+from motleycrew.common.exceptions import ModuleNotInstalled
 
 
 def to_str(value: str | BaseMessage | Sequence[str] | Sequence[BaseMessage]) -> str:
@@ -75,8 +75,8 @@ def ensure_module_is_installed(module_name: str, install_command: str = None) ->
         install_command (:obj:`str`, optional):
 
     Raises:
-        ModuleNotInstalledException:
+        ModuleNotInstalled:
     """
     module_path = sys.modules.get(module_name, None)
     if module_path is None:
-        raise ModuleNotInstalledException(module_name, install_command)
+        raise ModuleNotInstalled(module_name, install_command)

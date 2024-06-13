@@ -1,11 +1,14 @@
 import pytest
 
+from motleycrew.runnable import MotleyRunnable
 from motleycrew.tools import MotleyTool
 
 
-class ToolMock:
-    def invoke(self, input_dict: dict, *args, **kwargs):
-        return input_dict
+class ToolMock(MotleyRunnable):
+    name = "ToolMock"
+
+    def _invoke(self, input: dict, *args, **kwargs):
+        return input
 
 
 @pytest.fixture

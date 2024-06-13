@@ -220,7 +220,7 @@ class ReActToolCallingAgent(LangchainMotleyAgent):
     def __new__(
         cls,
         tools: Sequence[MotleySupportedTool],
-        goal: str = "",  # gets ignored at the moment
+        description: str | None = None,
         name: str | None = None,
         prompt: ChatPromptTemplate | Sequence[ChatPromptTemplate] | None = None,
         with_history: bool = False,
@@ -231,14 +231,14 @@ class ReActToolCallingAgent(LangchainMotleyAgent):
 
         Args:
             tools (Sequence[MotleySupportedTool]):
-            goal (:obj:`str`, optional):
+            description (:obj:`str`, optional):
             name (:obj:`str`, optional):
             prompt (:obj:ChatPromptTemplate`, :obj:`Sequence[ChatPromptTemplate]', optional):
             llm (:obj:`BaseLanguageModel`, optional):
             verbose (:obj:`bool`, optional):
         """
         return cls.from_function(
-            description=goal,
+            description=description,
             name=name,
             llm=llm,
             tools=tools,

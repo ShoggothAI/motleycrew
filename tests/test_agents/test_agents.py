@@ -2,6 +2,7 @@ import os
 import pytest
 
 from langchain_community.tools import DuckDuckGoSearchRun
+from langchain_core.prompts.chat import ChatPromptTemplate
 from motleycrew.agents.crewai.crewai_agent import CrewAIMotleyAgent
 from motleycrew.agents.langchain.tool_calling_react import ReActToolCallingAgent
 from motleycrew.agents.llama_index.llama_index_react import ReActLlamaIndexMotleyAgent
@@ -34,6 +35,7 @@ class TestAgents:
     def langchain_agent(self):
         agent = ReActToolCallingAgent(
             name="AI writer agent",
+            description="Generate AI-generated content",
             tools=[DuckDuckGoSearchRun()],
             verbose=True,
         )
@@ -81,3 +83,12 @@ class TestAgents:
     def test_as_tool(self, agent):
         tool = agent.as_tool()
         assert isinstance(tool, MotleyTool)
+
+    @pytest.mark.parametrize("agent", test_agents_names, indirect=True)
+    def test_compose_prompt(self, agent):
+        task_prompt = ChatPromptTemplate.from_template("What are the latest {topic} trends?")
+        task_dict = {"topic": "AI"}
+        prompt = agent.compose_prompt(input_dict=task_dict, prompt=task_prompt)
+
+        assert str(agent.description) in prompt
+        assert "What are the latest AI trends?" in prompt

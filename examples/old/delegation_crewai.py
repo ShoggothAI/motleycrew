@@ -39,9 +39,7 @@ def main():
     # You can give agents as tools to other agents
     writer = ReactMotleyAgent(
         name="AI writer agent",
-        description="""Conduct a comprehensive analysis of the latest advancements in AI in 2024.
-                  Identify key trends, breakthrough technologies, and potential industry impacts.
-                  Your final answer MUST be a full analysis report""",
+        description="You are an experienced writer with a passion for technology.",
         tools=[researcher],
         verbose=True,
     )

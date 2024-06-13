@@ -3,13 +3,17 @@
 import os
 from typing import List, Optional
 
-from lunary import LunaryCallbackHandler
+try:
+    from lunary import LunaryCallbackHandler
+except ImportError:
+    LunaryCallbackHandler = None
+
 from langchain_core.callbacks import BaseCallbackHandler, BaseCallbackManager
 from langchain_core.runnables import RunnableConfig, ensure_config
 
 from .callbacks import LlamaIndexLunaryCallbackHandler
-from motleycrew.common import LLMFramework
-from motleycrew.common import logger
+from motleycrew.common import LLMFramework, logger
+from motleycrew.common.utils import ensure_module_is_installed
 
 
 def get_lunary_public_key():
@@ -36,6 +40,7 @@ def create_lunary_callback() -> LunaryCallbackHandler:
     """
     lunary_public_key = get_lunary_public_key()
     if lunary_public_key is not None:
+        ensure_module_is_installed("lunary")
         return LunaryCallbackHandler(app_id=lunary_public_key)
 
 
@@ -50,6 +55,7 @@ def get_llamaindex_default_callbacks():
     # init lunary callback
     lunary_public_key = get_lunary_public_key()
     if lunary_public_key is not None:
+        ensure_module_is_installed("lunary")
         _default_callbacks.append(LlamaIndexLunaryCallbackHandler(lunary_public_key))
 
     return _default_callbacks

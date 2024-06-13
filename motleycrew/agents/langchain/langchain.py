@@ -3,9 +3,12 @@ from typing import Any, Optional, Sequence, Callable, Union
 
 from langchain.agents import AgentExecutor
 from langchain_core.runnables import RunnableConfig
+from langchain_core.runnables.history import RunnableWithMessageHistory
+from langchain_core.chat_history import BaseChatMessageHistory, InMemoryChatMessageHistory
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.prompts import BasePromptTemplate
 from langchain_core.tools import BaseTool
+
 
 from motleycrew.agents.parent import MotleyAgentParent
 
@@ -25,8 +28,10 @@ class LangchainMotleyAgent(MotleyAgentParent):
         agent_factory: MotleyAgentFactory[AgentExecutor] | None = None,
         tools: Sequence[MotleySupportedTool] | None = None,
         verbose: bool = False,
+        with_history: bool = False,
+        chat_history: BaseChatMessageHistory | None = None,
     ):
-        """ Description
+        """Description
 
         Args:
             description (str):
@@ -43,13 +48,32 @@ class LangchainMotleyAgent(MotleyAgentParent):
             verbose=verbose,
         )
 
+        self.with_history = with_history
+        self.chat_history = chat_history or InMemoryChatMessageHistory()
+
+    def materialize(self):
+        """Materialize the agent and wrap it in RunnableWithMessageHistory if needed."""
+        if self.is_materialized:
+            return
+
+        super().materialize()
+        if self.with_history:
+            if isinstance(self._agent, RunnableWithMessageHistory):
+                return
+            self._agent = RunnableWithMessageHistory(
+                runnable=self._agent,
+                get_session_history=lambda _: self.chat_history,
+                input_messages_key="input",
+                history_messages_key="chat_history",
+            )
+
     def invoke(
         self,
         task_dict: dict,
         config: Optional[RunnableConfig] = None,
         **kwargs: Any,
     ) -> Any:
-        """ Description
+        """Description
 
         Args:
             task_dict (dict):
@@ -66,11 +90,17 @@ class LangchainMotleyAgent(MotleyAgentParent):
             raise ValueError("Task must have a prompt")
 
         config = add_default_callbacks_to_langchain_config(config)
+        if self.with_history:
+            config["configurable"] = config.get("configurable") or {}
+            config["configurable"]["session_id"] = (
+                config["configurable"].get("session_id") or "default"
+            )
 
         result = self.agent.invoke({"input": prompt}, config, **kwargs)
         output = result.get("output")
         if output is None:
             raise Exception("Agent {} result does not contain output: {}".format(self, result))
+
         return output
 
     @staticmethod
@@ -89,9 +119,10 @@ class LangchainMotleyAgent(MotleyAgentParent):
         tools: Sequence[MotleySupportedTool] | None = None,
         prompt: BasePromptTemplate | Sequence[BasePromptTemplate] | None = None,
         require_tools: bool = False,
+        with_history: bool = False,
         verbose: bool = False,
     ) -> "LangchainMotleyAgent":
-        """ Description
+        """Description
 
         Args:
             creating_function (Callable):
@@ -131,6 +162,7 @@ class LangchainMotleyAgent(MotleyAgentParent):
             name=name,
             agent_factory=agent_factory,
             tools=tools,
+            with_history=with_history,
             verbose=verbose,
         )
 
@@ -141,7 +173,7 @@ class LangchainMotleyAgent(MotleyAgentParent):
         tools: Sequence[MotleySupportedTool] | None = None,
         verbose: bool = False,
     ) -> "LangchainMotleyAgent":
-        """ Description
+        """Description
 
         Args:
             agent (AgentExecutor):

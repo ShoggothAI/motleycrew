@@ -1,4 +1,5 @@
 """ Module description """
+
 from typing import Any, Optional, Sequence
 
 from langchain_core.runnables import RunnableConfig
@@ -8,7 +9,6 @@ from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
 from motleycrew.agents.crewai import CrewAIAgentWithConfig
 from motleycrew.common import MotleySupportedTool
 from motleycrew.common import MotleyAgentFactory
-from motleycrew.common.utils import to_str
 from motleycrew.tracking import add_default_callbacks_to_langchain_config
 from motleycrew.common.utils import ensure_module_is_installed
 
@@ -27,7 +27,7 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
         tools: Sequence[MotleySupportedTool] | None = None,
         verbose: bool = False,
     ):
-        """ Description
+        """Description
 
         Args:
             goal (str):
@@ -51,7 +51,7 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
         config: Optional[RunnableConfig] = None,
         **kwargs: Any,
     ) -> Any:
-        """ Description
+        """Description
 
         Args:
             task_dict (dict):
@@ -62,10 +62,7 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
             Any:
         """
         self.materialize()
-
-        prompt = task_dict.get("prompt")
-        if not prompt:
-            raise ValueError("Task must have a prompt")
+        prompt = self.compose_prompt(task_dict, task_dict.get("prompt"))
 
         langchain_tools = [tool.to_langchain_tool() for tool in self.tools.values()]
         config = add_default_callbacks_to_langchain_config(config)
@@ -79,7 +76,7 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
 
     # TODO: what do these do?
     def set_cache_handler(self, cache_handler: Any) -> None:
-        """ Description
+        """Description
 
         Args:
             cache_handler (Any):
@@ -90,7 +87,7 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
         return self.agent.set_cache_handler(cache_handler)
 
     def set_rpm_controller(self, rpm_controller: Any) -> None:
-        """ Description
+        """Description
 
         Args:
             rpm_controller (Any):
@@ -106,7 +103,7 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
         tools: Sequence[MotleySupportedTool] | None = None,
         verbose: bool = False,
     ) -> "CrewAIMotleyAgentParent":
-        """ Description
+        """Description
 
         Args:
             agent (CrewAIAgentWithConfig):

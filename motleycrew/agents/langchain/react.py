@@ -1,4 +1,5 @@
 """ Module description"""
+
 from typing import Sequence
 
 from langchain import hub
@@ -14,13 +15,13 @@ class ReactMotleyAgent(LangchainMotleyAgent):
     def __new__(
         cls,
         tools: Sequence[MotleySupportedTool],
-        description: str = "",  # gets ignored at the moment
+        description: str | None = None,
         name: str | None = None,
         prompt: str | None = None,
         llm: BaseLanguageModel | None = None,
         verbose: bool = False,
     ):
-        """ Description
+        """Description
 
         Args:
             tools (Sequence[MotleySupportedTool]):

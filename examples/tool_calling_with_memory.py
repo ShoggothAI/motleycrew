@@ -18,7 +18,7 @@ def main():
     researcher = ReActToolCallingAgent(
         tools=tools,
         verbose=True,
-        with_history=True,
+        chat_history=True,
         # llm=init_llm(
         #     llm_framework=LLMFramework.LANGCHAIN,
         #     llm_family=LLMFamily.ANTHROPIC,

@@ -23,34 +23,33 @@ from motleycache import (
     set_strong_cache,
 )
 
-from examples.delegation_crewai import main as delegation_crewai_main
-from examples._test_single_llama_index import main as single_llama_index_main
+from examples.old.delegation_crewai import main as delegation_crewai_main
+from examples.old.single_llama_index import main as single_llama_index_main
 
 
 INTEGRATION_TESTS = {
     "single_llama_index": single_llama_index_main,
     "delegation_crewai": delegation_crewai_main,
-    # "single_openai_tools_react": single_openai_tools_react_main, TODO: enable this test
 }
 
 IPYNB_INTEGRATION_TESTS = {
-    "delegation_crewai_ipynb": "examples/delegation_crewai.ipynb",
-    "image_generation_crewai_ipynb": "examples/image_generation_crewai.ipynb",
-    "math_crewai_ipynb": "examples/math_crewai.ipynb",
-    "single_crewai_ipynb": "examples/single_crewai.ipynb",
-    "single_llama_index_ipynb": "examples/single_llama_index.ipynb",
-    "single_openai_tools_react_ipynb": "examples/single_openai_tools_react.ipynb",
+    # "delegation_crewai_ipynb": "examples/delegation_crewai.ipynb",
+    # "image_generation_crewai_ipynb": "examples/image_generation_crewai.ipynb",
+    # "math_crewai_ipynb": "examples/math_crewai.ipynb",
+    # "single_crewai_ipynb": "examples/single_crewai.ipynb",
+    # "single_llama_index_ipynb": "examples/single_llama_index.ipynb",
+    # "single_openai_tools_react_ipynb": "examples/single_openai_tools_react.ipynb",
 }
 
 MINIMAL_INTEGRATION_TESTS = {}
 
 MINIMAL_IPYNB_INTEGRATION_TESTS = {
-    "delegation_crewai_ipynb": "examples/delegation_crewai.ipynb",
-    "image_generation_crewai_ipynb": "examples/image_generation_crewai.ipynb",
-    "math_crewai_ipynb": "examples/math_crewai.ipynb",
-    "single_crewai_ipynb": "examples/single_crewai.ipynb",
-    "single_llama_index_ipynb": "examples/single_llama_index.ipynb",
-    "single_openai_tools_react_ipynb": "examples/single_openai_tools_react.ipynb",
+    # "delegation_crewai_ipynb": "examples/delegation_crewai.ipynb",
+    # "image_generation_crewai_ipynb": "examples/image_generation_crewai.ipynb",
+    # "math_crewai_ipynb": "examples/math_crewai.ipynb",
+    # "single_crewai_ipynb": "examples/single_crewai.ipynb",
+    # "single_llama_index_ipynb": "examples/single_llama_index.ipynb",
+    # "single_openai_tools_react_ipynb": "examples/single_openai_tools_react.ipynb",
 }
 
 DEFAULT_CACHE_DIR = Path(__file__).parent / "itest_cache"

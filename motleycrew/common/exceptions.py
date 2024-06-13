@@ -114,3 +114,15 @@ class InvalidToolInput(Exception):
         if self.message:
             msg = "{}: {}".format(msg, self.message)
         return msg
+
+
+class RunnableSchemaMismatch(Exception):
+    """
+    Raised when the input schema of a runnable does not match the output schema
+    of the previous runnable
+    """
+    def __init__(self, message: str):
+        self.message = message
+
+    def __str__(self):
+        return self.message

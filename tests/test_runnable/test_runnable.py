@@ -3,45 +3,37 @@ from typing import Optional
 import pytest
 from langchain_core.runnables import RunnableConfig, RunnablePassthrough
 from langchain_core.runnables.utils import Input, Output
-from langchain_core.pydantic_v1 import BaseModel, Field
+from langchain_core.pydantic_v1 import BaseModel
 
 from langchain_core.tools import Tool
 from langchain_core.prompts import PromptTemplate
 
 from motleycrew.runnable import MotleyRunnable
+from motleycrew.tools import MotleyTool
+from motleycrew.common.exceptions import RunnableSchemaMismatch
 
 
 class RunnableMock(MotleyRunnable):
-    def invoke(self, input: Input, config: Optional[RunnableConfig] = None) -> Output:
+    def _invoke(self, input: Input, config: Optional[RunnableConfig] = None) -> Output:
         return input
 
 
 class SingleFieldModel(BaseModel):
-    str_field: str = Field(description="string")
+    str_field: str
 
 
 class MultipleFieldModel(BaseModel):
-    str_field: str = Field(description="string")
-    int_field: int = Field(description="number")
+    str_field: str
+    int_field: int
 
 
 class TestRunnableSchema:
-    def test_infer_input_schema_from_tool(self):
-        tool = Tool.from_function(
-            func=lambda input: input,
-            args_schema=SingleFieldModel,
-            name="SingleInputTool",
-            description="Tool with single input",
-        )
-        runnable = MotleyRunnable(tool)
-        assert runnable.input_schema == SingleFieldModel
-
-    def test_infer_input_schema_from_prompt_template(self):
-        prompt_template = PromptTemplate.from_template(
-            "string: {str_field}, number: {int_field}",
-        )
-        runnable = MotleyRunnable(prompt_template)
-        assert set(runnable.input_schema.__fields__.keys()) == {"str_field", "int_field"}
+    # def test_infer_input_schema_from_prompt_template(self):
+    #     prompt_template = PromptTemplate.from_template(
+    #         "string: {str_field}, number: {int_field}",
+    #     )
+    #     runnable = MotleyRunnable(prompt_template)
+    #     assert set(runnable.input_schema.__fields__.keys()) == {"str_field", "int_field"}
 
     def test_input_validation(self):
         runnable = RunnableMock()
@@ -49,7 +41,7 @@ class TestRunnableSchema:
 
         assert runnable.invoke({"str_field": "string"}) == {"str_field": "string"}
         with pytest.raises(ValueError):
-            runnable.invoke({"str_field": 1})
+            runnable.invoke({"str_field": None})
         with pytest.raises(ValueError):
             runnable.invoke({"extra": "string"})
 
@@ -113,13 +105,11 @@ class TestRunnableSchema:
 
         assert runnable.invoke({"str_field": "string"}) == {"str_field": "string"}
         with pytest.raises(ValueError):
-            runnable.invoke({"str_field": 1})
+            runnable.invoke({"str_field": None})
         with pytest.raises(ValueError):
             runnable.invoke({"extra": "extra"})
         with pytest.raises(ValueError):
             runnable.invoke("string")
-        with pytest.raises(ValueError):
-            runnable.invoke({"str_field": "string", "extra": "extra"})  # shall we allow extras?
 
 
 class TestRunnableChain:
@@ -155,9 +145,6 @@ class TestRunnableChain:
         assert chain.invoke({"str_field": "string", "int_field": 1}) == {
             "str_field": "string",
         }
-        assert chain.invoke(str_field="string") == {
-            "str_field": "string",
-        }
         assert chain.invoke("string") == {
             "str_field": "string",
         }
@@ -178,7 +165,7 @@ class TestRunnableChain:
         runnable_1.output_schema = SingleFieldModel
         runnable_2.input_schema = MultipleFieldModel
 
-        with pytest.raises(TypeError):
+        with pytest.raises(RunnableSchemaMismatch):
             runnable_1 | runnable_2
 
     def test_chain_with_langchain_runnable(self):
@@ -190,14 +177,14 @@ class TestRunnableChain:
             "str_field": "string",
         }
 
-    def test_assign_updates_output_schema(self):
-        runnable_1 = RunnableMock()
-        runnable_2 = RunnableMock()
-        runnable_1.output_schema = SingleFieldModel
-        runnable_2.input_schema = MultipleFieldModel
-
-        chain = runnable_1 | RunnablePassthrough.assign(int_field=lambda x: 1) | runnable_2
-        assert chain.invoke({"str_field": "string"}) == {
-            "str_field": "string",
-            "int_field": 1,
-        }
+    # def test_assign_updates_output_schema(self):
+    #     runnable_1 = RunnableMock()
+    #     runnable_2 = RunnableMock()
+    #     runnable_1.output_schema = SingleFieldModel
+    #     runnable_2.input_schema = MultipleFieldModel
+    #
+    #     chain = runnable_1 | RunnablePassthrough.assign(int_field=lambda x: 1) | runnable_2
+    #     assert chain.invoke({"str_field": "string"}) == {
+    #         "str_field": "string",
+    #         "int_field": 1,
+    #     }

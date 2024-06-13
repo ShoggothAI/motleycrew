@@ -87,4 +87,10 @@ class TestMotleyTool:
         assert isinstance(motley_tool.tool, BaseTool)
 
         converted_autogen_tool = motley_tool.to_autogen_tool()
-        assert converted_autogen_tool(mock_input.get("mock_input")) == motley_tool.invoke(mock_input)
+        assert converted_autogen_tool(mock_input.get("mock_input")) == motley_tool.invoke(
+            mock_input
+        )
+
+    def test_infer_input_schema(self, langchain_tool, mock_tool_args_schema):
+        motley_tool = MotleyTool.from_langchain_tool(langchain_tool)
+        assert motley_tool.input_schema.__fields__ == mock_tool_args_schema.__fields__

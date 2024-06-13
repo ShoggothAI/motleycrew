@@ -14,8 +14,11 @@ except ImportError:
     CBEventType = None
     ChatMessage = None
 
-from lunary import track_event
-from lunary import event_queue_ctx
+try:
+    from lunary import track_event, event_queue_ctx
+except ImportError:
+    track_event = None
+    event_queue_ctx = None
 
 from motleycrew.common.enums import LunaryRunType, LunaryEventName
 from motleycrew.common.utils import ensure_module_is_installed
@@ -109,6 +112,7 @@ class LlamaIndexLunaryCallbackHandler(BaseCallbackHandler):
             event_ends_to_ignore (List[CBEventType]): List of events for which event completion processing is ignored
         """
         ensure_module_is_installed("llama_index")
+        ensure_module_is_installed("lunary")
         super(LlamaIndexLunaryCallbackHandler, self).__init__(
             event_starts_to_ignore=event_starts_to_ignore or [],
             event_ends_to_ignore=event_ends_to_ignore or [],

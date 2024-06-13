@@ -24,7 +24,7 @@ from motleycrew.common.llms import init_llm
 class LangchainMotleyAgent(MotleyAgentParent):
     def __init__(
         self,
-        description: str,
+        description: str | None = None,
         name: str | None = None,
         agent_factory: MotleyAgentFactory | None = None,
         tools: Sequence[MotleySupportedTool] | None = None,
@@ -35,7 +35,7 @@ class LangchainMotleyAgent(MotleyAgentParent):
         """Description
 
         Args:
-            description (str):
+            description (:obj:`str`, optional):
             name (:obj:`str`, optional):
             agent_factory (:obj:`MotleyAgentFactory`, optional):
             tools (:obj:`Sequence[MotleySupportedTool]`, optional):
@@ -85,10 +85,7 @@ class LangchainMotleyAgent(MotleyAgentParent):
 
         """
         self.materialize()
-
-        prompt = task_dict.get("prompt")
-        if not prompt:
-            raise ValueError("Task must have a prompt")
+        prompt = self.compose_prompt(task_dict, task_dict.get("prompt"))
 
         config = add_default_callbacks_to_langchain_config(config)
         if self.with_history:
@@ -107,10 +104,9 @@ class LangchainMotleyAgent(MotleyAgentParent):
     @staticmethod
     def from_function(
         function: Callable[..., Any],
-        description: str,
+        description: str | None = None,
         name: str | None = None,
         llm: BaseLanguageModel | None = None,
-        delegation: bool | Sequence[MotleyAgentAbstractParent] = False,
         tools: Sequence[MotleySupportedTool] | None = None,
         prompt: ChatPromptTemplate | Sequence[ChatPromptTemplate] | None = None,
         require_tools: bool = False,
@@ -121,10 +117,9 @@ class LangchainMotleyAgent(MotleyAgentParent):
 
         Args:
             function (Callable):
-            description (str):
+            description (:obj:`str`, optional):
             name (:obj:`str`, optional):
             llm (:obj:`BaseLanguageModel`, optional):
-            delegation: (:obj:`bool`, :obj:`Sequence[MotleyAgentAbstractParent]`, optional):
             tools (:obj:`Sequence[MotleySupportedTool]`, optional):
             prompt (:obj:`ChatPromptTemplate`, :obj:`Sequence[ChatPromptTemplate]`, optional):
             require_tools (bool):
@@ -141,7 +136,6 @@ class LangchainMotleyAgent(MotleyAgentParent):
 
         def agent_factory(tools: dict[str, MotleyTool]):
             langchain_tools = [t.to_langchain_tool() for t in tools.values()]
-            # TODO: feed description into the agent's prompt
             agent = function(llm=llm, tools=langchain_tools, prompt=prompt)
             agent_executor = AgentExecutor(
                 agent=agent,

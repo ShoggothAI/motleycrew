@@ -1,4 +1,5 @@
 """ Module description """
+
 from typing import Sequence
 
 try:
@@ -9,7 +10,6 @@ except ImportError:
     LLM = object
 
 from motleycrew.agents.llama_index import LlamaIndexMotleyAgent
-from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
 from motleycrew.tools import MotleyTool
 from motleycrew.common import MotleySupportedTool
 from motleycrew.common import LLMFramework
@@ -21,16 +21,16 @@ from motleycrew.common.utils import ensure_module_is_installed
 class ReActLlamaIndexMotleyAgent(LlamaIndexMotleyAgent):
     def __init__(
         self,
-        description: str,
+        description: str | None = None,
         name: str | None = None,
         tools: Sequence[MotleySupportedTool] | None = None,
         llm: LLM | None = None,
         verbose: bool = False,
     ):
-        """ Description
+        """Description
 
         Args:
-            description (str):
+            description (:obj:`str`, optional):
             name (:obj:`str`, optional):
             tools (:obj:`Sequence[MotleySupportedTool]`, optional):
             llm (:obj:`LLM`, optional):
@@ -42,7 +42,6 @@ class ReActLlamaIndexMotleyAgent(LlamaIndexMotleyAgent):
 
         def agent_factory(tools: dict[str, MotleyTool]):
             llama_index_tools = [t.to_llama_index_tool() for t in tools.values()]
-            # TODO: feed description into the agent's prompt
             callbacks = get_default_callbacks_list(LLMFramework.LLAMA_INDEX)
             agent = ReActAgent.from_tools(
                 tools=llama_index_tools,

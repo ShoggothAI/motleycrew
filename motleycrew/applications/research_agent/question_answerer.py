@@ -3,6 +3,7 @@
 Attributes:
     _default_prompt:
 """
+
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain.prompts import PromptTemplate
 from langchain_core.prompts.base import BasePromptTemplate
@@ -43,7 +44,7 @@ class AnswerSubQuestionTool(MotleyTool):
         answer_length: int,
         prompt: str | BasePromptTemplate = None,
     ):
-        """ Description
+        """Description
 
         Args:
             graph (MotleyGraphStore):
@@ -72,7 +73,7 @@ class QuestionAnswererInput(BaseModel, arbitrary_types_allowed=True):
 
 
 def get_subquestions(graph: MotleyGraphStore, question: Question) -> list[Question]:
-    """ Description
+    """Description
 
     Args:
         graph (MotleyGraphStore):
@@ -98,7 +99,7 @@ def create_answer_question_langchain_tool(
     answer_length: int,
     prompt: str | BasePromptTemplate = None,
 ) -> Tool:
-    """ Creates a LangChainTool for the AnswerSubQuestionTool.
+    """Creates a LangChainTool for the AnswerSubQuestionTool.
 
     Args:
         graph (MotleyGraphStore):

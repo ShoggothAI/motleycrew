@@ -7,7 +7,7 @@ from langchain_core.runnables import RunnableConfig
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.chat_history import BaseChatMessageHistory, InMemoryChatMessageHistory
 from langchain_core.language_models import BaseLanguageModel
-from langchain_core.prompts.chat import ChatPromptTemplate
+from langchain_core.prompts.chat import ChatPromptTemplate, HumanMessage
 
 
 from motleycrew.agents.parent import MotleyAgentParent
@@ -85,10 +85,9 @@ class LangchainMotleyAgent(MotleyAgentParent):
 
         """
         self.materialize()
+        self.last_input = task_dict
 
-        prompt = task_dict.get("prompt")
-        if not prompt:
-            raise ValueError("Task must have a prompt")
+        prompt = self.compose_prompt(task_dict, task_dict.get("prompt"))
 
         config = add_default_callbacks_to_langchain_config(config)
         if self.with_history:

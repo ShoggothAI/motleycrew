@@ -1,8 +1,11 @@
 """ Module description """
+
 from typing import TYPE_CHECKING, Optional, Sequence
 
 from langchain_core.tools import Tool
 from langchain_core.runnables import Runnable
+from langchain_core.prompts.chat import ChatPromptTemplate, HumanMessage
+
 from pydantic import BaseModel
 
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
@@ -24,7 +27,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
         tools: Sequence[MotleySupportedTool] | None = None,
         verbose: bool = False,
     ):
-        """ Description
+        """Description
 
         Args:
             description (str):
@@ -39,7 +42,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
         self.tools: dict[str, MotleyTool] = {}
         self.verbose = verbose
         self.crew: MotleyCrew | None = None
-
+        self.last_input = {}
         self._agent = None
 
         if tools:
@@ -50,6 +53,32 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
 
     def __str__(self):
         return self.__repr__()
+
+    def last_input_value(self, key: str):
+        return self.last_input.get(key, None)
+
+    def compose_prompt(self, input_dict: dict, prompt: ChatPromptTemplate | str) -> str:
+        # TODO: always cast description and prompt to ChatPromptTemplate first?
+
+        if isinstance(self.description, str):
+            self.description = ChatPromptTemplate.from_template(self.description)
+        elif not isinstance(self.description, ChatPromptTemplate):
+            raise ValueError("Agent description must be a string or a ChatPromptTemplate")
+
+        prompt_messages = self.description.invoke(input_dict).to_messages()
+
+        if prompt is not None:
+            if isinstance(prompt, ChatPromptTemplate):
+                prompt_messages += prompt.invoke(input_dict).to_messages()
+
+            elif isinstance(prompt, str):
+                prompt_messages.append(HumanMessage(content=prompt))
+
+            else:
+                raise ValueError("Prompt must be a string or a ChatPromptTemplate")
+
+        prompt = "\n".join([m.content for m in prompt_messages]) + "\n"
+        return prompt
 
     @property
     def agent(self):
@@ -73,7 +102,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
         self._agent = self.agent_factory(tools=self.tools)
 
     def add_tools(self, tools: Sequence[MotleySupportedTool]):
-        """ Description
+        """Description
 
         Args:
             tools (Sequence[MotleySupportedTool]):
@@ -86,11 +115,12 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
 
         for t in tools:
             motley_tool = MotleyTool.from_supported_tool(t)
+            motley_tool.using_agent = self
             if motley_tool.name not in self.tools:
                 self.tools[motley_tool.name] = motley_tool
 
     def as_tool(self, input_schema: Optional[BaseModel] = None) -> MotleyTool:
-        """ Description
+        """Description
 
         Args:
             input_schema (:obj:`BaseModel`, optional):
@@ -98,6 +128,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
         Returns:
             MotleyTool:
         """
+
         def call_agent(*args, **kwargs):
             # TODO: this thing is hacky, we should have a better way to pass structured input
             if args:

@@ -4,14 +4,13 @@ from typing import Any, Optional, Sequence, Callable
 
 from langchain.agents import AgentExecutor
 from langchain_core.runnables import RunnableConfig
-from langchain_core.runnables.history import RunnableWithMessageHistory
-from langchain_core.chat_history import BaseChatMessageHistory, InMemoryChatMessageHistory
+from langchain_core.runnables.history import RunnableWithMessageHistory, GetSessionHistoryCallable
+from langchain_core.chat_history import InMemoryChatMessageHistory
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.prompts.chat import ChatPromptTemplate
 
 
 from motleycrew.agents.parent import MotleyAgentParent
-from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
 
 from motleycrew.tools import MotleyTool
 from motleycrew.tracking import add_default_callbacks_to_langchain_config
@@ -29,8 +28,7 @@ class LangchainMotleyAgent(MotleyAgentParent):
         agent_factory: MotleyAgentFactory | None = None,
         tools: Sequence[MotleySupportedTool] | None = None,
         verbose: bool = False,
-        with_history: bool = False,
-        chat_history: BaseChatMessageHistory | None = None,
+        chat_history: bool | GetSessionHistoryCallable = True,
     ):
         """Description
 
@@ -40,6 +38,10 @@ class LangchainMotleyAgent(MotleyAgentParent):
             agent_factory (:obj:`MotleyAgentFactory`, optional):
             tools (:obj:`Sequence[MotleySupportedTool]`, optional):
             verbose (bool):
+            chat_history (:obj:`bool`, :obj:`GetSessionHistoryCallable`):
+            Whether to use chat history or not. If `True`, uses `InMemoryChatMessageHistory`.
+            If a callable is passed, it is used to get the chat history by session_id.
+            See Langchain `RunnableWithMessageHistory` get_session_history param for more details.
         """
         super().__init__(
             description=description,
@@ -49,8 +51,11 @@ class LangchainMotleyAgent(MotleyAgentParent):
             verbose=verbose,
         )
 
-        self.with_history = with_history
-        self.chat_history = chat_history or InMemoryChatMessageHistory()
+        if chat_history is True:
+            chat_history = InMemoryChatMessageHistory()
+            self.get_session_history_callable = lambda _: chat_history
+        else:
+            self.get_session_history_callable = chat_history
 
     def materialize(self):
         """Materialize the agent and wrap it in RunnableWithMessageHistory if needed."""
@@ -58,12 +63,12 @@ class LangchainMotleyAgent(MotleyAgentParent):
             return
 
         super().materialize()
-        if self.with_history:
+        if self.get_session_history_callable:
             if isinstance(self._agent, RunnableWithMessageHistory):
                 return
             self._agent = RunnableWithMessageHistory(
                 runnable=self._agent,
-                get_session_history=lambda _: self.chat_history,
+                get_session_history=self.get_session_history_callable,
                 input_messages_key="input",
                 history_messages_key="chat_history",
             )
@@ -88,7 +93,7 @@ class LangchainMotleyAgent(MotleyAgentParent):
         prompt = self.compose_prompt(task_dict, task_dict.get("prompt"))
 
         config = add_default_callbacks_to_langchain_config(config)
-        if self.with_history:
+        if self.get_session_history_callable:
             config["configurable"] = config.get("configurable") or {}
             config["configurable"]["session_id"] = (
                 config["configurable"].get("session_id") or "default"
@@ -110,7 +115,7 @@ class LangchainMotleyAgent(MotleyAgentParent):
         tools: Sequence[MotleySupportedTool] | None = None,
         prompt: ChatPromptTemplate | Sequence[ChatPromptTemplate] | None = None,
         require_tools: bool = False,
-        with_history: bool = False,
+        chat_history: bool | GetSessionHistoryCallable = True,
         verbose: bool = False,
     ) -> "LangchainMotleyAgent":
         """Description
@@ -123,6 +128,10 @@ class LangchainMotleyAgent(MotleyAgentParent):
             tools (:obj:`Sequence[MotleySupportedTool]`, optional):
             prompt (:obj:`ChatPromptTemplate`, :obj:`Sequence[ChatPromptTemplate]`, optional):
             require_tools (bool):
+            chat_history (:obj:`bool`, :obj:`GetSessionHistoryCallable`):
+            Whether to use chat history or not. If `True`, uses `InMemoryChatMessageHistory`.
+            If a callable is passed, it is used to get the chat history by session_id.
+            See Langchain `RunnableWithMessageHistory` get_session_history param for more details.
             verbose (bool):
 
         Returns:
@@ -149,7 +158,7 @@ class LangchainMotleyAgent(MotleyAgentParent):
             name=name,
             agent_factory=agent_factory,
             tools=tools,
-            with_history=with_history,
+            chat_history=chat_history,
             verbose=verbose,
         )
 

@@ -1,4 +1,5 @@
 """ Module description """
+
 from typing import Any, Optional, Sequence
 
 try:
@@ -9,8 +10,6 @@ except ImportError:
 from langchain_core.runnables import RunnableConfig
 
 from motleycrew.agents.parent import MotleyAgentParent
-from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
-from motleycrew.tasks import TaskUnit
 from motleycrew.common import MotleySupportedTool
 from motleycrew.common import MotleyAgentFactory
 from motleycrew.common.utils import ensure_module_is_installed
@@ -19,16 +18,16 @@ from motleycrew.common.utils import ensure_module_is_installed
 class LlamaIndexMotleyAgent(MotleyAgentParent):
     def __init__(
         self,
-        description: str,
+        description: str | None = None,
         name: str | None = None,
         agent_factory: MotleyAgentFactory | None = None,
         tools: Sequence[MotleySupportedTool] | None = None,
         verbose: bool = False,
     ):
-        """ Description
+        """Description
 
         Args:
-            description (str):
+            description (:obj:`str`, optional):
             name (:obj:`str`, optional):
             agent_factory (:obj:`MotleyAgentFactory`, optional):
             tools (:obj:`Sequence[MotleySupportedTool]`, optional):
@@ -48,7 +47,7 @@ class LlamaIndexMotleyAgent(MotleyAgentParent):
         config: Optional[RunnableConfig] = None,
         **kwargs: Any,
     ) -> Any:
-        """ Description
+        """Description
 
         Args:
             task_dict (dict):
@@ -59,10 +58,7 @@ class LlamaIndexMotleyAgent(MotleyAgentParent):
             Any:
         """
         self.materialize()
-
-        prompt = task_dict.get("prompt")
-        if not prompt:
-            raise ValueError("Task must have a prompt")
+        prompt = self.compose_prompt(task_dict, task_dict.get("prompt"))
 
         output = self.agent.chat(prompt)
         return output.response
@@ -70,15 +66,15 @@ class LlamaIndexMotleyAgent(MotleyAgentParent):
     @staticmethod
     def from_agent(
         agent: AgentRunner,
-        goal: str,
+        description: Optional[str] = None,
         tools: Sequence[MotleySupportedTool] | None = None,
         verbose: bool = False,
     ) -> "LlamaIndexMotleyAgent":
-        """ Description
+        """Description
 
         Args:
             agent (AgentRunner):
-            goal (str):
+            description (:obj:`str`, optional):
             tools (:obj:`Sequence[MotleySupportedTool]`, optional):
             verbose (:obj:`bool`, optional):
 
@@ -86,6 +82,6 @@ class LlamaIndexMotleyAgent(MotleyAgentParent):
             LlamaIndexMotleyAgent:
         """
         ensure_module_is_installed("llama_index")
-        wrapped_agent = LlamaIndexMotleyAgent(description=goal, tools=tools, verbose=verbose)
+        wrapped_agent = LlamaIndexMotleyAgent(description=description, tools=tools, verbose=verbose)
         wrapped_agent._agent = agent
         return wrapped_agent

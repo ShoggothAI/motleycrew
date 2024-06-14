@@ -14,7 +14,6 @@ except ImportError:
 
 from motleycrew.common.utils import ensure_module_is_installed
 from motleycrew.common.types import MotleySupportedTool
-from motleycrew.common.exceptions import InvalidToolInput
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
 
 

@@ -1,4 +1,6 @@
 """ Module description"""
+from typing import Any, Optional
+
 from motleycrew.common import Defaults
 
 
@@ -76,8 +78,8 @@ class IntegrationTestException(Exception):
         return "Some integration tests failed: {}".format(self.test_names)
 
 
-class ModuleNotInstalledException(Exception):
-    """ Not install module exception
+class ModuleNotInstalled(Exception):
+    """Module not installed
 
     Args:
         module_name (str): the name of the non-installed module
@@ -97,3 +99,18 @@ class ModuleNotInstalledException(Exception):
             msg = "{}, {}".format(msg, self.install_command)
 
         return "{}.".format(msg)
+
+
+class InvalidToolInput(Exception):
+    """Raised when the tool input is invalid"""
+
+    def __init__(self, tool: Any, input: Any, message: Optional[str] = None):
+        self.tool = tool
+        self.input = input
+        self.message = message
+
+    def __str__(self):
+        msg = "Invalid input `{}` for tool `{}`".format(self.input, self.tool_name)
+        if self.message:
+            msg = "{}: {}".format(msg, self.message)
+        return msg

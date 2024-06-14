@@ -1,6 +1,6 @@
 """ Module description """
-import tempfile
 from typing import Optional
+import tempfile
 import os
 
 from motleycrew.common import Defaults

@@ -1,5 +1,6 @@
 """ Module description """
 from typing import Union, Annotated
+from typing import Callable
 
 from langchain.tools import BaseTool
 from langchain_core.runnables import Runnable
@@ -9,25 +10,12 @@ try:
     from llama_index.core.tools import FunctionTool as LlamaIndex__FunctionTool
 except ImportError:
     LlamaIndex__BaseTool = None
+    LlamaIndex__FunctionTool = None
 
 from motleycrew.common.utils import ensure_module_is_installed
+from motleycrew.common.types import MotleySupportedTool
+from motleycrew.common.exceptions import InvalidToolInput
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
-
-
-def normalize_input(args, kwargs):
-    """ Description
-
-    Args:
-        args (Sequence):
-        kwargs (Map):
-
-    Returns:
-        Any:
-    """
-    if "tool_input" in kwargs:
-        return kwargs["tool_input"]
-    else:
-        return args[0]
 
 
 class MotleyTool(Runnable):
@@ -40,6 +28,12 @@ class MotleyTool(Runnable):
             tool (BaseTool):
         """
         self.tool = tool
+
+    def __repr__(self):
+        return f"MotleyTool(name={self.name})"
+
+    def __str__(self):
+        return self.__repr__()
 
     @property
     def name(self):
@@ -85,9 +79,7 @@ class MotleyTool(Runnable):
         return MotleyTool.from_langchain_tool(langchain_tool=langchain_tool)
 
     @staticmethod
-    def from_supported_tool(
-        tool: Union["MotleyTool", BaseTool, LlamaIndex__BaseTool, MotleyAgentAbstractParent]
-    ):
+    def from_supported_tool(tool: MotleySupportedTool) -> "MotleyTool":
         """ Description
 
         Args:
@@ -132,7 +124,7 @@ class MotleyTool(Runnable):
         )
         return llama_index_tool
 
-    def to_autogen_tool(self):
+    def to_autogen_tool(self) -> Callable:
         """ Description
 
         Returns:

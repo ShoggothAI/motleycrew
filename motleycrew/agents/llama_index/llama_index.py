@@ -20,7 +20,7 @@ class LlamaIndexMotleyAgent(MotleyAgentParent):
         self,
         description: str | None = None,
         name: str | None = None,
-        agent_factory: MotleyAgentFactory | None = None,
+        agent_factory: MotleyAgentFactory[AgentRunner] | None = None,
         tools: Sequence[MotleySupportedTool] | None = None,
         verbose: bool = False,
     ):

@@ -1,4 +1,3 @@
-import logging
 import shutil
 from typing import Optional
 

@@ -6,7 +6,6 @@ from langchain import hub
 from langchain_core.language_models import BaseLanguageModel
 from langchain.agents import create_react_agent
 
-from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
 from motleycrew.agents.langchain.langchain import LangchainMotleyAgent
 from motleycrew.common import MotleySupportedTool
 
@@ -34,13 +33,13 @@ class ReactMotleyAgent(LangchainMotleyAgent):
         if prompt is None:
             # TODO: feed description into the agent's prompt
             prompt = hub.pull("hwchase17/react")
-        return cls.from_function(
+        return cls.from_creating_function(
             description=description,
             name=name,
             llm=llm,
             tools=tools,
             prompt=prompt,
-            function=create_react_agent,
+            creating_function=create_react_agent,
             require_tools=True,
             verbose=verbose,
         )

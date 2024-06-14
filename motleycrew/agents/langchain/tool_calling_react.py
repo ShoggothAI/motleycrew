@@ -1,9 +1,10 @@
 from typing import Sequence, List, Union
 
-from langchain_core.messages import BaseMessage, HumanMessage, ChatMessage
+from langchain_core.messages import BaseMessage, HumanMessage, ToolMessage
 from langchain_core.language_models import BaseChatModel
 from langchain_core.prompts.chat import ChatPromptTemplate
 from langchain_core.runnables import Runnable, RunnablePassthrough, RunnableLambda
+from langchain_core.runnables.history import GetSessionHistoryCallable
 from langchain_core.tools import BaseTool
 from langchain_core.agents import AgentFinish, AgentActionMessageLog
 from langchain_core.prompts import MessagesPlaceholder
@@ -147,7 +148,11 @@ def merge_consecutive_messages(messages: Sequence[BaseMessage]) -> List[BaseMess
     """
     merged_messages = []
     for message in messages:
-        if not merged_messages or type(merged_messages[-1]) != type(message):
+        if (
+            not merged_messages
+            or type(merged_messages[-1]) != type(message)
+            or isinstance(message, ToolMessage)
+        ):
             merged_messages.append(message)
         else:
             merged_messages[-1].content = merge_content(
@@ -220,31 +225,35 @@ class ReActToolCallingAgent(LangchainMotleyAgent):
     def __new__(
         cls,
         tools: Sequence[MotleySupportedTool],
-        goal: str = "",  # gets ignored at the moment
+        description: str | None = None,
         name: str | None = None,
         prompt: ChatPromptTemplate | Sequence[ChatPromptTemplate] | None = None,
-        with_history: bool = False,
         llm: BaseChatModel | None = None,
+        chat_history: bool | GetSessionHistoryCallable = True,
         verbose: bool = False,
     ):
         """Description
 
         Args:
             tools (Sequence[MotleySupportedTool]):
-            goal (:obj:`str`, optional):
+            description (:obj:`str`, optional):
             name (:obj:`str`, optional):
-            prompt (:obj:ChatPromptTemplate`, :obj:`Sequence[ChatPromptTemplate]', optional):
+            prompt (:obj:ChatPromptTemplate`, :obj:`Sequence[ChatPromptTemplate]`, optional):
+            chat_history (:obj:`bool`, :obj:`GetSessionHistoryCallable`):
+            Whether to use chat history or not. If `True`, uses `InMemoryChatMessageHistory`.
+            If a callable is passed, it is used to get the chat history by session_id.
+            See Langchain `RunnableWithMessageHistory` get_session_history param for more details.
             llm (:obj:`BaseLanguageModel`, optional):
             verbose (:obj:`bool`, optional):
         """
         return cls.from_function(
-            description=goal,
+            description=description,
             name=name,
             llm=llm,
             tools=tools,
             prompt=prompt,
             function=create_tool_calling_react_agent,
             require_tools=True,
-            with_history=with_history,
+            chat_history=chat_history,
             verbose=verbose,
         )

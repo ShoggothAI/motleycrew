@@ -14,7 +14,7 @@ def main():
 
     # TODO: add LlamaIndex native tools
     researcher = ReActLlamaIndexMotleyAgent(
-        description="Uncover cutting-edge developments in AI and data science",
+        description="Your goal is to uncover cutting-edge developments in AI and data science",
         tools=[search_tool],
         verbose=True,
     )

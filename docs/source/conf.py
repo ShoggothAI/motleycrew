@@ -15,7 +15,6 @@ sys.path.append(os.path.abspath("../.."))
 project = "motleycrew"
 copyright = "2024, motleycrew"
 author = "motleycrew"
-release = "1.0"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

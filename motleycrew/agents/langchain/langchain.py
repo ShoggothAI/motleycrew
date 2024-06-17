@@ -3,6 +3,7 @@
 from typing import Any, Optional, Sequence, Callable, Union
 
 from langchain.agents import AgentExecutor
+from langchain_core.agents import AgentFinish
 from langchain_core.runnables import RunnableConfig
 from langchain_core.runnables.history import RunnableWithMessageHistory, GetSessionHistoryCallable
 from langchain_core.chat_history import InMemoryChatMessageHistory
@@ -28,6 +29,7 @@ class LangchainMotleyAgent(MotleyAgentParent):
         name: str | None = None,
         agent_factory: MotleyAgentFactory[AgentExecutor] | None = None,
         tools: Sequence[MotleySupportedTool] | None = None,
+        output_handler: MotleySupportedTool | None = None,
         verbose: bool = False,
         chat_history: bool | GetSessionHistoryCallable = True,
     ):
@@ -38,6 +40,7 @@ class LangchainMotleyAgent(MotleyAgentParent):
             name (:obj:`str`, optional):
             agent_factory (:obj:`MotleyAgentFactory`, optional):
             tools (:obj:`Sequence[MotleySupportedTool]`, optional):
+            output_handler (:obj:`MotleySupportedTool`, optional):
             verbose (bool):
             chat_history (:obj:`bool`, :obj:`GetSessionHistoryCallable`):
             Whether to use chat history or not. If `True`, uses `InMemoryChatMessageHistory`.
@@ -49,6 +52,7 @@ class LangchainMotleyAgent(MotleyAgentParent):
             name=name,
             agent_factory=agent_factory,
             tools=tools,
+            output_handler=output_handler,
             verbose=verbose,
         )
 
@@ -100,78 +104,20 @@ class LangchainMotleyAgent(MotleyAgentParent):
                 config["configurable"].get("session_id") or "default"
             )
 
-        result = self.agent.invoke({"input": prompt}, config, **kwargs)
-        output = result.get("output")
-        if output is None:
-            raise Exception("Agent {} result does not contain output: {}".format(self, result))
+        output = self._run_and_catch_output(
+            action=self.agent.invoke,
+            action_args=(
+                {"input": prompt},
+                config,
+            ),
+            action_kwargs=kwargs,
+        )
+
+        # output = result.get("output")
+        # if output is None:
+        #     raise Exception("Agent {} result does not contain output: {}".format(self, result))
 
         return output
-
-    @staticmethod
-    def from_creating_function(
-        creating_function: Callable[
-            [
-                BaseLanguageModel,
-                Sequence[BaseTool],
-                Union[BasePromptTemplate, Sequence[BasePromptTemplate], None],
-            ],
-            Any,
-        ],
-        description: str | None = None,
-        name: str | None = None,
-        llm: BaseLanguageModel | None = None,
-        tools: Sequence[MotleySupportedTool] | None = None,
-        prompt: BasePromptTemplate | Sequence[BasePromptTemplate] | None = None,
-        require_tools: bool = False,
-        chat_history: bool | GetSessionHistoryCallable = True,
-        verbose: bool = False,
-    ) -> "LangchainMotleyAgent":
-        """Description
-
-        Args:
-            creating_function (Callable):
-            description (:obj:`str`, optional):
-            name (:obj:`str`, optional):
-            llm (:obj:`BaseLanguageModel`, optional):
-            tools (:obj:`Sequence[MotleySupportedTool]`, optional):
-            prompt (:obj:`ChatPromptTemplate`, :obj:`Sequence[ChatPromptTemplate]`, optional):
-            require_tools (bool):
-            chat_history (:obj:`bool`, :obj:`GetSessionHistoryCallable`):
-            Whether to use chat history or not. If `True`, uses `InMemoryChatMessageHistory`.
-            If a callable is passed, it is used to get the chat history by session_id.
-            See Langchain `RunnableWithMessageHistory` get_session_history param for more details.
-            verbose (bool):
-
-        Returns:
-            LangchainMotleyAgent:
-        """
-        if llm is None:
-            llm = init_llm(llm_framework=LLMFramework.LANGCHAIN)
-
-        if require_tools and not tools:
-            raise ValueError("You must provide at least one tool to the LangchainMotleyAgent")
-
-        for tool in tools:
-            MotleyTool.from_supported_tool(tool)
-
-        def agent_factory(tools: dict[str, MotleyTool]) -> AgentExecutor:
-            langchain_tools = [t.to_langchain_tool() for t in tools.values()]
-            agent = creating_function(llm, langchain_tools, prompt)
-            agent_executor = AgentExecutor(
-                agent=agent,
-                tools=langchain_tools,
-                verbose=verbose,
-            )
-            return agent_executor
-
-        return LangchainMotleyAgent(
-            description=description,
-            name=name,
-            agent_factory=agent_factory,
-            tools=tools,
-            chat_history=chat_history,
-            verbose=verbose,
-        )
 
     @staticmethod
     def from_agent(

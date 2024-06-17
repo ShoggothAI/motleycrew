@@ -114,3 +114,8 @@ class InvalidToolInput(Exception):
         if self.message:
             msg = "{}: {}".format(msg, self.message)
         return msg
+
+
+class InvalidOutput(Exception):
+    """Raised in output handlers when an agent's output is not accepted"""
+    pass

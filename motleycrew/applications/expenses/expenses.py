@@ -1,4 +1,4 @@
-from motleycrew.agents import ReActToolCallingAgent
+from motleycrew.agents.langchain import ReActToolCallingAgent
 from sql_tools import SQLExpression
 from schema_delta import delta_generator
 

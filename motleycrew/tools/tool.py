@@ -1,4 +1,5 @@
 """ Module description """
+
 from typing import Union, Annotated
 from typing import Callable
 
@@ -20,7 +21,7 @@ from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
 class MotleyTool(Runnable):
 
     def __init__(self, tool: BaseTool):
-        """ Base tool class compatible with MotleyAgents.
+        """Base tool class compatible with MotleyAgents.
         It is a wrapper for LangChain's BaseTool, containing all necessary adapters and converters.
 
         Args:
@@ -39,8 +40,16 @@ class MotleyTool(Runnable):
         # TODO: do we really want to make a thin wrapper in this fashion?
         return self.tool.name
 
+    @property
+    def description(self):
+        return self.tool.description
+
+    @property
+    def args_schema(self):
+        return self.tool.args_schema
+
     def invoke(self, *args, **kwargs):
-        """ Description
+        """Description
 
         Args:
             *args:
@@ -53,7 +62,7 @@ class MotleyTool(Runnable):
 
     @staticmethod
     def from_langchain_tool(langchain_tool: BaseTool) -> "MotleyTool":
-        """ Description
+        """Description
 
         Args:
             langchain_tool (BaseTool):
@@ -65,7 +74,7 @@ class MotleyTool(Runnable):
 
     @staticmethod
     def from_llama_index_tool(llama_index_tool: LlamaIndex__BaseTool) -> "MotleyTool":
-        """ Description
+        """Description
 
         Args:
             llama_index_tool (LlamaIndex__BaseTool):
@@ -79,7 +88,7 @@ class MotleyTool(Runnable):
 
     @staticmethod
     def from_supported_tool(tool: MotleySupportedTool) -> "MotleyTool":
-        """ Description
+        """Description
 
         Args:
             tool (:obj:`MotleyTool`, :obj:`BaseTool`, :obj:`LlamaIndex__BaseTool`, :obj:`MotleyAgentAbstractParent`):
@@ -101,7 +110,7 @@ class MotleyTool(Runnable):
             )
 
     def to_langchain_tool(self) -> BaseTool:
-        """ Description
+        """Description
 
         Returns:
             BaseTool:
@@ -109,7 +118,7 @@ class MotleyTool(Runnable):
         return self.tool
 
     def to_llama_index_tool(self) -> LlamaIndex__BaseTool:
-        """ Description
+        """Description
 
         Returns:
             LlamaIndex__BaseTool:
@@ -124,7 +133,7 @@ class MotleyTool(Runnable):
         return llama_index_tool
 
     def to_autogen_tool(self) -> Callable:
-        """ Description
+        """Description
 
         Returns:
             Callable:

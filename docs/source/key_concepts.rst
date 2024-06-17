@@ -122,3 +122,28 @@ method. When the worker finishes processing the task unit, the crew calls the ta
 
 Now that you know the basics, we suggest you check out the `research agent example <examples/research_agent.html>`_
 to see how it all works together.
+
+
+Asynchronous execution
+----------------------
+
+Motleycrew supports asynchronous execution of task units. In this mode, the crew does not wait for the
+completion of a task unit before searching for others. Instead, it searches and queues the task units
+in an infinite loop till the queue is empty and no tasks are returning units.
+
+Note that the dispatching process is always synchronous, so a task's ``get_next_unit`` method can be called only
+after the previous unit is marked as pending and added to the knowledge graph and the execution queue.
+So a task can generate new units based on what units have already been dispatched.
+
+Motleycrew implements this behavior with 2 backends: ``asyncio`` and ``threading``. Feel free to make a feature request
+if your needs call for some other backend.
+
+.. code-block:: python
+
+    from motleycrew.common import AsyncBackend
+    crew = MotleyCrew(async_backend=AsyncBackend.ASYNCIO)  # or AsyncBackend.THREADING
+    crew.run()
+
+Also, you should specify if a task's units can be executed in parallel to each other, by providing
+``allow_async_units=True`` to the ``__init__`` method of the ``Task`` class. Otherwise, this task's
+units will be only run in parallel to other tasks' units.

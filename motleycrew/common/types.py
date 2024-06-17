@@ -1,5 +1,5 @@
 """ Module description"""
-from typing import TYPE_CHECKING, Any, Union, Protocol, TypeVar
+from typing import TYPE_CHECKING, Union, Optional, Protocol, TypeVar
 
 if TYPE_CHECKING:
     from langchain.tools import BaseTool
@@ -28,7 +28,12 @@ AgentType = TypeVar("AgentType")
 class MotleyAgentFactory(Protocol[AgentType]):
     """
     Type protocol for an agent factory.
-    It is a function that accepts tools as an argument and returns an agent instance of an appropriate class.
+    It is a function that accepts tools as an argument
+    and returns an agent instance of an appropriate class.
     """
 
-    def __call__(self, tools: dict[str, MotleyTool]) -> AgentType: ...
+    def __call__(
+        self,
+        tools: dict[str, MotleyTool],
+        output_handler: Optional[MotleyTool] = None,
+    ) -> AgentType: ...

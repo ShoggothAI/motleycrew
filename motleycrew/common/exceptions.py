@@ -76,6 +76,21 @@ class IntegrationTestException(Exception):
         return "Some integration tests failed: {}".format(self.test_names)
 
 
+class IpynbIntegrationTestResultNotFound(Exception):
+    """ Ipynb integration test not found result file exception
+
+    Args:
+        ipynb_path (str): path to running ipynb
+        result_path (str): path to execution result file
+    """
+    def __init__(self, ipynb_path: str, result_path: str):
+        self.ipynb_path = ipynb_path
+        self.result_path = result_path
+
+    def __str__(self):
+        return "File result {} of the ipynb {} execution, not found.".format(self.result_path, self.ipynb_path)
+
+
 class ModuleNotInstalledException(Exception):
     """ Not install module exception
 

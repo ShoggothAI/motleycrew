@@ -13,8 +13,9 @@ from functools import partial
 from dotenv import load_dotenv
 import nbformat
 from nbconvert.preprocessors import ExecutePreprocessor
+from nbformat.v4.nbbase import new_code_cell
 
-from motleycrew.common.exceptions import IntegrationTestException
+from motleycrew.common.exceptions import IntegrationTestException, IpynbIntegrationTestResultNotFound
 from motleycrew.common import logger, configure_logging
 
 from motleycache import (
@@ -33,12 +34,10 @@ INTEGRATION_TESTS = {
 }
 
 IPYNB_INTEGRATION_TESTS = {
-    # "delegation_crewai_ipynb": "examples/delegation_crewai.ipynb",
-    # "image_generation_crewai_ipynb": "examples/image_generation_crewai.ipynb",
-    # "math_crewai_ipynb": "examples/math_crewai.ipynb",
-    # "single_crewai_ipynb": "examples/single_crewai.ipynb",
-    # "single_llama_index_ipynb": "examples/single_llama_index.ipynb",
-    # "single_openai_tools_react_ipynb": "examples/single_openai_tools_react.ipynb",
+    "blog_with_images_ipynb": "examples/Blog with Images.ipynb",
+    "multi_step_research_agent_ipynb": "examples/Multi-step research agent.ipynb",
+    "math_via_python_code_with_a_single_agent_ipynb": "examples/Math via python code with a single agent.ipynb",
+    # "using_autogen_with_motleycrew_ipynb": "examples/Using AutoGen with motleycrew.ipynb"
 }
 
 MINIMAL_INTEGRATION_TESTS = {}
@@ -125,13 +124,51 @@ def read_golden_data(golden_dir: str, test_name: str, extension: str = "json"):
         return json.load(fd)
 
 
-def run_ipynb(ipynb_path: str):
+def run_ipynb(ipynb_path: str, strong_cache: bool = False, cache_sub_dir: str = None) -> str:
     """Run jupiter notebook execution"""
     with open(ipynb_path) as f:
         nb = nbformat.read(f, as_version=4)
 
-    ep = ExecutePreprocessor()
+    # ipynb import and cache settings
+    if cache_sub_dir:
+        str_strong_cache = "True" if strong_cache else "False"
+        cells = [
+            new_code_cell("from motleycache.caching import enable_cache, disable_cache, set_cache_location"),
+            new_code_cell("from motleycache import set_strong_cache"),
+            new_code_cell("enable_cache()"),
+            new_code_cell("set_strong_cache({})".format(str_strong_cache)),
+            new_code_cell("set_cache_location(r'{}')".format(cache_sub_dir))
+            ]
+        for cell in reversed(cells):
+            nb.cells.insert(0, cell)
+
+        # ipynb save final result
+        # final_result variable must be present in ipynb and store the result of the execution as a string
+        ipynb_result_file_path = os.path.join(cache_sub_dir, "ipynb_result.txt")
+        save_result_command = "with open(r'{}', 'w') as f:\n\tf.write(final_result)".format(ipynb_result_file_path)
+        cells = [
+            new_code_cell(save_result_command),
+            new_code_cell("disable_cache()")
+        ]
+        nb.cells += cells
+    else:
+        ipynb_result_file_path = None
+
+    ep = ExecutePreprocessor(kernel_name="python3")
     ep.preprocess(nb)
+
+    # create result
+    if ipynb_result_file_path is not None:
+        if os.path.exists(ipynb_result_file_path):
+            with open(ipynb_result_file_path) as f:
+                result = f.read()
+            os.remove(ipynb_result_file_path)
+        else:
+            raise IpynbIntegrationTestResultNotFound(ipynb_path, ipynb_result_file_path)
+    else:
+        result = ''
+
+    return result
 
 
 def set_tiktoken_cache_dir(cache_dir: str) -> str:
@@ -200,14 +237,24 @@ def run_integration_tests(
             shutil.rmtree(cache_sub_dir, ignore_errors=True)
             os.makedirs(cache_sub_dir, exist_ok=True)
             os.makedirs(golden_dir, exist_ok=True)
-            set_strong_cache(False)
+            strong_cache = False
         else:
-            set_strong_cache(True)
+            strong_cache = True
 
+        set_strong_cache(strong_cache)
         set_cache_location(cache_sub_dir)
+
+        if current_test_name in IPYNB_INTEGRATION_TESTS:
+            test_fn_kwargs = {
+                "strong_cache": strong_cache,
+                "cache_sub_dir": cache_sub_dir
+            }
+        else:
+            test_fn_kwargs = {}
+
         try:
-            test_result = test_fn()
-            if current_test_name in INTEGRATION_TESTS:
+            test_result = test_fn(**test_fn_kwargs)
+            if current_test_name in INTEGRATION_TESTS or current_test_name in IPYNB_INTEGRATION_TESTS:
                 if update_golden:
                     logger.info(
                         "Skipping check and updating golden data for test: %s", current_test_name

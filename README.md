@@ -1,7 +1,7 @@
 # motleycrew
 
 [![PyPI - Version](https://img.shields.io/pypi/v/motleycrew)](https://pypi.org/project/motleycrew/)
-[![CI](https://github.com/langchain-ai/langchain/actions/workflows/check_diffs.yml/badge.svg)](https://github.com/ShoggothAI/motleycrew/actions/workflows/build.yml)
+[![CI](https://github.com/ShoggothAI/motleycrew/actions/workflows/build.yml/badge.svg)](https://github.com/ShoggothAI/motleycrew/actions/workflows/build.yml)
 [![GitHub commit activity (branch)](https://img.shields.io/github/commit-activity/w/ShoggothAI/motleycrew)](https://github.com/ShoggothAI/motleycrew/commits/main/)
 
 [Website](https://motleycrew.ai) •︎ [Documentation](https://motleycrew.readthedocs.io)

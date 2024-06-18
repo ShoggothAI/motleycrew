@@ -1,10 +1,19 @@
 import pytest
 
-from motleycrew.tools import PgSqlLinterTool
+from motleycrew.tools import PgSqlLinterTool, PythonLinterTool
+from motleycrew.common.exceptions import ModuleNotInstalledException
 
 @pytest.fixture
 def pgsql_linter_tool():
     tool = PgSqlLinterTool()
+    return tool
+
+@pytest.fixture
+def python_linter_tool():
+    try:
+        tool = PythonLinterTool()
+    except ModuleNotInstalledException:
+        tool = None
     return tool
 
 @pytest.mark.parametrize(
@@ -18,3 +27,30 @@ def pgsql_linter_tool():
 def test_pgsql_tool(pgsql_linter_tool, query, expected):
     parse_result = pgsql_linter_tool.invoke({"query": query})
     assert expected == parse_result
+
+@pytest.mark.parametrize(
+    "code, file_name, valid_code, raises",
+    [
+        ("def plus(a, b):\n\treturn a + b", None, True, False),
+        ("def plus(a):\n\treturn a + b", "test_code.py", False, False),
+        ("def plus(a, b):\nreturn a + b", "test_code.py", False, False),
+        ("def plus(a, b):\n\treturn a + b", "code.js", True, True),
+    ]
+)
+def test_python_tool(python_linter_tool, code, file_name, valid_code, raises):
+    if python_linter_tool is None:
+        return
+
+    params = {"code": code}
+    if file_name:
+        params["file_name"] = file_name
+
+    if raises:
+        with pytest.raises(ValueError):
+            python_linter_tool.invoke(params)
+    else:
+        linter_result = python_linter_tool.invoke(params)
+        if valid_code:
+            assert linter_result is None
+        else:
+            assert isinstance(linter_result, str)

@@ -31,15 +31,15 @@ To get you started, here's a simple example of how to create a crew with two age
 
 ```python
 from motleycrew import MotleyCrew
-from motleycrew.agents.langchain import ReactMotleyAgent
+from motleycrew.agents.langchain import ReActToolCallingAgent
 from motleycrew.tasks import SimpleTask
 from motleycrew.tools.image.dall_e import DallEImageGeneratorTool
 from langchain_community.tools import DuckDuckGoSearchRun
 
 crew = MotleyCrew()
 
-writer = ReactMotleyAgent(name="writer", tools=[DuckDuckGoSearchRun()])
-illustrator = ReactMotleyAgent(name="illustrator", tools=[DallEImageGeneratorTool()])
+writer = ReActToolCallingAgent(name="writer", tools=[DuckDuckGoSearchRun()])
+illustrator = ReActToolCallingAgent(name="illustrator", tools=[DallEImageGeneratorTool()])
 
 write_task = SimpleTask(
     crew=crew, agent=writer, description="Write a short article about latest AI advancements"

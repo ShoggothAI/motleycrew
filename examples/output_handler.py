@@ -25,7 +25,7 @@ def main():
 
     output_handler = StructuredTool.from_function(
         name="output_handler",
-        description="You must use this tool for returning the output",
+        description="Output handler",
         func=check_output,
     )
 
@@ -34,19 +34,13 @@ def main():
         verbose=True,
         chat_history=True,
         output_handler=output_handler,
-        # llm=init_llm(
-        #     llm_framework=LLMFramework.LANGCHAIN,
-        #     llm_family=LLMFamily.ANTHROPIC,
-        #     llm_name="claude-3-sonnet-20240229",
-        # ),
     )
-
 
     crew = MotleyCrew()
     task = SimpleTask(
         crew=crew,
-        name="produce comprehensive analysis report on AI advancements",
-        description="""Conduct a comprehensive analysis of the latest advancements in AI.
+        name="produce comprehensive analysis report on AI advancements in 2024",
+        description="""Conduct a comprehensive analysis of the latest advancements in AI in 2024.
       Identify key trends, breakthrough technologies, and potential industry impacts.
       Your final answer MUST be a full analysis report""",
         agent=researcher,

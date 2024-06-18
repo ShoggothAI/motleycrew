@@ -1,10 +1,10 @@
 """ Module description """
 
-from typing import Union, Annotated
+from typing import Union, Annotated, Optional, Dict, Any
 from typing import Callable
 
 from langchain.tools import BaseTool
-from langchain_core.runnables import Runnable
+from langchain_core.runnables import Runnable, RunnableConfig
 
 try:
     from llama_index.core.tools import BaseTool as LlamaIndex__BaseTool
@@ -48,17 +48,13 @@ class MotleyTool(Runnable):
     def args_schema(self):
         return self.tool.args_schema
 
-    def invoke(self, *args, **kwargs):
-        """Description
-
-        Args:
-            *args:
-            **kwargs:
-
-        Returns:
-            Any:
-        """
-        return self.tool.invoke(*args, **kwargs)
+    def invoke(
+        self,
+        input: Union[str, Dict],
+        config: Optional[RunnableConfig] = None,
+        **kwargs: Any,
+    ) -> Any:
+        return self.tool.invoke(input=input, config=config, **kwargs)
 
     @staticmethod
     def from_langchain_tool(langchain_tool: BaseTool) -> "MotleyTool":

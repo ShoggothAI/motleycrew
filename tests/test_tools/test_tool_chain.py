@@ -4,8 +4,8 @@ from motleycrew.tools import MotleyTool
 
 
 class ToolMock:
-    def invoke(self, input_dict: dict, *args, **kwargs):
-        return input_dict
+    def invoke(self, input: dict, *args, **kwargs):
+        return input
 
 
 @pytest.fixture

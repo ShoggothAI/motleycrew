@@ -3,20 +3,22 @@
 from typing import Any, Optional, Sequence, Callable, Union
 
 from langchain.agents import AgentExecutor
-from langchain_core.agents import AgentFinish
-from langchain_core.runnables import RunnableConfig
+from langchain.agents.agent import RunnableAgent
+from langchain_core.agents import AgentFinish, AgentAction
+from langchain_core.runnables import Runnable, RunnableConfig, RunnableLambda
 from langchain_core.runnables.history import RunnableWithMessageHistory, GetSessionHistoryCallable
 from langchain_core.chat_history import InMemoryChatMessageHistory
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.prompts import BasePromptTemplate
 from langchain_core.tools import BaseTool
+from langchain_core.tools import Tool
 
 
 from motleycrew.agents.parent import MotleyAgentParent
 
 from motleycrew.tools import MotleyTool
 from motleycrew.tracking import add_default_callbacks_to_langchain_config
-from motleycrew.common import MotleySupportedTool
+from motleycrew.common import MotleySupportedTool, logger
 from motleycrew.common import MotleyAgentFactory
 from motleycrew.common import LLMFramework
 from motleycrew.common.llms import init_llm
@@ -62,13 +64,71 @@ class LangchainMotleyAgent(MotleyAgentParent):
         else:
             self.get_session_history_callable = chat_history
 
+        self._agent_finish_blocker_tool = self._create_agent_finish_blocker_tool()
+
+    def _create_agent_finish_blocker_tool(self) -> BaseTool:
+        """Create a tool that will force the agent to retry if it attempts to return the output
+        bypassing the output handler.
+        """
+
+        def create_agent_finish_blocking_message(input: Any) -> str:
+            return f"{input}\n\nYou must use {self.output_handler.name} to return the final output."
+
+        return Tool.from_function(
+            name="agent_finish_blocker",
+            description="",
+            func=create_agent_finish_blocking_message,
+        )
+
+    def _block_agent_finish(self, input: Any):
+        """Intercept AgentFinish for forcing output via output handler.
+        If the agent attempts to return the output bypassing the output handler,
+        a tool call to the agent_finish_blocker_tool will be made
+        so that one more AgentExecutor iteration is forced.
+        """
+        if isinstance(input, AgentFinish) and self.output_handler:
+            return [
+                AgentAction(
+                    tool=self._agent_finish_blocker_tool.name,
+                    tool_input={"input": input.return_values},
+                    log="\nDetected AgentFinish, blocking it to force output via output handler.\n",
+                )
+            ]
+        return input
+
     def materialize(self):
         """Materialize the agent and wrap it in RunnableWithMessageHistory if needed."""
         if self.is_materialized:
             return
 
         super().materialize()
+        assert isinstance(self._agent, AgentExecutor)
+
+        if self.output_handler:
+            self._agent.tools += [self._agent_finish_blocker_tool]
+
+            if isinstance(self._agent.agent, Runnable):
+                logger.info("Patching agent to force output via output handler")
+                agent_with_forced_output_via_handler = self._agent.agent | RunnableLambda(
+                    self._block_agent_finish
+                )
+                self._agent.agent = agent_with_forced_output_via_handler
+
+            elif isinstance(self._agent.agent, RunnableAgent):
+                logger.info("Patching agent to force output via output handler")
+                agent_with_forced_output_via_handler = self._agent.agent.runnable | RunnableLambda(
+                    self._block_agent_finish
+                )
+                self._agent.agent.runnable = agent_with_forced_output_via_handler
+
+            else:
+                logger.warning(
+                    "Agent is not a Runnable, cannot patch it to force output via output handler"
+                )
+
         if self.get_session_history_callable:
+            logger.info("Wrapping agent in RunnableWithMessageHistory")
+
             if isinstance(self._agent, RunnableWithMessageHistory):
                 return
             self._agent = RunnableWithMessageHistory(
@@ -104,7 +164,7 @@ class LangchainMotleyAgent(MotleyAgentParent):
                 config["configurable"].get("session_id") or "default"
             )
 
-        output = self._run_and_catch_output(
+        caught_direct_output, output = self._run_and_catch_output(
             action=self.agent.invoke,
             action_args=(
                 {"input": prompt},
@@ -113,9 +173,8 @@ class LangchainMotleyAgent(MotleyAgentParent):
             action_kwargs=kwargs,
         )
 
-        # output = result.get("output")
-        # if output is None:
-        #     raise Exception("Agent {} result does not contain output: {}".format(self, result))
+        if not caught_direct_output:
+            output = output.get("output")  # unpack native Langchain output
 
         return output
 

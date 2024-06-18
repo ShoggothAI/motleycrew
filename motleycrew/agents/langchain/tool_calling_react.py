@@ -256,10 +256,12 @@ class ReActToolCallingAgent(LangchainMotleyAgent):
         act_prompt: ChatPromptTemplate | None = None,
         chat_history: bool | GetSessionHistoryCallable = True,
         output_handler: MotleySupportedTool | None = None,
+        handle_parsing_errors: bool = True,
+        handle_tool_errors: bool = True,
         llm: BaseChatModel | None = None,
         verbose: bool = False,
     ):
-        """Description
+        """Universal ReAct-style agent that supports tool calling.
 
         Args:
             tools (Sequence[MotleySupportedTool]):
@@ -269,11 +271,14 @@ class ReActToolCallingAgent(LangchainMotleyAgent):
                 See Prompt section below for more on the expected input variables.
             act_prompt (ChatPromptTemplate, optional): The acting step prompt to use.
                 See Prompt section below for more on the expected input variables.
-            output_handler (BaseTool, optional): Tool to use for returning agent's output.
             chat_history (:obj:`bool`, :obj:`GetSessionHistoryCallable`):
-            Whether to use chat history or not. If `True`, uses `InMemoryChatMessageHistory`.
-            If a callable is passed, it is used to get the chat history by session_id.
-            See Langchain `RunnableWithMessageHistory` get_session_history param for more details.
+                Whether to use chat history or not. If `True`, uses `InMemoryChatMessageHistory`.
+                If a callable is passed, it is used to get the chat history by session_id.
+                See Langchain `RunnableWithMessageHistory` get_session_history param for more details.
+            output_handler (BaseTool, optional): Tool to use for returning agent's output.
+            handle_parsing_errors (:obj:`bool`, optional): Whether to handle parsing errors or not.
+            handle_tool_errors (:obj:`bool`, optional): Whether to handle tool errors or not.
+                If True, `handle_tool_error` and `handle_validation_error` in all tools are set to True.
             llm (:obj:`BaseLanguageModel`, optional):
             verbose (:obj:`bool`, optional):
         """
@@ -281,25 +286,37 @@ class ReActToolCallingAgent(LangchainMotleyAgent):
             llm = init_llm(llm_framework=LLMFramework.LANGCHAIN)
 
         if not tools:
-            raise ValueError("You must provide at least one tool to the LangchainMotleyAgent")
+            raise ValueError("You must provide at least one tool to the ReActToolCallingAgent")
 
         def agent_factory(
             tools: dict[str, MotleyTool], output_handler: Optional[MotleyTool] = None
         ) -> AgentExecutor:
-            langchain_tools = [t.to_langchain_tool() for t in tools.values()]
+            tools_for_langchain = [t.to_langchain_tool() for t in tools.values()]
+            if output_handler:
+                output_handler_for_langchain = output_handler.to_langchain_tool()
+            else:
+                output_handler_for_langchain = None
 
             agent = create_tool_calling_react_agent(
                 llm=llm,
-                tools=langchain_tools,
+                tools=tools_for_langchain,
                 think_prompt=think_prompt,
                 act_prompt=act_prompt,
-                output_handler=output_handler.to_langchain_tool(),
+                output_handler=output_handler_for_langchain,
             )
 
-            tools_for_executor = langchain_tools + [output_handler.to_langchain_tool()]
+            if output_handler_for_langchain:
+                tools_for_langchain.append(output_handler_for_langchain)
+
+            if handle_tool_errors:
+                for tool in tools_for_langchain:
+                    tool.handle_tool_error = True
+                    tool.handle_validation_error = True
+
             agent_executor = AgentExecutor(
                 agent=agent,
-                tools=tools_for_executor,
+                tools=tools_for_langchain,
+                handle_parsing_errors=handle_parsing_errors,
                 verbose=verbose,
             )
             return agent_executor

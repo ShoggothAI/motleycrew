@@ -1,20 +1,32 @@
 """ Module description """
 
-from typing import TYPE_CHECKING, Optional, Sequence
+from typing import TYPE_CHECKING, Optional, Sequence, Any, Callable, Dict, Union, Tuple
+from functools import wraps
+import inspect
 
 from langchain_core.tools import Tool
 from langchain_core.runnables import Runnable
 from langchain_core.prompts.chat import ChatPromptTemplate, HumanMessage, SystemMessage
+from langchain_core.tools import StructuredTool
 from pydantic import BaseModel
 
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
 from motleycrew.tools import MotleyTool
 from motleycrew.common import MotleyAgentFactory, MotleySupportedTool
-from motleycrew.common.exceptions import AgentNotMaterialized, CannotModifyMaterializedAgent
+from motleycrew.common.exceptions import (
+    AgentNotMaterialized,
+    CannotModifyMaterializedAgent,
+    InvalidOutput,
+)
 from motleycrew.common import logger
 
 if TYPE_CHECKING:
     from motleycrew import MotleyCrew
+
+
+class DirectOutput(BaseException):
+    def __init__(self, output: Any):
+        self.output = output
 
 
 class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
@@ -24,6 +36,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
         name: str | None = None,
         agent_factory: MotleyAgentFactory | None = None,
         tools: Sequence[MotleySupportedTool] | None = None,
+        output_handler: MotleySupportedTool | None = None,
         verbose: bool = False,
     ):
         """Description
@@ -33,12 +46,14 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
             name (:obj:`str`, optional):
             agent_factory (:obj:`MotleyAgentFactory`, optional):
             tools (:obj:`Sequence[MotleySupportedTool]`, optional):
+            output_handler (:obj:`MotleySupportedTool`, optional):
             verbose (:obj:`bool`, optional):
         """
         self.name = name or description
         self.description = description  # becomes tool description
         self.agent_factory = agent_factory
         self.tools: dict[str, MotleyTool] = {}
+        self.output_handler = output_handler
         self.verbose = verbose
         self.crew: MotleyCrew | None = None
 
@@ -97,12 +112,81 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
     def is_materialized(self):
         return self._agent is not None
 
+    def _prepare_output_handler(self) -> Optional[MotleyTool]:
+        """
+        Wraps the output handler in one more tool layer,
+        adding the necessary stuff for returning direct output through output handler.
+        Expects agent's later invocation through _run_and_catch_output method below.
+        """
+        if not self.output_handler:
+            return None
+
+        def handle_agent_output(*args, **kwargs):
+            assert self.output_handler
+            try:
+                output = self.output_handler._run(*args, **kwargs)
+            except InvalidOutput as exc:
+                return f"{exc.__class__.__name__}: {str(exc)}"
+
+            raise DirectOutput(output)
+
+        description = self.output_handler.description or f"Output handler for {self.name}"
+        assert isinstance(description, str)
+        description += "\n ONLY RETURN THE FINAL RESULT USING THIS TOOL!"
+
+        prepared_output_handler = StructuredTool.from_function(
+            name=self.output_handler.name,
+            description=description,
+            func=handle_agent_output,
+            args_schema=self.output_handler.args_schema,
+        )
+
+        return MotleyTool.from_langchain_tool(prepared_output_handler)
+
+    @staticmethod
+    def _run_and_catch_output(
+        action: Callable, action_args: tuple, action_kwargs: Dict[str, Any]
+    ) -> Tuple[bool, Any]:
+        """
+        Catcher for the direct output from the output handler (see _prepare_output_handler).
+
+        Args:
+            action (Callable): the action inside which the output handler is supposed to be called.
+                Usually the invocation method of the underlying agent.
+            action_args (tuple): the args for the action
+            action_kwargs (tuple): the kwargs for the action
+
+        Returns:
+            tuple[bool, Any]: a tuple with a boolean indicating whether the output was caught
+                via DirectOutput and the output itself
+        """
+        assert callable(action)
+
+        try:
+            output = action(*action_args, **action_kwargs)
+        except DirectOutput as output_exc:
+            return True, output_exc.output
+
+        return False, output
+
     def materialize(self):
         if self.is_materialized:
             logger.info("Agent is already materialized, skipping materialization")
             return
         assert self.agent_factory, "Cannot materialize agent without a factory provided"
-        self._agent = self.agent_factory(tools=self.tools)
+
+        output_handler = self._prepare_output_handler()
+
+        if inspect.signature(self.agent_factory).parameters.get("output_handler"):
+            logger.info("Agent factory accepts output handler, passing it")
+            self._agent = self.agent_factory(tools=self.tools, output_handler=output_handler)
+        elif output_handler:
+            logger.info("Agent factory does not accept output handler, passing it as a tool")
+            tools_with_output_handler = self.tools.copy()
+            tools_with_output_handler[output_handler.name] = output_handler
+            self._agent = self.agent_factory(tools=tools_with_output_handler)
+        else:
+            self._agent = self.agent_factory(tools=self.tools)
 
     def add_tools(self, tools: Sequence[MotleySupportedTool]):
         """Description

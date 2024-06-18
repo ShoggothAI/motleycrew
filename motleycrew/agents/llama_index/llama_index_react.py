@@ -40,7 +40,7 @@ class ReActLlamaIndexMotleyAgent(LlamaIndexMotleyAgent):
         if llm is None:
             llm = init_llm(llm_framework=LLMFramework.LLAMA_INDEX)
 
-        def agent_factory(tools: dict[str, MotleyTool]):
+        def agent_factory(tools: dict[str, MotleyTool]) -> ReActAgent:
             llama_index_tools = [t.to_llama_index_tool() for t in tools.values()]
             callbacks = get_default_callbacks_list(LLMFramework.LLAMA_INDEX)
             agent = ReActAgent.from_tools(

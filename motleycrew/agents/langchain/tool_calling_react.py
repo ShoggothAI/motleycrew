@@ -1,4 +1,4 @@
-from typing import Sequence, List, Union
+from typing import Sequence, List, Optional
 
 from langchain_core.messages import BaseMessage, HumanMessage, ToolMessage
 from langchain_core.language_models import BaseChatModel
@@ -10,13 +10,17 @@ from langchain_core.agents import AgentFinish, AgentActionMessageLog
 from langchain_core.prompts import MessagesPlaceholder
 from langchain_core.messages.base import merge_content
 
+from langchain.agents import AgentExecutor
 from langchain.agents.format_scratchpad.tools import format_to_tool_messages
 from langchain.agents.output_parsers.tools import ToolsAgentOutputParser
 
 from langchain.tools.render import render_text_description
 
-from motleycrew.agents.langchain.langchain import LangchainMotleyAgent
+from motleycrew.agents.langchain import LangchainMotleyAgent
+from motleycrew.tools import MotleyTool
 from motleycrew.common import MotleySupportedTool
+from motleycrew.common import LLMFramework
+from motleycrew.common.llms import init_llm
 from motleycrew.common.utils import print_passthrough
 
 
@@ -69,7 +73,8 @@ You have access to the following tools:
 {tools}
 
 Your response MUST be only a tool call to one of these unless the last input
-message contains the words "Final Answer"; if it does, just repeat it.
+message contains the words "Final Answer"; {output_instruction}
+{output_handler}
 
 """,
         ),
@@ -77,6 +82,12 @@ message contains the words "Final Answer"; if it does, just repeat it.
         ("user", "{input}"),
         MessagesPlaceholder(variable_name="agent_scratchpad"),
     ]
+)
+default_act_prompt_without_output_handler = default_act_prompt.partial(
+    output_instruction="if it does, just repeat it."
+)
+default_act_prompt_with_output_handler = default_act_prompt.partial(
+    output_instruction="if it does, you must use the output handler:"
 )
 
 
@@ -164,15 +175,20 @@ def merge_consecutive_messages(messages: Sequence[BaseMessage]) -> List[BaseMess
 def create_tool_calling_react_agent(
     llm: BaseChatModel,
     tools: Sequence[BaseTool],
-    prompt: tuple[ChatPromptTemplate, ChatPromptTemplate] | None = None,
+    think_prompt: ChatPromptTemplate | None = None,
+    act_prompt: ChatPromptTemplate | None = None,
+    output_handler: BaseTool | None = None,
 ) -> Runnable:
     """Create a ReAct-style agent that supports tool calling.
 
     Args:
         llm (BaseChatModel): LLM to use as the agent.
         tools (Sequence[BaseTool]): Tools this agent has access to.
-        prompt (Tuple[ChatPromptTemplate, ChatPromptTemplate], optional): The prompts to use.
+        think_prompt (ChatPromptTemplate, optional): The thinking step prompt to use.
             See Prompt section below for more on the expected input variables.
+        act_prompt (ChatPromptTemplate, optional): The acting step prompt to use.
+            See Prompt section below for more on the expected input variables.
+        output_handler (BaseTool, optional): Tool to use for returning agent's output.
 
     Returns:
         A Runnable sequence representing an agent. It takes as input all the same input
@@ -182,22 +198,31 @@ def create_tool_calling_react_agent(
     Prompt:
         This agent uses two prompts, one for thinking and one for acting. The prompts
         must have `agent_scratchpad` and `chat_history` ``MessagesPlaceholder``s.
-        If the prompt is not passed in, the default prompts are used.
+        If a prompt is not passed in, the default one is used.
 
     """
-    if prompt is None:
+    if think_prompt is None:
         think_prompt = default_think_prompt
-        act_prompt = default_act_prompt
-    else:
-        think_prompt, act_prompt = prompt
+
+    if act_prompt is None:
+        if output_handler:
+            act_prompt = default_act_prompt_with_output_handler
+        else:
+            act_prompt = default_act_prompt_without_output_handler
 
     think_prompt = think_prompt.partial(tools=render_text_description(list(tools)))
-    act_prompt = act_prompt.partial(tools=render_text_description(list(tools)))
+    act_prompt = act_prompt.partial(
+        tools=render_text_description(list(tools)),
+        output_handler=render_text_description([output_handler]) if output_handler else "",
+    )
 
     check_variables(think_prompt)
     check_variables(act_prompt)
 
-    llm_with_tools = llm.bind_tools(tools=tools)
+    tools_for_llm = list(tools)
+    if output_handler:
+        tools_for_llm.append(output_handler)
+    llm_with_tools = llm.bind_tools(tools=tools_for_llm)
 
     think_chain = think_prompt | llm_with_tools | RunnableLambda(cast_thought_to_human_message)
     act_chain = (
@@ -222,38 +247,86 @@ def create_tool_calling_react_agent(
 
 
 class ReActToolCallingAgent(LangchainMotleyAgent):
-    def __new__(
-        cls,
+    def __init__(
+        self,
         tools: Sequence[MotleySupportedTool],
         description: str | None = None,
         name: str | None = None,
-        prompt: ChatPromptTemplate | Sequence[ChatPromptTemplate] | None = None,
-        llm: BaseChatModel | None = None,
+        think_prompt: ChatPromptTemplate | None = None,
+        act_prompt: ChatPromptTemplate | None = None,
         chat_history: bool | GetSessionHistoryCallable = True,
+        output_handler: MotleySupportedTool | None = None,
+        handle_parsing_errors: bool = True,
+        handle_tool_errors: bool = True,
+        llm: BaseChatModel | None = None,
         verbose: bool = False,
     ):
-        """Description
+        """Universal ReAct-style agent that supports tool calling.
 
         Args:
             tools (Sequence[MotleySupportedTool]):
             description (:obj:`str`, optional):
             name (:obj:`str`, optional):
-            prompt (:obj:ChatPromptTemplate`, :obj:`Sequence[ChatPromptTemplate]`, optional):
+            think_prompt (ChatPromptTemplate, optional): The thinking step prompt to use.
+                See Prompt section below for more on the expected input variables.
+            act_prompt (ChatPromptTemplate, optional): The acting step prompt to use.
+                See Prompt section below for more on the expected input variables.
             chat_history (:obj:`bool`, :obj:`GetSessionHistoryCallable`):
-            Whether to use chat history or not. If `True`, uses `InMemoryChatMessageHistory`.
-            If a callable is passed, it is used to get the chat history by session_id.
-            See Langchain `RunnableWithMessageHistory` get_session_history param for more details.
+                Whether to use chat history or not. If `True`, uses `InMemoryChatMessageHistory`.
+                If a callable is passed, it is used to get the chat history by session_id.
+                See Langchain `RunnableWithMessageHistory` get_session_history param for more details.
+            output_handler (BaseTool, optional): Tool to use for returning agent's output.
+            handle_parsing_errors (:obj:`bool`, optional): Whether to handle parsing errors or not.
+            handle_tool_errors (:obj:`bool`, optional): Whether to handle tool errors or not.
+                If True, `handle_tool_error` and `handle_validation_error` in all tools are set to True.
             llm (:obj:`BaseLanguageModel`, optional):
             verbose (:obj:`bool`, optional):
         """
-        return cls.from_function(
+        if llm is None:
+            llm = init_llm(llm_framework=LLMFramework.LANGCHAIN)
+
+        if not tools:
+            raise ValueError("You must provide at least one tool to the ReActToolCallingAgent")
+
+        def agent_factory(
+            tools: dict[str, MotleyTool], output_handler: Optional[MotleyTool] = None
+        ) -> AgentExecutor:
+            tools_for_langchain = [t.to_langchain_tool() for t in tools.values()]
+            if output_handler:
+                output_handler_for_langchain = output_handler.to_langchain_tool()
+            else:
+                output_handler_for_langchain = None
+
+            agent = create_tool_calling_react_agent(
+                llm=llm,
+                tools=tools_for_langchain,
+                think_prompt=think_prompt,
+                act_prompt=act_prompt,
+                output_handler=output_handler_for_langchain,
+            )
+
+            if output_handler_for_langchain:
+                tools_for_langchain.append(output_handler_for_langchain)
+
+            if handle_tool_errors:
+                for tool in tools_for_langchain:
+                    tool.handle_tool_error = True
+                    tool.handle_validation_error = True
+
+            agent_executor = AgentExecutor(
+                agent=agent,
+                tools=tools_for_langchain,
+                handle_parsing_errors=handle_parsing_errors,
+                verbose=verbose,
+            )
+            return agent_executor
+
+        super().__init__(
             description=description,
             name=name,
-            llm=llm,
+            agent_factory=agent_factory,
             tools=tools,
-            prompt=prompt,
-            function=create_tool_calling_react_agent,
-            require_tools=True,
+            output_handler=output_handler,
             chat_history=chat_history,
             verbose=verbose,
         )

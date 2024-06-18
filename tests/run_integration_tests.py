@@ -15,7 +15,10 @@ import nbformat
 from nbconvert.preprocessors import ExecutePreprocessor
 from nbformat.v4.nbbase import new_code_cell
 
-from motleycrew.common.exceptions import IntegrationTestException, IpynbIntegrationTestResultNotFound
+from motleycrew.common.exceptions import (
+    IntegrationTestException,
+    IpynbIntegrationTestResultNotFound,
+)
 from motleycrew.common import logger, configure_logging
 
 from motleycache import (
@@ -51,6 +54,13 @@ MINIMAL_IPYNB_INTEGRATION_TESTS = {
     # "single_openai_tools_react_ipynb": "examples/single_openai_tools_react.ipynb",
 }
 
+ALL_INTEGRATION_TESTS = dict(
+    **INTEGRATION_TESTS,
+    **IPYNB_INTEGRATION_TESTS,
+    **MINIMAL_INTEGRATION_TESTS,
+    **MINIMAL_IPYNB_INTEGRATION_TESTS
+)
+
 DEFAULT_CACHE_DIR = Path(__file__).parent / "itest_cache"
 DEFAULT_GOLDEN_DIR = Path(__file__).parent / "itest_golden_data"
 TIKTOKEN_CACHE_DIR_NAME = "tiktoken_cache"
@@ -65,7 +75,7 @@ def get_args_parser():
     parser.add_argument(
         "--test-name",
         type=str,
-        choices=INTEGRATION_TESTS.keys(),
+        choices=ALL_INTEGRATION_TESTS.keys(),
         help="Name of the test to run (leave empty to run all tests)",
         default=None,
     )
@@ -133,23 +143,24 @@ def run_ipynb(ipynb_path: str, strong_cache: bool = False, cache_sub_dir: str = 
     if cache_sub_dir:
         str_strong_cache = "True" if strong_cache else "False"
         cells = [
-            new_code_cell("from motleycache.caching import enable_cache, disable_cache, set_cache_location"),
+            new_code_cell(
+                "from motleycache.caching import enable_cache, disable_cache, set_cache_location"
+            ),
             new_code_cell("from motleycache import set_strong_cache"),
             new_code_cell("enable_cache()"),
             new_code_cell("set_strong_cache({})".format(str_strong_cache)),
-            new_code_cell("set_cache_location(r'{}')".format(cache_sub_dir))
-            ]
+            new_code_cell("set_cache_location(r'{}')".format(cache_sub_dir)),
+        ]
         for cell in reversed(cells):
             nb.cells.insert(0, cell)
 
         # ipynb save final result
         # final_result variable must be present in ipynb and store the result of the execution as a string
         ipynb_result_file_path = os.path.join(cache_sub_dir, "ipynb_result.txt")
-        save_result_command = "with open(r'{}', 'w') as f:\n\tf.write(final_result)".format(ipynb_result_file_path)
-        cells = [
-            new_code_cell(save_result_command),
-            new_code_cell("disable_cache()")
-        ]
+        save_result_command = "with open(r'{}', 'w') as f:\n\tf.write(final_result)".format(
+            ipynb_result_file_path
+        )
+        cells = [new_code_cell(save_result_command), new_code_cell("disable_cache()")]
         nb.cells += cells
     else:
         ipynb_result_file_path = None
@@ -166,7 +177,7 @@ def run_ipynb(ipynb_path: str, strong_cache: bool = False, cache_sub_dir: str = 
         else:
             raise IpynbIntegrationTestResultNotFound(ipynb_path, ipynb_result_file_path)
     else:
-        result = ''
+        result = ""
 
     return result
 
@@ -245,16 +256,16 @@ def run_integration_tests(
         set_cache_location(cache_sub_dir)
 
         if current_test_name in IPYNB_INTEGRATION_TESTS:
-            test_fn_kwargs = {
-                "strong_cache": strong_cache,
-                "cache_sub_dir": cache_sub_dir
-            }
+            test_fn_kwargs = {"strong_cache": strong_cache, "cache_sub_dir": cache_sub_dir}
         else:
             test_fn_kwargs = {}
 
         try:
             test_result = test_fn(**test_fn_kwargs)
-            if current_test_name in INTEGRATION_TESTS or current_test_name in IPYNB_INTEGRATION_TESTS:
+            if (
+                current_test_name in INTEGRATION_TESTS
+                or current_test_name in IPYNB_INTEGRATION_TESTS
+            ):
                 if update_golden:
                     logger.info(
                         "Skipping check and updating golden data for test: %s", current_test_name

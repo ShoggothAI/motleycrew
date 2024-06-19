@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from langchain_community.tools import DuckDuckGoSearchRun
 
 from motleycrew.agents.crewai import CrewAIMotleyAgent
-from motleycrew.agents.langchain.react import ReactMotleyAgent
+from motleycrew.agents.langchain.react import ReActMotleyAgent
 from motleycrew.common import configure_logging
 from motleycrew.tasks import SimpleTask
 
@@ -37,7 +37,7 @@ def main():
     )
 
     # You can give agents as tools to other agents
-    writer = ReactMotleyAgent(
+    writer = ReActMotleyAgent(
         name="AI writer agent",
         description="You are an experienced writer with a passion for technology.",
         tools=[researcher],

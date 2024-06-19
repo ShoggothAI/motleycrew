@@ -5,7 +5,6 @@ from typing import Any, Optional, Sequence
 from langchain_core.runnables import RunnableConfig
 
 from motleycrew.agents.parent import MotleyAgentParent
-from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
 from motleycrew.agents.crewai import CrewAIAgentWithConfig
 from motleycrew.common import MotleySupportedTool
 from motleycrew.common import MotleyAgentFactory
@@ -23,7 +22,7 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
         self,
         goal: str,
         name: str | None = None,
-        agent_factory: MotleyAgentFactory | None = None,
+        agent_factory: MotleyAgentFactory[CrewAIAgentWithConfig] | None = None,
         tools: Sequence[MotleySupportedTool] | None = None,
         verbose: bool = False,
     ):

@@ -7,4 +7,5 @@ Examples
 
    examples/blog_with_images
    examples/research_agent
+   examples/output_handlers
    autogen

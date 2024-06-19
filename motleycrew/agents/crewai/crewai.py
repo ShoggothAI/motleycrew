@@ -46,22 +46,21 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
 
     def invoke(
         self,
-        task_dict: dict,
+        input: dict,
         config: Optional[RunnableConfig] = None,
         **kwargs: Any,
     ) -> Any:
         """Description
 
         Args:
-            task_dict (dict):
+            input (dict):
             config (:obj:`RunnableConfig`, optional):
             **kwargs:
 
         Returns:
             Any:
         """
-        self.materialize()
-        prompt = self.compose_prompt(task_dict, task_dict.get("prompt"))
+        prompt = self.prepare_for_invocation(input=input)
 
         langchain_tools = [tool.to_langchain_tool() for tool in self.tools.values()]
         config = add_default_callbacks_to_langchain_config(config)
@@ -69,7 +68,7 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
         crewai_task = CrewAI__Task(description=prompt)
 
         output = self.agent.execute_task(
-            task=crewai_task, context=task_dict.get("context"), tools=langchain_tools, config=config
+            task=crewai_task, context=input.get("context"), tools=langchain_tools, config=config
         )
         return output
 

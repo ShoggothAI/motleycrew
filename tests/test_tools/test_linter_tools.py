@@ -3,10 +3,12 @@ import pytest
 from motleycrew.tools import PostgreSQLLinterTool, PythonLinterTool
 from motleycrew.common.exceptions import ModuleNotInstalled
 
+
 @pytest.fixture
 def pgsql_linter_tool():
     tool = PostgreSQLLinterTool()
     return tool
+
 
 @pytest.fixture
 def python_linter_tool():
@@ -15,6 +17,7 @@ def python_linter_tool():
     except ModuleNotInstalled:
         tool = None
     return tool
+
 
 @pytest.mark.parametrize(
     "query, expected",
@@ -27,6 +30,7 @@ def python_linter_tool():
 def test_pgsql_tool(pgsql_linter_tool, query, expected):
     parse_result = pgsql_linter_tool.invoke({"query": query})
     assert expected == parse_result
+
 
 @pytest.mark.parametrize(
     "code, file_name, valid_code, raises",

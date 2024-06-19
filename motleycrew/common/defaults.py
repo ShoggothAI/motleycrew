@@ -27,8 +27,9 @@ class Defaults:
     MODULE_INSTALL_COMMANDS = {
         "crewai": "pip install crewai",
         "llama_index": "pip install llama-index",
-        "autogen": "pip install autogen",
-        "lunary": "pip install lunary"
+        "autogen": "pip install pyautogen",
+        "lunary": "pip install lunary",
+        "aider": "pip install aider-chat",
     }
     DEFAULT_NUM_THREADS = 4
     DEFAULT_EVENT_LOOP_SLEEP = 1

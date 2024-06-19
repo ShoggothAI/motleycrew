@@ -1,39 +1,27 @@
 """ Module description """
-from typing import Union, Annotated
+
+from typing import Union, Annotated, Optional, Dict, Any
+from typing import Callable
 
 from langchain.tools import BaseTool
-from langchain_core.runnables import Runnable
+from langchain_core.runnables import Runnable, RunnableConfig
 
 try:
     from llama_index.core.tools import BaseTool as LlamaIndex__BaseTool
     from llama_index.core.tools import FunctionTool as LlamaIndex__FunctionTool
 except ImportError:
     LlamaIndex__BaseTool = None
+    LlamaIndex__FunctionTool = None
 
 from motleycrew.common.utils import ensure_module_is_installed
+from motleycrew.common.types import MotleySupportedTool
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
-
-
-def normalize_input(args, kwargs):
-    """ Description
-
-    Args:
-        args (Sequence):
-        kwargs (Map):
-
-    Returns:
-        Any:
-    """
-    if "tool_input" in kwargs:
-        return kwargs["tool_input"]
-    else:
-        return args[0]
 
 
 class MotleyTool(Runnable):
 
     def __init__(self, tool: BaseTool):
-        """ Base tool class compatible with MotleyAgents.
+        """Base tool class compatible with MotleyAgents.
         It is a wrapper for LangChain's BaseTool, containing all necessary adapters and converters.
 
         Args:
@@ -41,26 +29,36 @@ class MotleyTool(Runnable):
         """
         self.tool = tool
 
+    def __repr__(self):
+        return f"MotleyTool(name={self.name})"
+
+    def __str__(self):
+        return self.__repr__()
+
     @property
     def name(self):
         # TODO: do we really want to make a thin wrapper in this fashion?
         return self.tool.name
 
-    def invoke(self, *args, **kwargs):
-        """ Description
+    @property
+    def description(self):
+        return self.tool.description
 
-        Args:
-            *args:
-            **kwargs:
+    @property
+    def args_schema(self):
+        return self.tool.args_schema
 
-        Returns:
-            Any:
-        """
-        return self.tool.invoke(*args, **kwargs)
+    def invoke(
+        self,
+        input: Union[str, Dict],
+        config: Optional[RunnableConfig] = None,
+        **kwargs: Any,
+    ) -> Any:
+        return self.tool.invoke(input=input, config=config, **kwargs)
 
     @staticmethod
     def from_langchain_tool(langchain_tool: BaseTool) -> "MotleyTool":
-        """ Description
+        """Description
 
         Args:
             langchain_tool (BaseTool):
@@ -72,7 +70,7 @@ class MotleyTool(Runnable):
 
     @staticmethod
     def from_llama_index_tool(llama_index_tool: LlamaIndex__BaseTool) -> "MotleyTool":
-        """ Description
+        """Description
 
         Args:
             llama_index_tool (LlamaIndex__BaseTool):
@@ -85,10 +83,8 @@ class MotleyTool(Runnable):
         return MotleyTool.from_langchain_tool(langchain_tool=langchain_tool)
 
     @staticmethod
-    def from_supported_tool(
-        tool: Union["MotleyTool", BaseTool, LlamaIndex__BaseTool, MotleyAgentAbstractParent]
-    ):
-        """ Description
+    def from_supported_tool(tool: MotleySupportedTool) -> "MotleyTool":
+        """Description
 
         Args:
             tool (:obj:`MotleyTool`, :obj:`BaseTool`, :obj:`LlamaIndex__BaseTool`, :obj:`MotleyAgentAbstractParent`):
@@ -110,7 +106,7 @@ class MotleyTool(Runnable):
             )
 
     def to_langchain_tool(self) -> BaseTool:
-        """ Description
+        """Description
 
         Returns:
             BaseTool:
@@ -118,7 +114,7 @@ class MotleyTool(Runnable):
         return self.tool
 
     def to_llama_index_tool(self) -> LlamaIndex__BaseTool:
-        """ Description
+        """Description
 
         Returns:
             LlamaIndex__BaseTool:
@@ -132,8 +128,8 @@ class MotleyTool(Runnable):
         )
         return llama_index_tool
 
-    def to_autogen_tool(self):
-        """ Description
+    def to_autogen_tool(self) -> Callable:
+        """Description
 
         Returns:
             Callable:

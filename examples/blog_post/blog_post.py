@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 from langchain.schema import AIMessage, HumanMessage, SystemMessage, BaseMessage
 from langchain_core.prompts.chat import ChatPromptTemplate
-from motleycrew.agents.langchain.react import ReactMotleyAgent
+from motleycrew.agents.langchain.react import ReActMotleyAgent
 
 from motleycrew.tools.llm_tool import LLMTool
 from motleycrew import MotleyCrew, Task
@@ -103,7 +103,7 @@ seo_expert = LLMTool(
 )
 
 
-writer = ReactMotleyAgent(
+writer = ReActMotleyAgent(
     prompt="You are a professional freelance copywriter with 10 years of experience.",
     tools=[editor, illustrator, seo_expert],
 )

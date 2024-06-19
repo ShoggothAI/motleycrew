@@ -1,7 +1,7 @@
 # motleycrew
 
 [![PyPI - Version](https://img.shields.io/pypi/v/motleycrew)](https://pypi.org/project/motleycrew/)
-[![CI](https://github.com/langchain-ai/langchain/actions/workflows/check_diffs.yml/badge.svg)](https://github.com/ShoggothAI/motleycrew/actions/workflows/build.yml)
+[![CI](https://github.com/ShoggothAI/motleycrew/actions/workflows/build.yml/badge.svg)](https://github.com/ShoggothAI/motleycrew/actions/workflows/build.yml)
 [![GitHub commit activity (branch)](https://img.shields.io/github/commit-activity/w/ShoggothAI/motleycrew)](https://github.com/ShoggothAI/motleycrew/commits/main/)
 
 [Website](https://motleycrew.ai) •︎ [Documentation](https://motleycrew.readthedocs.io)
@@ -31,15 +31,15 @@ To get you started, here's a simple example of how to create a crew with two age
 
 ```python
 from motleycrew import MotleyCrew
-from motleycrew.agents.langchain import ReactMotleyAgent
+from motleycrew.agents.langchain import ReActToolCallingAgent
 from motleycrew.tasks import SimpleTask
 from motleycrew.tools.image.dall_e import DallEImageGeneratorTool
 from langchain_community.tools import DuckDuckGoSearchRun
 
 crew = MotleyCrew()
 
-writer = ReactMotleyAgent(name="writer", tools=[DuckDuckGoSearchRun()])
-illustrator = ReactMotleyAgent(name="illustrator", tools=[DallEImageGeneratorTool()])
+writer = ReActToolCallingAgent(name="writer", tools=[DuckDuckGoSearchRun()])
+illustrator = ReActToolCallingAgent(name="illustrator", tools=[DallEImageGeneratorTool()])
 
 write_task = SimpleTask(
     crew=crew, agent=writer, description="Write a short article about latest AI advancements"

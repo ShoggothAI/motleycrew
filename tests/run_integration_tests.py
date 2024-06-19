@@ -143,6 +143,8 @@ def run_ipynb(ipynb_path: str, strong_cache: bool = False, cache_sub_dir: str = 
     if cache_sub_dir:
         str_strong_cache = "True" if strong_cache else "False"
         cells = [
+            new_code_cell("from dotenv import load_dotenv"),
+            new_code_cell("load_dotenv()"),
             new_code_cell(
                 "from motleycache.caching import enable_cache, disable_cache, set_cache_location"
             ),

@@ -25,6 +25,7 @@ requests = "^2.31.0"
 curl-cffi = "^0.6.4"
 httpx = "^0.27.0"
 motleycache = "^0.0.4"
+pglast = {version = "^6.2", optional = true}
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.2.0"
@@ -45,6 +46,7 @@ nbformat = "^5.10.4"
 crewai = ["crewai"]
 llama-index = ["llama-index"]
 lunary = ["lunary"]
+pglast = ["pglast"]
 
 [build-system]
 requires = ["poetry-core"]

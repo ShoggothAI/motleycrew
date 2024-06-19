@@ -28,7 +28,10 @@ class Defaults:
         "crewai": "pip install crewai",
         "llama_index": "pip install llama-index",
         "autogen": "pip install pyautogen",
-        "lunary": "pip install lunary"
+        "lunary": "pip install lunary",
+        "aider": "pip install aider-chat",
+        "pglast": "pip install pglast",
     }
+
     DEFAULT_NUM_THREADS = 4
     DEFAULT_EVENT_LOOP_SLEEP = 1

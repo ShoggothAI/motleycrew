@@ -23,7 +23,7 @@ class AiderTool(MotleyTool):
             model (str): model name
             **kwargs:
         """
-        ensure_module_is_installed("aider", "pip install aider-chat")
+        ensure_module_is_installed("aider")
 
         model = model or Defaults.DEFAULT_LLM_NAME
         llm_model = Model(model=model)
@@ -44,7 +44,7 @@ class AiderToolInput(BaseModel):
 
 
 def create_aider_tool(coder: Coder):
-    """Create langchain tool from Aider coder.run() method
+    """Create langchain tool from Aider Coder.run() method
 
     Returns:
         Tool:

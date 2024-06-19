@@ -1,11 +1,11 @@
 import pytest
 
-from motleycrew.tools import PgSqlLinterTool, PythonLinterTool
+from motleycrew.tools import PostgreSQLLinterTool, PythonLinterTool
 from motleycrew.common.exceptions import ModuleNotInstalledException
 
 @pytest.fixture
 def pgsql_linter_tool():
-    tool = PgSqlLinterTool()
+    tool = PostgreSQLLinterTool()
     return tool
 
 @pytest.fixture

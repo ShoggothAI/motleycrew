@@ -1,7 +1,7 @@
 import pytest
 
 from motleycrew.tools import PostgreSQLLinterTool, PythonLinterTool
-from motleycrew.common.exceptions import ModuleNotInstalledException
+from motleycrew.common.exceptions import ModuleNotInstalled
 
 @pytest.fixture
 def pgsql_linter_tool():
@@ -12,7 +12,7 @@ def pgsql_linter_tool():
 def python_linter_tool():
     try:
         tool = PythonLinterTool()
-    except ModuleNotInstalledException:
+    except ModuleNotInstalled:
         tool = None
     return tool
 

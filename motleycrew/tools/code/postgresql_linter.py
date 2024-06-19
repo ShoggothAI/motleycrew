@@ -1,9 +1,16 @@
 from langchain_core.tools import Tool
 from langchain_core.pydantic_v1 import BaseModel, Field
-from pglast import parse_sql, prettify
-from pglast.parser import ParseError
+
+try:
+    from pglast import parse_sql, prettify
+    from pglast.parser import ParseError
+except ImportError:
+    parse_sql = None
+    prettify = None
+    ParseError = None
 
 from motleycrew.tools import MotleyTool
+from motleycrew.common.utils import ensure_module_is_installed
 
 
 class PostgreSQLLinterTool(MotleyTool):
@@ -11,6 +18,7 @@ class PostgreSQLLinterTool(MotleyTool):
     def __init__(self):
         """PostgreSQL code verification tool
         """
+        ensure_module_is_installed("pglast")
 
         langchain_tool = create_pgsql_linter_tool()
         super().__init__(langchain_tool)

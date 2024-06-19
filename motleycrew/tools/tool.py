@@ -1,6 +1,6 @@
 """ Module description """
 
-from typing import Union, Annotated, Optional, Dict, Any
+from typing import Union, Optional, Dict, Any
 from typing import Callable
 
 from langchain.tools import BaseTool

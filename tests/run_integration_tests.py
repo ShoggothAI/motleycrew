@@ -40,6 +40,8 @@ IPYNB_INTEGRATION_TESTS = {
     "blog_with_images_ipynb": "examples/Blog with Images.ipynb",
     "multi_step_research_agent_ipynb": "examples/Multi-step research agent.ipynb",
     "math_via_python_code_with_a_single_agent_ipynb": "examples/Math via python code with a single agent.ipynb",
+    "validating_agent_output_ipynb": "examples/Validating agent output.ipynb",
+    "advanced_output_handling_ipynb": "examples/Advanced output handling.ipynb",
     # "using_autogen_with_motleycrew_ipynb": "examples/Using AutoGen with motleycrew.ipynb"
 }
 

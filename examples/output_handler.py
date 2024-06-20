@@ -10,9 +10,6 @@ from motleycrew.tasks import SimpleTask
 from motleycrew.common.exceptions import InvalidOutput
 
 
-from langchain_core.tools import StructuredTool
-
-
 def main():
     search_tool = DuckDuckGoSearchRun()
 
@@ -23,7 +20,7 @@ def main():
             if "medicine" not in output.lower():
                 raise InvalidOutput("Add more information about AI applications in medicine.")
 
-            if "2024" in self.last_agent_input["prompt"]:
+            if "2024" in self.agent_input["prompt"]:
                 output += "\n\nThis report is up-to-date for 2024."
 
             output += f"\n\nBrought to you by motleycrew's {self.agent}."

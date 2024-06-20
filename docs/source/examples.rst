@@ -7,5 +7,6 @@ Examples
 
    examples/blog_with_images
    examples/research_agent
-   examples/output_handlers
+   examples/validating_agent_output
+   examples/advanced_output_handling
    autogen

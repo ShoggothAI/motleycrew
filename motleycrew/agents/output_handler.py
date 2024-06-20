@@ -1,6 +1,6 @@
 from typing import Optional
 from abc import ABC, abstractmethod
-from langchain_core.tools import StructuredTool, BaseTool
+from langchain_core.tools import StructuredTool
 from langchain_core.pydantic_v1 import BaseModel
 
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent

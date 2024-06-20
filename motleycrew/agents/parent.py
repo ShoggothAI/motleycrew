@@ -141,7 +141,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
 
             raise DirectOutput(output)
 
-        prepared_output_handler = StructuredTool.from_function(
+        prepared_output_handler = StructuredTool(
             name=self.output_handler.name,
             description=description,
             func=handle_agent_output,
@@ -210,7 +210,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
 
         if isinstance(self.output_handler, MotleyOutputHandler):
             self.output_handler.agent = self
-            self.output_handler.last_agent_input = input
+            self.output_handler.agent_input = input
 
         prompt = self.compose_prompt(input, input.get("prompt"))
         return prompt

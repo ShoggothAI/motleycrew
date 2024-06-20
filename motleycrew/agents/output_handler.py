@@ -27,7 +27,7 @@ class MotleyOutputHandler(MotleyTool, ABC):
         super().__init__(langchain_tool)
 
         self.agent: Optional[MotleyAgentAbstractParent] = None
-        self.last_agent_input: Optional[dict] = None
+        self.agent_input: Optional[dict] = None
 
     @property
     def exceptions_to_handle(self):

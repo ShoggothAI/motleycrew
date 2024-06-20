@@ -12,14 +12,14 @@ class MotleyAgentAbstractParent(ABC):
     @abstractmethod
     def invoke(
         self,
-        task_dict: dict,
+        input: dict,
         config: Optional[RunnableConfig] = None,
         **kwargs: Any,
     ) -> Any:
         """ Description
 
             Args:
-                task_dict (dict):
+                input (dict):
                 config (:obj:`RunnableConfig`, optional):
                 **kwargs:
 

@@ -3,13 +3,11 @@ from langchain_community.tools import DuckDuckGoSearchRun
 
 from motleycrew import MotleyCrew
 from motleycrew.agents.langchain.tool_calling_react import ReActToolCallingAgent
+from motleycrew.agents import MotleyOutputHandler
 from motleycrew.common import configure_logging
 from motleycrew.tasks import SimpleTask
 
 from motleycrew.common.exceptions import InvalidOutput
-
-
-from langchain_core.tools import StructuredTool
 
 
 def main():
@@ -17,23 +15,23 @@ def main():
 
     tools = [search_tool]
 
-    def check_output(output: str):
-        if "medicine" not in output.lower():
-            raise InvalidOutput("Add more information about AI applications in medicine.")
+    class ReportOutputHandler(MotleyOutputHandler):
+        def handle_output(self, output: str):
+            if "medicine" not in output.lower():
+                raise InvalidOutput("Add more information about AI applications in medicine.")
 
-        return {"checked_output": output}
+            if "2024" in self.agent_input["prompt"]:
+                output += "\n\nThis report is up-to-date for 2024."
 
-    output_handler = StructuredTool.from_function(
-        name="output_handler",
-        description="Output handler",
-        func=check_output,
-    )
+            output += f"\n\nBrought to you by motleycrew's {self.agent}."
+
+            return {"checked_output": output}
 
     researcher = ReActToolCallingAgent(
         tools=tools,
         verbose=True,
         chat_history=True,
-        output_handler=output_handler,
+        output_handler=ReportOutputHandler(),
     )
 
     crew = MotleyCrew()

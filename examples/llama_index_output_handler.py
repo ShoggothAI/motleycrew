@@ -16,11 +16,23 @@ def main():
     """Main function of running the example."""
     search_tool = DuckDuckGoSearchRun()
 
+    def check_output(output: str):
+        if "medicine" not in output.lower():
+            raise InvalidOutput("Add more information about AI applications in medicine.")
+
+        return {"checked_output": output.lower()}
+
+    output_handler = StructuredTool.from_function(
+        name="output_handler",
+        description="Output handler",
+        func=check_output,
+    )
 
     # TODO: add LlamaIndex native tools
     researcher = ReActLlamaIndexMotleyAgent(
         description="Your goal is to uncover cutting-edge developments in AI and data science",
         tools=[search_tool],
+        output_handler=output_handler,
         verbose=True,
     )
 

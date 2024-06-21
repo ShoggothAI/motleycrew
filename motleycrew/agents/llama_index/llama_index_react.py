@@ -25,6 +25,7 @@ class ReActLlamaIndexMotleyAgent(LlamaIndexMotleyAgent):
         name: str | None = None,
         tools: Sequence[MotleySupportedTool] | None = None,
         llm: LLM | None = None,
+        output_handler: MotleySupportedTool | None = None,
         verbose: bool = False,
     ):
         """Description
@@ -56,5 +57,6 @@ class ReActLlamaIndexMotleyAgent(LlamaIndexMotleyAgent):
             name=name,
             agent_factory=agent_factory,
             tools=tools,
+            output_handler=output_handler,
             verbose=verbose,
         )

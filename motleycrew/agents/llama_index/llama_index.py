@@ -5,8 +5,15 @@ import uuid
 
 try:
     from llama_index.core.agent import AgentRunner
+    from llama_index.core.chat_engine.types import ChatResponseMode
+    from llama_index.core.agent.types import TaskStep, TaskStepOutput
+    from llama_index.core.chat_engine.types import AgentChatResponse
 except ImportError:
     AgentRunner = None
+    ChatResponseMode = None
+    TaskStep = None
+    TaskStepOutput = None
+    AgentChatResponse = None
 
 from langchain_core.runnables import RunnableConfig
 
@@ -15,13 +22,11 @@ from motleycrew.common import MotleySupportedTool
 from motleycrew.common import MotleyAgentFactory
 from motleycrew.common.utils import ensure_module_is_installed
 
-from llama_index.core.chat_engine.types import ChatResponseMode
-from llama_index.core.agent.types import TaskStep, TaskStepOutput
-from llama_index.core.chat_engine.types import AgentChatResponse
-
 
 def run_step_decorator(agent, output_handler = None):
     """Decorator for inclusion in the call chain of the agent, the output handler tool"""
+    ensure_module_is_installed("llama_index")
+
     def decorator(func):
         output_task_step = None
         def wrapper(task_id: str,

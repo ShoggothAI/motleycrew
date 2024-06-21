@@ -254,7 +254,7 @@ class LlamaIndexLunaryCallbackHandler(BaseCallbackHandler):
         params = self._get_initial_track_event_params(
             LunaryRunType.TOOL, LunaryEventName.END, event_id
         )
-        params["output"] = payload.get(EventPayload.FUNCTION_OUTPUT)
+        params["output"] = payload.get(EventPayload.FUNCTION_OUTPUT) if payload is not None else ""
         return params
 
     def _on_agent_step_start(

@@ -2,8 +2,9 @@ from dotenv import load_dotenv
 
 from motleycrew import MotleyCrew
 from motleycrew.agents.crewai import CrewAIMotleyAgent
-from motleycrew.tools.image.dall_e import DallEImageGeneratorTool
 from motleycrew.common import configure_logging
+from motleycrew.tasks import SimpleTask
+from motleycrew.tools.image.dall_e import DallEImageGeneratorTool
 
 
 def main():
@@ -35,7 +36,8 @@ def main():
 
     # Create tasks for your agents
     crew = MotleyCrew()
-    write_task = crew.create_simple_task(
+    write_task = SimpleTask(
+        crew=crew,
         name="write a short story about a cat",
         description="Creatively write a short story of about 4 paragraphs "
         "about a house cat that was smarter than its owners. \n"

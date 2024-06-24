@@ -1,27 +1,25 @@
 """ Module description """
 
-from typing import Any, Optional, Sequence, Callable, Union
+from typing import Any, Optional, Sequence, Callable, Union, Dict, List, Tuple
+
+from pydantic.v1.fields import ModelField
+from pydantic.v1.config import BaseConfig
 
 from langchain.agents import AgentExecutor
-from langchain.agents.agent import RunnableAgent
 from langchain_core.agents import AgentFinish, AgentAction
-from langchain_core.runnables import Runnable, RunnableConfig, RunnableLambda
+from langchain_core.runnables import Runnable, RunnableConfig
 from langchain_core.runnables.history import RunnableWithMessageHistory, GetSessionHistoryCallable
 from langchain_core.chat_history import InMemoryChatMessageHistory
-from langchain_core.language_models import BaseLanguageModel
-from langchain_core.prompts import BasePromptTemplate
 from langchain_core.tools import BaseTool
 from langchain_core.tools import Tool
-
+from langchain_core.callbacks import CallbackManagerForChainRun
+from langchain_core.messages import AIMessage
 
 from motleycrew.agents.parent import MotleyAgentParent
-
-from motleycrew.tools import MotleyTool
 from motleycrew.tracking import add_default_callbacks_to_langchain_config
 from motleycrew.common import MotleySupportedTool, logger
 from motleycrew.common import MotleyAgentFactory
-from motleycrew.common import LLMFramework
-from motleycrew.common.llms import init_llm
+from motleycrew.agents.parent import DirectOutput
 
 
 class LangchainMotleyAgent(MotleyAgentParent):
@@ -96,6 +94,62 @@ class LangchainMotleyAgent(MotleyAgentParent):
             ]
         return input
 
+    def agent_plane_decorator(self):
+        """Decorator for inclusion in the call chain of the agent, the output handler tool"""
+
+        def decorator(func: Callable):
+
+            def wrapper(
+                intermediate_steps: List[Tuple[AgentAction, str]],
+                callbacks: "Callbacks" = None,
+                **kwargs: Any,
+            ) -> Union[AgentAction, AgentFinish]:
+                step = func(intermediate_steps, callbacks, **kwargs)
+
+                if not isinstance(step, AgentFinish):
+                    return step
+
+                if self.output_handler is not None:
+                    return AgentAction(
+                        tool=self._agent_finish_blocker_tool.name,
+                        tool_input={"input": self._agent_finish_blocker_tool},
+                        log="\nDetected AgentFinish, blocking it to force output via output handler.\n",
+                    )
+                return step
+
+            return wrapper
+
+        return decorator
+
+    def take_next_step_decorator(self):
+        """DirectOutput exception interception decorator"""
+
+        def decorator(func: Callable):
+            def wrapper(
+                name_to_tool_map: Dict[str, BaseTool],
+                color_mapping: Dict[str, str],
+                inputs: Dict[str, str],
+                intermediate_steps: List[Tuple[AgentAction, str]],
+                run_manager: Optional[CallbackManagerForChainRun] = None,
+            ) -> Union[AgentFinish, List[Tuple[AgentAction, str]]]:
+
+                try:
+                    step = func(
+                        name_to_tool_map, color_mapping, inputs, intermediate_steps, run_manager
+                    )
+                except DirectOutput as direct_ex:
+                    message = "Final answer\n" + str(direct_ex.output)
+                    return AgentFinish(
+                        return_values={"output": direct_ex.output},
+                        messages=[AIMessage(content=message)],
+                        log=message,
+                    )
+                return step
+
+            return wrapper
+
+        return decorator
+
     def materialize(self):
         """Materialize the agent and wrap it in RunnableWithMessageHistory if needed."""
         if self.is_materialized:
@@ -107,24 +161,19 @@ class LangchainMotleyAgent(MotleyAgentParent):
         if self.output_handler:
             self._agent.tools += [self._agent_finish_blocker_tool]
 
-            if isinstance(self._agent.agent, Runnable):
-                logger.info("Patching agent to force output via output handler")
-                agent_with_forced_output_via_handler = self._agent.agent | RunnableLambda(
-                    self._block_agent_finish
-                )
-                self._agent.agent = agent_with_forced_output_via_handler
+            plan = ModelField(
+                name="plan", type_=Callable, class_validators={}, model_config=BaseConfig
+            )
+            self._agent.agent.__fields__["plan"] = plan
+            self._agent.agent.plan = self.agent_plane_decorator()(self._agent.agent.plan)
 
-            elif isinstance(self._agent.agent, RunnableAgent):
-                logger.info("Patching agent to force output via output handler")
-                agent_with_forced_output_via_handler = self._agent.agent.runnable | RunnableLambda(
-                    self._block_agent_finish
-                )
-                self._agent.agent.runnable = agent_with_forced_output_via_handler
-
-            else:
-                logger.warning(
-                    "Agent is not a Runnable, cannot patch it to force output via output handler"
-                )
+            _take_next_step = ModelField(
+                name="_take_next_step", type_=Callable, class_validators={}, model_config=BaseConfig
+            )
+            self._agent.__fields__["_take_next_step"] = _take_next_step
+            self._agent._take_next_step = self.take_next_step_decorator()(
+                self._agent._take_next_step
+            )
 
         if self.get_session_history_callable:
             logger.info("Wrapping agent in RunnableWithMessageHistory")

@@ -1,6 +1,6 @@
 """ Module description """
 
-from typing import Union, Annotated, Optional, Dict, Any
+from typing import Union, Optional, Dict, Any
 from typing import Callable
 
 from langchain.tools import BaseTool
@@ -55,6 +55,9 @@ class MotleyTool(Runnable):
         **kwargs: Any,
     ) -> Any:
         return self.tool.invoke(input=input, config=config, **kwargs)
+
+    def _run(self, *args: tuple, **kwargs: Dict[str, Any]) -> Any:
+        return self.tool._run(*args, **kwargs)
 
     @staticmethod
     def from_langchain_tool(langchain_tool: BaseTool) -> "MotleyTool":

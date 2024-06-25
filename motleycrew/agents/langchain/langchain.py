@@ -91,22 +91,21 @@ class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlerMixin):
 
     def invoke(
         self,
-        task_dict: dict,
+        input: dict,
         config: Optional[RunnableConfig] = None,
         **kwargs: Any,
     ) -> Any:
         """Description
 
         Args:
-            task_dict (dict):
+            input (dict):
             config (:obj:`RunnableConfig`, optional):
             **kwargs:
 
         Returns:
 
         """
-        self.materialize()
-        prompt = self.compose_prompt(task_dict, task_dict.get("prompt"))
+        prompt = self.prepare_for_invocation(input=input)
 
         config = add_default_callbacks_to_langchain_config(config)
         if self.get_session_history_callable:

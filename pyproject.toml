@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "motleycrew"
-version = "0.1.3"
+version = "0.1.5"
 description = "A lightweight agent interaction framework."
 authors = ["MotleyCrew <github@motleycrew.ai>"]
 readme = "README.md"
@@ -25,6 +25,7 @@ requests = "^2.31.0"
 curl-cffi = "^0.6.4"
 httpx = "^0.27.0"
 motleycache = "^0.0.4"
+pglast = {version = "^6.2", optional = true}
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.2.0"
@@ -45,6 +46,7 @@ nbformat = "^5.10.4"
 crewai = ["crewai"]
 llama-index = ["llama-index"]
 lunary = ["lunary"]
+pglast = ["pglast"]
 
 [build-system]
 requires = ["poetry-core"]

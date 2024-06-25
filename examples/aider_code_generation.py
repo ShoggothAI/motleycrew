@@ -8,10 +8,10 @@ import logging
 
 from langchain_community.tools import ShellTool
 from motleycrew.agents.crewai import CrewAIMotleyAgent
-from motleycrew.common import configure_logging, AsyncBackend
+from motleycrew.common import configure_logging
 from motleycrew.tasks import SimpleTask
 from motleycache import logger
-from motleycrew.tools.aider_tool import AiderTool
+from motleycrew.tools.code.aider_tool import AiderTool
 
 
 logger.setLevel(logging.INFO)

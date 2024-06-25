@@ -92,7 +92,7 @@ class CrewAIMotleyAgentParent(MotleyAgentParent, LangchainOutputHandlerMixin):
                 object.__setattr__(
                     self._agent.agent_executor.agent,
                     "plan",
-                    self.agent_plane_decorator()(self._agent.agent_executor.agent.plan),
+                    self.agent_plan_decorator()(self._agent.agent_executor.agent.plan),
                 )
 
                 object.__setattr__(

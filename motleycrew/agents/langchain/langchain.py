@@ -66,8 +66,9 @@ class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlerMixin):
         assert isinstance(self._agent, AgentExecutor)
 
         if self.output_handler:
+
             object.__setattr__(
-                self._agent.agent, "plan", self.agent_plane_decorator()(self._agent.agent.plan)
+                self._agent.agent, "plan", self.agent_plan_decorator()(self._agent.agent.plan)
             )
 
             object.__setattr__(

@@ -9,7 +9,7 @@ from motleycrew.agents.parent import DirectOutput
 
 class LangchainOutputHandlerMixin:
 
-    def agent_plane_decorator(self):
+    def agent_plan_decorator(self):
         """Decorator for inclusion in the call chain of the agent, the output handler tool"""
 
         def decorator(func: Callable):

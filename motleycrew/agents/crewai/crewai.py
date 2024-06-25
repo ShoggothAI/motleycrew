@@ -1,7 +1,9 @@
 """ Module description """
 
-from typing import Any, Optional, Sequence
+from typing import Any, Optional, Sequence, Callable
 
+from pydantic.v1.fields import ModelField
+from pydantic.v1.config import BaseConfig
 from langchain_core.runnables import RunnableConfig
 
 from motleycrew.agents.parent import MotleyAgentParent
@@ -10,6 +12,7 @@ from motleycrew.common import MotleySupportedTool
 from motleycrew.common import MotleyAgentFactory
 from motleycrew.tracking import add_default_callbacks_to_langchain_config
 from motleycrew.common.utils import ensure_module_is_installed
+from motleycrew.agents.mixins import LangchainOutputHandlerMixin
 
 try:
     from crewai import Task as CrewAI__Task
@@ -17,13 +20,14 @@ except ImportError:
     pass
 
 
-class CrewAIMotleyAgentParent(MotleyAgentParent):
+class CrewAIMotleyAgentParent(MotleyAgentParent, LangchainOutputHandlerMixin):
     def __init__(
         self,
         goal: str,
         name: str | None = None,
         agent_factory: MotleyAgentFactory[CrewAIAgentWithConfig] | None = None,
         tools: Sequence[MotleySupportedTool] | None = None,
+        output_handler: MotleySupportedTool | None = None,
         verbose: bool = False,
     ):
         """Description
@@ -41,8 +45,13 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
             name=name,
             agent_factory=agent_factory,
             tools=tools,
+            output_handler=output_handler,
             verbose=verbose,
         )
+
+        if self.output_handler:
+            output_handler_tool = self._prepare_output_handler()
+            self.tools[output_handler_tool.name] = output_handler_tool
 
     def invoke(
         self,
@@ -72,6 +81,41 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
             task=crewai_task, context=task_dict.get("context"), tools=langchain_tools, config=config
         )
         return output
+
+    def _create_agent_executor_decorator(self):
+        """Decorator adding logic for working with output_handler when creating agent_executor"""
+        def decorator(func: Callable):
+            def wrapper(tools=None):
+                result =func(tools)
+
+                plan = ModelField(
+                    name="plan", type_=Callable, class_validators={}, model_config=BaseConfig
+                )
+                self._agent.agent_executor.agent.__fields__["plan"] = plan
+                self._agent.agent_executor.agent.plan = self.agent_plane_decorator()(
+                    self._agent.agent_executor.agent.plan)
+
+                _take_next_step = ModelField(
+                    name="_take_next_step", type_=Callable, class_validators={}, model_config=BaseConfig
+                )
+                self._agent.agent_executor.__fields__["_take_next_step"] = _take_next_step
+                self._agent.agent_executor._take_next_step = self.take_next_step_decorator()(
+                    self._agent.agent_executor._take_next_step
+                )
+                return result
+            return wrapper
+        return decorator
+
+    def materialize(self):
+        super().materialize()
+
+        if self.output_handler:
+            create_agent_executor = ModelField(
+                name="create_agent_executor", type_=Callable, class_validators={}, model_config=BaseConfig
+            )
+            self._agent.__fields__["create_agent_executor"] = create_agent_executor
+            self._agent.create_agent_executor = self._create_agent_executor_decorator()(
+                self._agent.create_agent_executor)
 
     # TODO: what do these do?
     def set_cache_handler(self, cache_handler: Any) -> None:

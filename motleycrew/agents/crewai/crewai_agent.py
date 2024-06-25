@@ -19,6 +19,7 @@ class CrewAIMotleyAgent(CrewAIMotleyAgentParent):
         delegation: bool = False,
         tools: Sequence[MotleySupportedTool] | None = None,
         llm: Optional[Any] = None,
+        output_handler: MotleySupportedTool | None = None,
         verbose: bool = False,
     ):
         """ Description
@@ -62,5 +63,6 @@ class CrewAIMotleyAgent(CrewAIMotleyAgentParent):
             name=role,
             agent_factory=agent_factory,
             tools=tools,
+            output_handler=output_handler,
             verbose=verbose,
         )

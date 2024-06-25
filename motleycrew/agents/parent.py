@@ -1,24 +1,24 @@
 """ Module description """
 
-from typing import TYPE_CHECKING, Optional, Sequence, Any, Callable, Dict, Union, Tuple
-from functools import wraps
 import inspect
+from typing import TYPE_CHECKING, Optional, Sequence, Any, Callable, Dict, Union, Tuple
 
-from langchain_core.tools import Tool
-from langchain_core.runnables import Runnable
 from langchain_core.prompts.chat import ChatPromptTemplate, HumanMessage, SystemMessage
+from langchain_core.runnables import Runnable
 from langchain_core.tools import StructuredTool
+from langchain_core.tools import Tool
+from motleycrew.agents.output_handler import MotleyOutputHandler
 from pydantic import BaseModel
 
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
-from motleycrew.tools import MotleyTool
 from motleycrew.common import MotleyAgentFactory, MotleySupportedTool
+from motleycrew.common import logger
 from motleycrew.common.exceptions import (
     AgentNotMaterialized,
     CannotModifyMaterializedAgent,
     InvalidOutput,
 )
-from motleycrew.common import logger
+from motleycrew.tools import MotleyTool
 
 if TYPE_CHECKING:
     from motleycrew import MotleyCrew
@@ -63,12 +63,14 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
             self.add_tools(tools)
 
     def __repr__(self):
-        return f"Agent(name={self.name})"
+        return f"{self.__class__.__name__}(name={self.name})"
 
     def __str__(self):
         return self.__repr__()
 
-    def compose_prompt(self, input_dict: dict, prompt: ChatPromptTemplate | str) -> str:
+    def compose_prompt(
+        self, input_dict: dict, prompt: ChatPromptTemplate | str
+    ) -> Union[str, ChatPromptTemplate]:
         # TODO: always cast description and prompt to ChatPromptTemplate first?
         prompt_messages = []
 
@@ -95,6 +97,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
             else:
                 raise ValueError("Prompt must be a string or a ChatPromptTemplate")
 
+        # TODO: pass the unformatted messages list to agents that can handle it
         prompt = "\n\n".join([m.content for m in prompt_messages]) + "\n"
         return prompt
 
@@ -121,20 +124,26 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
         if not self.output_handler:
             return None
 
+        # TODO: make this neater by constructing MotleyOutputHandler from tools?
+        if isinstance(self.output_handler, MotleyOutputHandler):
+            exceptions_to_handle = self.output_handler.exceptions_to_handle
+            description = self.output_handler.description
+        else:
+            exceptions_to_handle = (InvalidOutput,)
+            description = self.output_handler.description or f"Output handler"
+            assert isinstance(description, str)
+            description += "\n ONLY RETURN THE FINAL RESULT USING THIS TOOL!"
+
         def handle_agent_output(*args, **kwargs):
             assert self.output_handler
             try:
                 output = self.output_handler._run(*args, **kwargs)
-            except InvalidOutput as exc:
+            except exceptions_to_handle as exc:
                 return f"{exc.__class__.__name__}: {str(exc)}"
 
             raise DirectOutput(output)
 
-        description = self.output_handler.description or f"Output handler for {self.name}"
-        assert isinstance(description, str)
-        description += "\n ONLY RETURN THE FINAL RESULT USING THIS TOOL!"
-
-        prepared_output_handler = StructuredTool.from_function(
+        prepared_output_handler = StructuredTool(
             name=self.output_handler.name,
             description=description,
             func=handle_agent_output,
@@ -187,6 +196,26 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
             self._agent = self.agent_factory(tools=tools_with_output_handler)
         else:
             self._agent = self.agent_factory(tools=self.tools)
+
+    def prepare_for_invocation(self, input: dict) -> str:
+        """Prepares the agent for invocation by materializing it and composing the prompt.
+
+        Should be called in the beginning of the agent's invoke method.
+
+        Args:
+            input (dict): the input to the agent
+
+        Returns:
+            str: the composed prompt
+        """
+        self.materialize()
+
+        if isinstance(self.output_handler, MotleyOutputHandler):
+            self.output_handler.agent = self
+            self.output_handler.agent_input = input
+
+        prompt = self.compose_prompt(input, input.get("prompt"))
+        return prompt
 
     def add_tools(self, tools: Sequence[MotleySupportedTool]):
         """Description

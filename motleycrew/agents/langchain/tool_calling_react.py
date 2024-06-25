@@ -1,28 +1,25 @@
 from typing import Sequence, List, Optional
 
-from langchain_core.messages import BaseMessage, HumanMessage, ToolMessage
+from langchain.agents import AgentExecutor
+from langchain.agents.format_scratchpad.tools import format_to_tool_messages
+from langchain.agents.output_parsers.tools import ToolsAgentOutputParser
+from langchain.tools.render import render_text_description
+from langchain_core.agents import AgentFinish, AgentActionMessageLog
 from langchain_core.language_models import BaseChatModel
+from langchain_core.messages import BaseMessage, HumanMessage, ToolMessage
+from langchain_core.messages.base import merge_content
+from langchain_core.prompts import MessagesPlaceholder
 from langchain_core.prompts.chat import ChatPromptTemplate
 from langchain_core.runnables import Runnable, RunnablePassthrough, RunnableLambda
 from langchain_core.runnables.history import GetSessionHistoryCallable
 from langchain_core.tools import BaseTool
-from langchain_core.agents import AgentFinish, AgentActionMessageLog
-from langchain_core.prompts import MessagesPlaceholder
-from langchain_core.messages.base import merge_content
-
-from langchain.agents import AgentExecutor
-from langchain.agents.format_scratchpad.tools import format_to_tool_messages
-from langchain.agents.output_parsers.tools import ToolsAgentOutputParser
-
-from langchain.tools.render import render_text_description
 
 from motleycrew.agents.langchain import LangchainMotleyAgent
-from motleycrew.tools import MotleyTool
-from motleycrew.common import MotleySupportedTool
 from motleycrew.common import LLMFramework
+from motleycrew.common import MotleySupportedTool
 from motleycrew.common.llms import init_llm
 from motleycrew.common.utils import print_passthrough
-
+from motleycrew.tools import MotleyTool
 
 default_think_prompt = ChatPromptTemplate.from_messages(
     [

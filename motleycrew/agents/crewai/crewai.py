@@ -84,38 +84,37 @@ class CrewAIMotleyAgentParent(MotleyAgentParent, LangchainOutputHandlerMixin):
 
     def _create_agent_executor_decorator(self):
         """Decorator adding logic for working with output_handler when creating agent_executor"""
+
         def decorator(func: Callable):
             def wrapper(tools=None):
-                result =func(tools)
+                result = func(tools)
 
-                plan = ModelField(
-                    name="plan", type_=Callable, class_validators={}, model_config=BaseConfig
+                object.__setattr__(
+                    self._agent.agent_executor.agent,
+                    "plan",
+                    self.agent_plane_decorator()(self._agent.agent_executor.agent.plan),
                 )
-                self._agent.agent_executor.agent.__fields__["plan"] = plan
-                self._agent.agent_executor.agent.plan = self.agent_plane_decorator()(
-                    self._agent.agent_executor.agent.plan)
 
-                _take_next_step = ModelField(
-                    name="_take_next_step", type_=Callable, class_validators={}, model_config=BaseConfig
-                )
-                self._agent.agent_executor.__fields__["_take_next_step"] = _take_next_step
-                self._agent.agent_executor._take_next_step = self.take_next_step_decorator()(
-                    self._agent.agent_executor._take_next_step
+                object.__setattr__(
+                    self._agent.agent_executor,
+                    "_take_next_step",
+                    self.take_next_step_decorator()(self._agent.agent_executor._take_next_step),
                 )
                 return result
+
             return wrapper
+
         return decorator
 
     def materialize(self):
         super().materialize()
 
         if self.output_handler:
-            create_agent_executor = ModelField(
-                name="create_agent_executor", type_=Callable, class_validators={}, model_config=BaseConfig
+            object.__setattr__(
+                self._agent,
+                "create_agent_executor",
+                self._create_agent_executor_decorator()(self._agent.create_agent_executor),
             )
-            self._agent.__fields__["create_agent_executor"] = create_agent_executor
-            self._agent.create_agent_executor = self._create_agent_executor_decorator()(
-                self._agent.create_agent_executor)
 
     # TODO: what do these do?
     def set_cache_handler(self, cache_handler: Any) -> None:

@@ -66,19 +66,14 @@ class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlerMixin):
         assert isinstance(self._agent, AgentExecutor)
 
         if self.output_handler:
-
-            plan = ModelField(
-                name="plan", type_=Callable, class_validators={}, model_config=BaseConfig
+            object.__setattr__(
+                self._agent.agent, "plan", self.agent_plane_decorator()(self._agent.agent.plan)
             )
-            self._agent.agent.__fields__["plan"] = plan
-            self._agent.agent.plan = self.agent_plane_decorator()(self._agent.agent.plan)
 
-            _take_next_step = ModelField(
-                name="_take_next_step", type_=Callable, class_validators={}, model_config=BaseConfig
-            )
-            self._agent.__fields__["_take_next_step"] = _take_next_step
-            self._agent._take_next_step = self.take_next_step_decorator()(
-                self._agent._take_next_step
+            object.__setattr__(
+                self._agent,
+                "_take_next_step",
+                self.take_next_step_decorator()(self._agent._take_next_step),
             )
 
         if self.get_session_history_callable:

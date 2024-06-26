@@ -1,23 +1,20 @@
 """ Module description """
 
-from typing import Any, Optional, Sequence, Callable, Union, Dict, List, Tuple
-
-from pydantic.v1.fields import ModelField
-from pydantic.v1.config import BaseConfig
+from typing import Any, Optional, Sequence
 
 from langchain.agents import AgentExecutor
+from langchain_core.chat_history import InMemoryChatMessageHistory
 from langchain_core.runnables import RunnableConfig
 from langchain_core.runnables.history import RunnableWithMessageHistory, GetSessionHistoryCallable
-from langchain_core.chat_history import InMemoryChatMessageHistory
 
+from motleycrew.agents.mixins import LangchainOutputHandlingAgentMixin
 from motleycrew.agents.parent import MotleyAgentParent
-from motleycrew.tracking import add_default_callbacks_to_langchain_config
-from motleycrew.common import MotleySupportedTool, logger
 from motleycrew.common import MotleyAgentFactory
-from motleycrew.agents.mixins import LangchainOutputHandlerMixin
+from motleycrew.common import MotleySupportedTool, logger
+from motleycrew.tracking import add_default_callbacks_to_langchain_config
 
 
-class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlerMixin):
+class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin):
     def __init__(
         self,
         description: str | None = None,

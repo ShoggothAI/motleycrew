@@ -1,7 +1,7 @@
 """ Module description """
 
-from typing import Any, Optional, Sequence
 import uuid
+from typing import Any, Optional, Sequence
 
 try:
     from llama_index.core.agent import AgentRunner
@@ -88,8 +88,8 @@ class LlamaIndexMotleyAgent(MotleyAgentParent):
                     output_task_step = TaskStep(
                         task_id=task_id,
                         step_id=str(uuid.uuid4()),
-                        input="{}\n\nYou must use {} to return the final output.".format(
-                            agent_output, self.output_handler.name
+                        input="You must call the {} tool to return the output.".format(
+                            self.output_handler.name
                         ),
                     )
 

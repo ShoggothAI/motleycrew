@@ -2,17 +2,15 @@
 
 from typing import Any, Optional, Sequence, Callable
 
-from pydantic.v1.fields import ModelField
-from pydantic.v1.config import BaseConfig
 from langchain_core.runnables import RunnableConfig
 
-from motleycrew.agents.parent import MotleyAgentParent
 from motleycrew.agents.crewai import CrewAIAgentWithConfig
-from motleycrew.common import MotleySupportedTool
+from motleycrew.agents.mixins import LangchainOutputHandlingAgentMixin
+from motleycrew.agents.parent import MotleyAgentParent
 from motleycrew.common import MotleyAgentFactory
-from motleycrew.tracking import add_default_callbacks_to_langchain_config
+from motleycrew.common import MotleySupportedTool
 from motleycrew.common.utils import ensure_module_is_installed
-from motleycrew.agents.mixins import LangchainOutputHandlerMixin
+from motleycrew.tracking import add_default_callbacks_to_langchain_config
 
 try:
     from crewai import Task as CrewAI__Task
@@ -20,7 +18,7 @@ except ImportError:
     pass
 
 
-class CrewAIMotleyAgentParent(MotleyAgentParent, LangchainOutputHandlerMixin):
+class CrewAIMotleyAgentParent(MotleyAgentParent, LangchainOutputHandlingAgentMixin):
     def __init__(
         self,
         goal: str,

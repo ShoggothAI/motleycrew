@@ -1,16 +1,21 @@
 from typing import Any, Optional, Callable, Union, Dict, List, Tuple
 
 from langchain_core.agents import AgentFinish, AgentAction
-from langchain_core.tools import BaseTool
 from langchain_core.callbacks import CallbackManagerForChainRun
 from langchain_core.messages import AIMessage
+from langchain_core.tools import BaseTool
+
 from motleycrew.agents.parent import DirectOutput
+from motleycrew.tools import MotleyTool
 
 
-class LangchainOutputHandlerMixin:
+class LangchainOutputHandlingAgentMixin:
+    """A mixin for Langchain-based agents that support output handlers."""
+
+    output_handler: Optional[MotleyTool] = None
 
     def agent_plan_decorator(self):
-        """Decorator for inclusion in the call chain of the agent, the output handler tool"""
+        """Decorator for Agent.plan() method that intercepts AgentFinish events"""
 
         def decorator(func: Callable):
 
@@ -28,8 +33,8 @@ class LangchainOutputHandlerMixin:
                     return AgentAction(
                         tool=self.output_handler.name,
                         tool_input=step.return_values,
-                        log="Use tool: {}\nInput: {}".format(
-                            self.output_handler.name, step.return_values
+                        log="You must call the {} tool to return the output.".format(
+                            self.output_handler.name
                         ),
                     )
                 return step
@@ -39,7 +44,9 @@ class LangchainOutputHandlerMixin:
         return decorator
 
     def take_next_step_decorator(self):
-        """DirectOutput exception interception decorator"""
+        """
+        Decorator for AgentExecutor._take_next_step() method that catches DirectOutput exceptions.
+        """
 
         def decorator(func: Callable):
             def wrapper(
@@ -55,7 +62,7 @@ class LangchainOutputHandlerMixin:
                         name_to_tool_map, color_mapping, inputs, intermediate_steps, run_manager
                     )
                 except DirectOutput as direct_ex:
-                    message = "Final answer\n" + str(direct_ex.output)
+                    message = str(direct_ex.output)
                     return AgentFinish(
                         return_values={"output": direct_ex.output},
                         messages=[AIMessage(content=message)],

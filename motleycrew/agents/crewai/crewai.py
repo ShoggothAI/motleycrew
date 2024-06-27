@@ -10,6 +10,7 @@ from motleycrew.agents.parent import MotleyAgentParent
 from motleycrew.common import MotleyAgentFactory
 from motleycrew.common import MotleySupportedTool
 from motleycrew.common.utils import ensure_module_is_installed
+from motleycrew.tools import MotleyTool
 from motleycrew.tracking import add_default_callbacks_to_langchain_config
 
 try:
@@ -48,6 +49,8 @@ class CrewAIMotleyAgentParent(MotleyAgentParent, LangchainOutputHandlingAgentMix
         )
 
         if self.output_handler:
+            self._agent_finish_blocker_tool = self._create_agent_finish_blocker_tool()
+            self.tools[self._agent_finish_blocker_tool.name] = MotleyTool.from_langchain_tool(self._agent_finish_blocker_tool)
             output_handler_tool = self._prepare_output_handler()
             self.tools[output_handler_tool.name] = output_handler_tool
 

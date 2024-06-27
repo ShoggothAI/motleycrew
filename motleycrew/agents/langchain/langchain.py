@@ -48,6 +48,8 @@ class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin)
             verbose=verbose,
         )
 
+        self._agent_finish_blocker_tool = self._create_agent_finish_blocker_tool()
+
         if chat_history is True:
             chat_history = InMemoryChatMessageHistory()
             self.get_session_history_callable = lambda _: chat_history
@@ -63,6 +65,7 @@ class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin)
         assert isinstance(self._agent, AgentExecutor)
 
         if self.output_handler:
+            self._agent.tools += [self._agent_finish_blocker_tool]
 
             object.__setattr__(
                 self._agent.agent, "plan", self.agent_plan_decorator()(self._agent.agent.plan)

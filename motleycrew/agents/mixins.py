@@ -3,7 +3,7 @@ from typing import Any, Optional, Callable, Union, Dict, List, Tuple
 from langchain_core.agents import AgentFinish, AgentAction
 from langchain_core.callbacks import CallbackManagerForChainRun
 from langchain_core.messages import AIMessage
-from langchain_core.tools import BaseTool
+from langchain_core.tools import BaseTool, Tool
 
 from motleycrew.agents.parent import DirectOutput
 from motleycrew.tools import MotleyTool
@@ -13,6 +13,24 @@ class LangchainOutputHandlingAgentMixin:
     """A mixin for Langchain-based agents that support output handlers."""
 
     output_handler: Optional[MotleyTool] = None
+
+    def _create_agent_finish_blocker_tool(self) -> BaseTool:
+        """Create a tool that will force the agent to retry if it attempts to return the output
+        bypassing the output handler.
+        """
+
+        def create_agent_finish_blocking_message(input: Any = None) -> str:
+            return f"You must use {self.output_handler.name} to return the final output.\n"
+
+        return Tool.from_function(
+            name="agent_finish_blocker",
+            description="",
+            func=create_agent_finish_blocking_message,
+        )
+
+    def _is_blocker_action(self, action: AgentAction) -> bool:
+        """Checks whether the action of the response blocking tool"""
+        return bool(isinstance(action, AgentAction) and action.tool==self._agent_finish_blocker_tool.name)
 
     def agent_plan_decorator(self):
         """Decorator for Agent.plan() method that intercepts AgentFinish events"""
@@ -24,6 +42,22 @@ class LangchainOutputHandlingAgentMixin:
                 callbacks: "Callbacks" = None,
                 **kwargs: Any,
             ) -> Union[AgentAction, AgentFinish]:
+
+                if self.output_handler:
+                    to_remove_steps = []
+                    additional_inputs = []
+                    for intermediate_step in intermediate_steps:
+                        action, action_output = intermediate_step
+                        if self._is_blocker_action(action):
+                            additional_inputs.append(action_output)
+                            to_remove_steps.append(intermediate_step)
+
+                    if additional_inputs:
+                        for to_remove_step in to_remove_steps:
+                            intermediate_steps.remove(to_remove_step)
+
+                        kwargs["input"] = kwargs["input"] + "\n{}".format("\n".join(additional_inputs))
+
                 step = func(intermediate_steps, callbacks, **kwargs)
 
                 if not isinstance(step, AgentFinish):
@@ -31,11 +65,9 @@ class LangchainOutputHandlingAgentMixin:
 
                 if self.output_handler is not None:
                     return AgentAction(
-                        tool=self.output_handler.name,
+                        tool=self._agent_finish_blocker_tool.name,
                         tool_input=step.return_values,
-                        log="You must call the {} tool to return the output.".format(
-                            self.output_handler.name
-                        ),
+                        log="\nUse tool: {}".format(self._agent_finish_blocker_tool.name ),
                     )
                 return step
 

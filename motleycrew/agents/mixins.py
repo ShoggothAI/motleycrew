@@ -30,12 +30,15 @@ class LangchainOutputHandlingAgentMixin:
 
     def _is_blocker_action(self, action: AgentAction) -> bool:
         """Checks whether the action of the response blocking tool"""
-        return bool(isinstance(action, AgentAction) and action.tool==self._agent_finish_blocker_tool.name)
+        return bool(
+            isinstance(action, AgentAction) and action.tool == self._agent_finish_blocker_tool.name
+        )
 
     def agent_plan_decorator(self):
         """Decorator for Agent.plan() method that intercepts AgentFinish events"""
 
         def decorator(func: Callable):
+            additional_inputs = set()
 
             def wrapper(
                 intermediate_steps: List[Tuple[AgentAction, str]],
@@ -45,18 +48,19 @@ class LangchainOutputHandlingAgentMixin:
 
                 if self.output_handler:
                     to_remove_steps = []
-                    additional_inputs = []
                     for intermediate_step in intermediate_steps:
                         action, action_output = intermediate_step
                         if self._is_blocker_action(action):
-                            additional_inputs.append(action_output)
+                            additional_inputs.add(action_output)
                             to_remove_steps.append(intermediate_step)
 
-                    if additional_inputs:
-                        for to_remove_step in to_remove_steps:
-                            intermediate_steps.remove(to_remove_step)
+                    for to_remove_step in to_remove_steps:
+                        intermediate_steps.remove(to_remove_step)
 
-                        kwargs["input"] = kwargs["input"] + "\n{}".format("\n".join(additional_inputs))
+                    if additional_inputs:
+                        kwargs["input"] = kwargs["input"] + "\n{}".format(
+                            "\n".join(additional_inputs)
+                        )
 
                 step = func(intermediate_steps, callbacks, **kwargs)
 
@@ -67,7 +71,7 @@ class LangchainOutputHandlingAgentMixin:
                     return AgentAction(
                         tool=self._agent_finish_blocker_tool.name,
                         tool_input=step.return_values,
-                        log="\nUse tool: {}".format(self._agent_finish_blocker_tool.name ),
+                        log="\nUse tool: {}".format(self._agent_finish_blocker_tool.name),
                     )
                 return step
 

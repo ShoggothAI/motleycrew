@@ -55,6 +55,8 @@ def run_tool_direct_decorator(func: Callable):
 
 
 class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
+    wrapp_direct_tool = True
+
     def __init__(
         self,
         description: str | None = None,
@@ -175,15 +177,16 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
             args_schema=self.output_handler.args_schema,
         )
 
-        object.__setattr__(
-            prepared_output_handler,
-            "_run",
-            _run_tool_direct_decorator(prepared_output_handler._run),
-        )
+        if self.wrapp_direct_tool:
+            object.__setattr__(
+                prepared_output_handler,
+                "_run",
+                _run_tool_direct_decorator(prepared_output_handler._run),
+            )
 
-        object.__setattr__(
-            prepared_output_handler, "run", run_tool_direct_decorator(prepared_output_handler.run)
-        )
+            object.__setattr__(
+                prepared_output_handler, "run", run_tool_direct_decorator(prepared_output_handler.run)
+            )
 
         return MotleyTool.from_langchain_tool(prepared_output_handler)
 

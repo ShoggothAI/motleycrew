@@ -24,6 +24,8 @@ from motleycrew.common.utils import ensure_module_is_installed
 
 
 class LlamaIndexMotleyAgent(MotleyAgentParent):
+    wrapp_direct_tool = False
+
     def __init__(
         self,
         description: str | None = None,

@@ -29,33 +29,7 @@ class DirectOutput(BaseException):
         self.output = output
 
 
-def _run_tool_direct_decorator(func: Callable):
-    """Decorator of the tool's _run method, for intercepting a DirectOutput exception"""
-
-    def wrapper(*args, **kwargs):
-        try:
-            result = func(*args, **kwargs)
-        except DirectOutput as direct_exc:
-            return direct_exc
-        return result
-
-    return wrapper
-
-
-def run_tool_direct_decorator(func: Callable):
-    """Decorator of the tool's run method, for intercepting a DirectOutput exception"""
-
-    def wrapper(*args, **kwargs):
-        result = func(*args, **kwargs)
-        if isinstance(result, DirectOutput):
-            raise result
-        return result
-
-    return wrapper
-
-
 class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
-    wrapp_direct_tool = True
 
     def __init__(
         self,
@@ -176,17 +150,6 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
             func=handle_agent_output,
             args_schema=self.output_handler.args_schema,
         )
-
-        if self.wrapp_direct_tool:
-            object.__setattr__(
-                prepared_output_handler,
-                "_run",
-                _run_tool_direct_decorator(prepared_output_handler._run),
-            )
-
-            object.__setattr__(
-                prepared_output_handler, "run", run_tool_direct_decorator(prepared_output_handler.run)
-            )
 
         return MotleyTool.from_langchain_tool(prepared_output_handler)
 

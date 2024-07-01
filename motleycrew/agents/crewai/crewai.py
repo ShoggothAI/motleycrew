@@ -1,11 +1,10 @@
 """ Module description """
 
-from typing import Any, Optional, Sequence, Callable
+from typing import Any, Optional, Sequence
 
 from langchain_core.runnables import RunnableConfig
 
 from motleycrew.agents.crewai import CrewAIAgentWithConfig
-from motleycrew.agents.mixins import LangchainOutputHandlingAgentMixin
 from motleycrew.agents.parent import MotleyAgentParent
 from motleycrew.common import MotleyAgentFactory
 from motleycrew.common import MotleySupportedTool
@@ -19,7 +18,7 @@ except ImportError:
     pass
 
 
-class CrewAIMotleyAgentParent(MotleyAgentParent, LangchainOutputHandlingAgentMixin):
+class CrewAIMotleyAgentParent(MotleyAgentParent):
     def __init__(
         self,
         goal: str,
@@ -38,6 +37,13 @@ class CrewAIMotleyAgentParent(MotleyAgentParent, LangchainOutputHandlingAgentMix
             tools (:obj:`Sequence[MotleySupportedTool]`, optional:
             verbose (bool):
         """
+
+        if output_handler:
+            raise NotImplementedError(
+                "Output handler is not supported for CrewAI agents "
+                "because of the specificity of CrewAi's prompts."
+            )
+
         ensure_module_is_installed("crewai")
         super().__init__(
             description=goal,
@@ -47,12 +53,6 @@ class CrewAIMotleyAgentParent(MotleyAgentParent, LangchainOutputHandlingAgentMix
             output_handler=output_handler,
             verbose=verbose,
         )
-
-        if self.output_handler:
-            self._agent_finish_blocker_tool = self._create_agent_finish_blocker_tool()
-            self.tools[self._agent_finish_blocker_tool.name] = MotleyTool.from_langchain_tool(self._agent_finish_blocker_tool)
-            output_handler_tool = self._prepare_output_handler()
-            self.tools[output_handler_tool.name] = output_handler_tool
 
     def invoke(
         self,
@@ -78,43 +78,15 @@ class CrewAIMotleyAgentParent(MotleyAgentParent, LangchainOutputHandlingAgentMix
         crewai_task = CrewAI__Task(description=prompt)
 
         output = self.agent.execute_task(
-            task=crewai_task, context=input.get("context"), tools=langchain_tools, config=config
+            task=crewai_task,
+            context=input.get("context"),
+            tools=langchain_tools,
+            config=config,
         )
         return output
 
-    def _create_agent_executor_decorator(self):
-        """Decorator adding logic for working with output_handler when creating agent_executor"""
-
-        def decorator(func: Callable):
-            def wrapper(tools=None):
-                result = func(tools)
-
-                object.__setattr__(
-                    self._agent.agent_executor.agent,
-                    "plan",
-                    self.agent_plan_decorator()(self._agent.agent_executor.agent.plan),
-                )
-
-                object.__setattr__(
-                    self._agent.agent_executor,
-                    "_take_next_step",
-                    self.take_next_step_decorator()(self._agent.agent_executor._take_next_step),
-                )
-                return result
-
-            return wrapper
-
-        return decorator
-
     def materialize(self):
         super().materialize()
-
-        if self.output_handler:
-            object.__setattr__(
-                self._agent,
-                "create_agent_executor",
-                self._create_agent_executor_decorator()(self._agent.create_agent_executor),
-            )
 
     # TODO: what do these do?
     def set_cache_handler(self, cache_handler: Any) -> None:

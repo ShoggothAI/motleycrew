@@ -120,7 +120,6 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
         """
         Wraps the output handler in one more tool layer,
         adding the necessary stuff for returning direct output through output handler.
-        Expects agent's later invocation through _run_and_catch_output method below.
         """
         if not self.output_handler:
             return None
@@ -152,32 +151,6 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
         )
 
         return MotleyTool.from_langchain_tool(prepared_output_handler)
-
-    @staticmethod
-    def _run_and_catch_output(
-        action: Callable, action_args: tuple, action_kwargs: Dict[str, Any]
-    ) -> Tuple[bool, Any]:
-        """
-        Catcher for the direct output from the output handler (see _prepare_output_handler).
-
-        Args:
-            action (Callable): the action inside which the output handler is supposed to be called.
-                Usually the invocation method of the underlying agent.
-            action_args (tuple): the args for the action
-            action_kwargs (tuple): the kwargs for the action
-
-        Returns:
-            tuple[bool, Any]: a tuple with a boolean indicating whether the output was caught
-                via DirectOutput and the output itself
-        """
-        assert callable(action)
-
-        try:
-            output = action(*action_args, **action_kwargs)
-        except DirectOutput as output_exc:
-            return True, output_exc.output
-
-        return False, output
 
     def materialize(self):
         if self.is_materialized:

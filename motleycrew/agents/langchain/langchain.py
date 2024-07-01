@@ -131,18 +131,8 @@ class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin)
                 config["configurable"].get("session_id") or "default"
             )
 
-        caught_direct_output, output = self._run_and_catch_output(
-            action=self.agent.invoke,
-            action_args=(
-                {"input": prompt},
-                config,
-            ),
-            action_kwargs=kwargs,
-        )
-
-        if not caught_direct_output:
-            output = output.get("output")  # unpack native Langchain output
-
+        output = self.agent.invoke({"input": prompt}, config, **kwargs)
+        output = output.get("output")
         return output
 
     @staticmethod

@@ -34,78 +34,93 @@ class LangchainOutputHandlingAgentMixin:
             isinstance(action, AgentAction) and action.tool == self._agent_finish_blocker_tool.name
         )
 
-    def agent_plan_decorator(self):
+    def agent_plan_decorator(self, func: Callable):
         """Decorator for Agent.plan() method that intercepts AgentFinish events"""
 
-        def decorator(func: Callable):
-            additional_inputs = set()
+        additional_inputs = set()
 
-            def wrapper(
-                intermediate_steps: List[Tuple[AgentAction, str]],
-                callbacks: "Callbacks" = None,
-                **kwargs: Any,
-            ) -> Union[AgentAction, AgentFinish]:
+        def wrapper(
+            intermediate_steps: List[Tuple[AgentAction, str]],
+            callbacks: "Callbacks" = None,
+            **kwargs: Any,
+        ) -> Union[AgentAction, AgentFinish]:
 
-                if self.output_handler:
-                    to_remove_steps = []
-                    for intermediate_step in intermediate_steps:
-                        action, action_output = intermediate_step
-                        if self._is_blocker_action(action):
-                            additional_inputs.add(action_output)
-                            to_remove_steps.append(intermediate_step)
+            if self.output_handler:
+                to_remove_steps = []
+                for intermediate_step in intermediate_steps:
+                    action, action_output = intermediate_step
+                    if self._is_blocker_action(action):
+                        additional_inputs.add(action_output)
+                        to_remove_steps.append(intermediate_step)
 
-                    for to_remove_step in to_remove_steps:
-                        intermediate_steps.remove(to_remove_step)
+                for to_remove_step in to_remove_steps:
+                    intermediate_steps.remove(to_remove_step)
 
-                    if additional_inputs:
-                        kwargs["input"] = kwargs["input"] + "\n{}".format(
-                            "\n".join(additional_inputs)
-                        )
+                if additional_inputs:
+                    kwargs["input"] = kwargs["input"] + "\n{}".format("\n".join(additional_inputs))
 
-                step = func(intermediate_steps, callbacks, **kwargs)
+            step = func(intermediate_steps, callbacks, **kwargs)
 
-                if not isinstance(step, AgentFinish):
-                    return step
-
-                if self.output_handler is not None:
-                    return AgentAction(
-                        tool=self._agent_finish_blocker_tool.name,
-                        tool_input=step.return_values,
-                        log="\nUse tool: {}".format(self._agent_finish_blocker_tool.name),
-                    )
+            if not isinstance(step, AgentFinish):
                 return step
 
-            return wrapper
+            if self.output_handler is not None:
+                return AgentAction(
+                    tool=self._agent_finish_blocker_tool.name,
+                    tool_input=step.return_values,
+                    log="\nUse tool: {}".format(self._agent_finish_blocker_tool.name),
+                )
+            return step
 
-        return decorator
+        return wrapper
 
-    def take_next_step_decorator(self):
+    def take_next_step_decorator(self, func: Callable):
         """
         Decorator for AgentExecutor._take_next_step() method that catches DirectOutput exceptions.
         """
 
-        def decorator(func: Callable):
-            def wrapper(
-                name_to_tool_map: Dict[str, BaseTool],
-                color_mapping: Dict[str, str],
-                inputs: Dict[str, str],
-                intermediate_steps: List[Tuple[AgentAction, str]],
-                run_manager: Optional[CallbackManagerForChainRun] = None,
-            ) -> Union[AgentFinish, List[Tuple[AgentAction, str]]]:
+        def wrapper(
+            name_to_tool_map: Dict[str, BaseTool],
+            color_mapping: Dict[str, str],
+            inputs: Dict[str, str],
+            intermediate_steps: List[Tuple[AgentAction, str]],
+            run_manager: Optional[CallbackManagerForChainRun] = None,
+        ) -> Union[AgentFinish, List[Tuple[AgentAction, str]]]:
 
-                try:
-                    step = func(
-                        name_to_tool_map, color_mapping, inputs, intermediate_steps, run_manager
-                    )
-                except DirectOutput as direct_ex:
-                    message = str(direct_ex.output)
-                    return AgentFinish(
-                        return_values={"output": direct_ex.output},
-                        messages=[AIMessage(content=message)],
-                        log=message,
-                    )
-                return step
+            try:
+                step = func(
+                    name_to_tool_map, color_mapping, inputs, intermediate_steps, run_manager
+                )
+            except DirectOutput as direct_ex:
+                message = str(direct_ex.output)
+                return AgentFinish(
+                    return_values={"output": direct_ex.output},
+                    messages=[AIMessage(content=message)],
+                    log=message,
+                )
+            return step
 
-            return wrapper
+        return wrapper
 
-        return decorator
+    def _run_tool_direct_decorator(self, func: Callable):
+        """Decorator of the tool's _run method, for intercepting a DirectOutput exception"""
+
+        def wrapper(*args, **kwargs):
+            try:
+                result = func(*args, **kwargs)
+            except DirectOutput as direct_exc:
+                return direct_exc
+            return result
+
+        return wrapper
+
+    def run_tool_direct_decorator(self, func: Callable):
+        """Decorator of the tool's run method, for intercepting a DirectOutput exception"""
+
+        def wrapper(*args, **kwargs):
+            result = func(*args, **kwargs)
+            if isinstance(result, DirectOutput):
+                raise result
+            return result
+
+        return wrapper

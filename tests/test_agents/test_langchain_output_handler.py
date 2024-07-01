@@ -47,13 +47,13 @@ def agent():
     )
     agent.materialize()
     object.__setattr__(agent._agent, "plan", fake_agent_plan)
-    object.__setattr__(agent.agent, "plan", agent.agent_plan_decorator()(agent.agent.plan))
+    object.__setattr__(agent.agent, "plan", agent.agent_plan_decorator(agent.agent.plan))
 
     object.__setattr__(agent._agent, "_take_next_step", fake_agent_take_next_step)
     object.__setattr__(
         agent._agent,
         "_take_next_step",
-        agent.take_next_step_decorator()(agent.agent._take_next_step),
+        agent.take_next_step_decorator(agent.agent._take_next_step),
     )
     return agent
 

@@ -1,35 +1,35 @@
-import shutil
-from typing import Optional
-
-import os
 import argparse
-from pathlib import Path
-import traceback
 import difflib
 import json
+import os
+import shutil
+import sys
+import traceback
 from copy import copy
 from functools import partial
+from pathlib import Path
+from typing import Optional
 
-from dotenv import load_dotenv
 import nbformat
-from nbconvert.preprocessors import ExecutePreprocessor
-from nbformat.v4.nbbase import new_code_cell
-
-from motleycrew.common.exceptions import (
-    IntegrationTestException,
-    IpynbIntegrationTestResultNotFound,
-)
-from motleycrew.common import logger, configure_logging
-
+from dotenv import load_dotenv
 from motleycache import (
     enable_cache,
     set_cache_location,
     set_strong_cache,
 )
+from nbconvert.preprocessors import ExecutePreprocessor
+from nbformat.v4.nbbase import new_code_cell
+
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, project_root)  # ensure the examples are importable
 
 from examples.old.delegation_crewai import main as delegation_crewai_main
 from examples.old.single_llama_index import main as single_llama_index_main
-
+from motleycrew.common import logger, configure_logging
+from motleycrew.common.exceptions import (
+    IntegrationTestException,
+    IpynbIntegrationTestResultNotFound,
+)
 
 INTEGRATION_TESTS = {
     "single_llama_index": single_llama_index_main,

@@ -25,7 +25,9 @@ class ReActLlamaIndexMotleyAgent(LlamaIndexMotleyAgent):
         name: str | None = None,
         tools: Sequence[MotleySupportedTool] | None = None,
         llm: LLM | None = None,
+        output_handler: MotleySupportedTool | None = None,
         verbose: bool = False,
+        max_iterations: int = 10,
     ):
         """Description
 
@@ -47,6 +49,7 @@ class ReActLlamaIndexMotleyAgent(LlamaIndexMotleyAgent):
                 tools=llama_index_tools,
                 llm=llm,
                 verbose=verbose,
+                max_iterations=max_iterations,
                 callback_manager=CallbackManager(callbacks),
             )
             return agent
@@ -56,5 +59,6 @@ class ReActLlamaIndexMotleyAgent(LlamaIndexMotleyAgent):
             name=name,
             agent_factory=agent_factory,
             tools=tools,
+            output_handler=output_handler,
             verbose=verbose,
         )

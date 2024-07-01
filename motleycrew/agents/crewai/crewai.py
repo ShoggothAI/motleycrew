@@ -4,12 +4,13 @@ from typing import Any, Optional, Sequence
 
 from langchain_core.runnables import RunnableConfig
 
-from motleycrew.agents.parent import MotleyAgentParent
 from motleycrew.agents.crewai import CrewAIAgentWithConfig
-from motleycrew.common import MotleySupportedTool
+from motleycrew.agents.parent import MotleyAgentParent
 from motleycrew.common import MotleyAgentFactory
-from motleycrew.tracking import add_default_callbacks_to_langchain_config
+from motleycrew.common import MotleySupportedTool
 from motleycrew.common.utils import ensure_module_is_installed
+from motleycrew.tools import MotleyTool
+from motleycrew.tracking import add_default_callbacks_to_langchain_config
 
 try:
     from crewai import Task as CrewAI__Task
@@ -24,6 +25,7 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
         name: str | None = None,
         agent_factory: MotleyAgentFactory[CrewAIAgentWithConfig] | None = None,
         tools: Sequence[MotleySupportedTool] | None = None,
+        output_handler: MotleySupportedTool | None = None,
         verbose: bool = False,
     ):
         """Description
@@ -35,12 +37,20 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
             tools (:obj:`Sequence[MotleySupportedTool]`, optional:
             verbose (bool):
         """
+
+        if output_handler:
+            raise NotImplementedError(
+                "Output handler is not supported for CrewAI agents "
+                "because of the specificity of CrewAi's prompts."
+            )
+
         ensure_module_is_installed("crewai")
         super().__init__(
             description=goal,
             name=name,
             agent_factory=agent_factory,
             tools=tools,
+            output_handler=output_handler,
             verbose=verbose,
         )
 
@@ -68,9 +78,15 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
         crewai_task = CrewAI__Task(description=prompt)
 
         output = self.agent.execute_task(
-            task=crewai_task, context=input.get("context"), tools=langchain_tools, config=config
+            task=crewai_task,
+            context=input.get("context"),
+            tools=langchain_tools,
+            config=config,
         )
         return output
+
+    def materialize(self):
+        super().materialize()
 
     # TODO: what do these do?
     def set_cache_handler(self, cache_handler: Any) -> None:

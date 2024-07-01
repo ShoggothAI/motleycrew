@@ -1,25 +1,24 @@
 """ Module description """
 
-from typing import TYPE_CHECKING, Optional, Sequence, Any, Callable, Dict, Union, Tuple
-from functools import wraps
 import inspect
+from typing import TYPE_CHECKING, Optional, Sequence, Any, Callable, Dict, Union, Tuple
 
-from langchain_core.tools import Tool
-from langchain_core.runnables import Runnable
 from langchain_core.prompts.chat import ChatPromptTemplate, HumanMessage, SystemMessage
+from langchain_core.runnables import Runnable
 from langchain_core.tools import StructuredTool
+from langchain_core.tools import Tool
+from motleycrew.agents.output_handler import MotleyOutputHandler
 from pydantic import BaseModel
 
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
-from motleycrew.agents.output_handler import MotleyOutputHandler
-from motleycrew.tools import MotleyTool
 from motleycrew.common import MotleyAgentFactory, MotleySupportedTool
+from motleycrew.common import logger
 from motleycrew.common.exceptions import (
     AgentNotMaterialized,
     CannotModifyMaterializedAgent,
     InvalidOutput,
 )
-from motleycrew.common import logger
+from motleycrew.tools import MotleyTool
 
 if TYPE_CHECKING:
     from motleycrew import MotleyCrew
@@ -31,6 +30,7 @@ class DirectOutput(BaseException):
 
 
 class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
+
     def __init__(
         self,
         description: str | None = None,
@@ -69,7 +69,9 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
     def __str__(self):
         return self.__repr__()
 
-    def compose_prompt(self, input_dict: dict, prompt: ChatPromptTemplate | str) -> str:
+    def compose_prompt(
+        self, input_dict: dict, prompt: ChatPromptTemplate | str
+    ) -> Union[str, ChatPromptTemplate]:
         # TODO: always cast description and prompt to ChatPromptTemplate first?
         prompt_messages = []
 
@@ -96,6 +98,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
             else:
                 raise ValueError("Prompt must be a string or a ChatPromptTemplate")
 
+        # TODO: pass the unformatted messages list to agents that can handle it
         prompt = "\n\n".join([m.content for m in prompt_messages]) + "\n"
         return prompt
 
@@ -117,7 +120,6 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
         """
         Wraps the output handler in one more tool layer,
         adding the necessary stuff for returning direct output through output handler.
-        Expects agent's later invocation through _run_and_catch_output method below.
         """
         if not self.output_handler:
             return None
@@ -149,32 +151,6 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
         )
 
         return MotleyTool.from_langchain_tool(prepared_output_handler)
-
-    @staticmethod
-    def _run_and_catch_output(
-        action: Callable, action_args: tuple, action_kwargs: Dict[str, Any]
-    ) -> Tuple[bool, Any]:
-        """
-        Catcher for the direct output from the output handler (see _prepare_output_handler).
-
-        Args:
-            action (Callable): the action inside which the output handler is supposed to be called.
-                Usually the invocation method of the underlying agent.
-            action_args (tuple): the args for the action
-            action_kwargs (tuple): the kwargs for the action
-
-        Returns:
-            tuple[bool, Any]: a tuple with a boolean indicating whether the output was caught
-                via DirectOutput and the output itself
-        """
-        assert callable(action)
-
-        try:
-            output = action(*action_args, **action_kwargs)
-        except DirectOutput as output_exc:
-            return True, output_exc.output
-
-        return False, output
 
     def materialize(self):
         if self.is_materialized:

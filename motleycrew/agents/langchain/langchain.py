@@ -1,6 +1,6 @@
 """ Module description """
 
-from typing import Any, Optional, Sequence
+from typing import Any, Optional, Sequence, Callable
 
 from langchain.agents import AgentExecutor
 from langchain_core.chat_history import InMemoryChatMessageHistory
@@ -8,11 +8,35 @@ from langchain_core.runnables import RunnableConfig
 from langchain_core.runnables.history import RunnableWithMessageHistory, GetSessionHistoryCallable
 
 from motleycrew.agents.mixins import LangchainOutputHandlingAgentMixin
-from motleycrew.agents.parent import MotleyAgentParent
+from motleycrew.agents.parent import MotleyAgentParent, DirectOutput
 from motleycrew.common import MotleyAgentFactory
 from motleycrew.common import MotleySupportedTool, logger
 from motleycrew.tracking import add_default_callbacks_to_langchain_config
 
+
+def _run_tool_direct_decorator(func: Callable):
+    """Decorator of the tool's _run method, for intercepting a DirectOutput exception"""
+
+    def wrapper(*args, **kwargs):
+        try:
+            result = func(*args, **kwargs)
+        except DirectOutput as direct_exc:
+            return direct_exc
+        return result
+
+    return wrapper
+
+
+def run_tool_direct_decorator(func: Callable):
+    """Decorator of the tool's run method, for intercepting a DirectOutput exception"""
+
+    def wrapper(*args, **kwargs):
+        result = func(*args, **kwargs)
+        if isinstance(result, DirectOutput):
+            raise result
+        return result
+
+    return wrapper
 
 class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin):
     def __init__(
@@ -75,6 +99,21 @@ class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin)
                 self._agent,
                 "_take_next_step",
                 self.take_next_step_decorator()(self._agent._take_next_step),
+            )
+
+            prepared_output_handler = None
+            for tool in self.agent.tools:
+                if tool.name == "output_handler":
+                    prepared_output_handler = tool
+
+            object.__setattr__(
+                prepared_output_handler,
+                "_run",
+                _run_tool_direct_decorator(prepared_output_handler._run),
+            )
+
+            object.__setattr__(
+                prepared_output_handler, "run", run_tool_direct_decorator(prepared_output_handler.run)
             )
 
         if self.get_session_history_callable:

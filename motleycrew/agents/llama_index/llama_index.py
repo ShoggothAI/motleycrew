@@ -55,10 +55,7 @@ class LlamaIndexMotleyAgent(MotleyAgentParent):
     def run_step_decorator(self):
         """Decorator for inclusion in the call chain of the agent, the output handler tool"""
         ensure_module_is_installed("llama_index")
-
         def decorator(func):
-            output_task_step = None
-
             def wrapper(
                 task_id: str,
                 step: Optional[TaskStep] = None,
@@ -67,15 +64,14 @@ class LlamaIndexMotleyAgent(MotleyAgentParent):
                 **kwargs: Any,
             ):
 
-                nonlocal output_task_step
-
                 try:
                     cur_step_output = func(task_id, step, input, mode, **kwargs)
                 except DirectOutput as output_exc:
                     self.direct_output = output_exc
                     output = AgentChatResponse(str(output_exc.output))
+                    task_step = TaskStep(task_id=task_id, step_id=str(uuid.uuid4()))
                     cur_step_output = TaskStepOutput(
-                        output=output, is_last=True, next_steps=[], task_step=output_task_step
+                        output=output, is_last=True, next_steps=[], task_step=task_step
                     )
                     return cur_step_output
 
@@ -85,7 +81,6 @@ class LlamaIndexMotleyAgent(MotleyAgentParent):
                 if cur_step_output.is_last:
                     cur_step_output.is_last = False
                     task_id = cur_step_output.task_step.task_id
-                    agent_output = cur_step_output.output.response
                     output_task_step = TaskStep(
                         task_id=task_id,
                         step_id=str(uuid.uuid4()),

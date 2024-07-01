@@ -68,7 +68,7 @@ class LangchainOutputHandlingAgentMixin:
                 return AgentAction(
                     tool=self._agent_finish_blocker_tool.name,
                     tool_input=step.return_values,
-                    log="\nUse tool: {}".format(self._agent_finish_blocker_tool.name),
+                    log="\nDetected AgentFinish, blocking it to force output via output handler.\n",
                 )
             return step
 

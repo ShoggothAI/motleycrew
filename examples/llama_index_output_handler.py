@@ -18,9 +18,11 @@ def main():
 
     def check_output(output: str):
         if "medicine" not in output.lower():
-            raise InvalidOutput("Add more information about AI applications in medicine.")
+            raise InvalidOutput(
+                "Add more information about AI applications in medicine."
+            )
 
-        return {"checked_output": output.lower()}
+        return {"checked_output": output}
 
     output_handler = StructuredTool.from_function(
         name="output_handler",
@@ -34,6 +36,7 @@ def main():
         tools=[search_tool],
         output_handler=output_handler,
         verbose=True,
+        max_iterations=16,  # default is 10, we add more because the output handler may reject the output
     )
 
     crew = MotleyCrew(async_backend=AsyncBackend.NONE)

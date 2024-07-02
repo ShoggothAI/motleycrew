@@ -15,9 +15,10 @@ def main():
     illustrator = CrewAIMotleyAgent(
         role="Illustrator",
         goal="Create beautiful and insightful illustrations",
-        backstory="You are an expert in creating illustrations for all sorts of concepts and articles. "
+        prompt_prefix="You are an expert in creating illustrations for all sorts of concepts and articles. "
         "You do it by skillfully prompting a text-to-image model.\n"
         "Your final answer MUST be the exact URL or filename of the illustration.",
+        backstory="",
         verbose=True,
         delegation=False,
         tools=[image_generator_tool],
@@ -26,8 +27,9 @@ def main():
     writer = CrewAIMotleyAgent(
         role="Short stories writer",
         goal="Write short stories for children",
-        backstory="You are an accomplished children's writer, known for your funny and interesting short stories.\n"
+        prompt_prefix="You are an accomplished children's writer, known for your funny and interesting short stories.\n"
         "Many parents around the world read your books to their children.",
+        backstory="",
         verbose=True,
         delegation=True,
         tools=[illustrator],

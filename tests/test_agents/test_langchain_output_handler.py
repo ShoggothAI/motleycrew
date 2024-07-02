@@ -47,7 +47,9 @@ def agent():
     )
     agent.materialize()
     object.__setattr__(agent._agent, "plan", fake_agent_plan)
-    object.__setattr__(agent.agent, "plan", agent.agent_plan_decorator(agent.agent.plan))
+    object.__setattr__(
+        agent.agent, "plan", agent.agent_plan_decorator(agent.agent.plan)
+    )
 
     object.__setattr__(agent._agent, "_take_next_step", fake_agent_take_next_step)
     object.__setattr__(
@@ -74,7 +76,7 @@ def test_agent_plan(agent):
 
 
 def test_agent_take_next_step(agent):
-    agent_executor = agent.agent.bound.bound.steps[1].bound
+    agent_executor = agent.agent.bound.bound.last.default.bound
 
     run_kwargs = {
         "name_to_tool_map": {tool.name: tool for tool in agent_executor.tools},

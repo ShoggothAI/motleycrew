@@ -75,7 +75,10 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
         langchain_tools = [tool.to_langchain_tool() for tool in self.tools.values()]
         config = add_default_callbacks_to_langchain_config(config)
 
-        crewai_task = CrewAI__Task(description=prompt)
+        crewai_task = CrewAI__Task(
+            description=prompt,
+            expected_output=None,  # TODO: support expected_output
+        )
 
         output = self.agent.execute_task(
             task=crewai_task,

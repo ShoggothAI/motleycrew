@@ -22,6 +22,8 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
     def __init__(
         self,
         goal: str,
+        prompt_prefix: str | None = None,
+        description: str | None = None,
         name: str | None = None,
         agent_factory: MotleyAgentFactory[CrewAIAgentWithConfig] | None = None,
         tools: Sequence[MotleySupportedTool] | None = None,
@@ -32,6 +34,8 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
 
         Args:
             goal (str):
+            prompt_prefix (:obj:`str`, optional):
+            description (:obj:`str`, optional):
             name (:obj:`str`, optional):
             agent_factory (:obj:`MotleyAgentFactory`, optional):
             tools (:obj:`Sequence[MotleySupportedTool]`, optional:
@@ -46,7 +50,8 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
 
         ensure_module_is_installed("crewai")
         super().__init__(
-            description=goal,
+            prompt_prefix=prompt_prefix,
+            description=description or goal,
             name=name,
             agent_factory=agent_factory,
             tools=tools,
@@ -132,6 +137,8 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
 
         wrapped_agent = CrewAIMotleyAgentParent(
             goal=agent.goal,
+            prompt_prefix=agent.prompt_prefix,
+            description=agent.description,
             name=agent.role,
             tools=tools,
             verbose=verbose,

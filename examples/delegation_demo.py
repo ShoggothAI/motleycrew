@@ -25,11 +25,15 @@ except ImportError:
     motleycrew_location = os.path.realpath(WORKING_DIR / "..")
     sys.path.append(motleycrew_location)
 
-if "Dropbox" in WORKING_DIR.parts and platform.system() == "Windows":
-    # On Windows, kuzu has file locking issues with Dropbox
-    DB_PATH = os.path.realpath(os.path.expanduser("~") + "/Documents/research_db")
+if __name__ == '__main__':
+    if "Dropbox" in WORKING_DIR.parts and platform.system() == "Windows":
+        # On Windows, kuzu has file locking issues with Dropbox
+        DB_PATH = os.path.realpath(os.path.expanduser("~") + "/Documents/research_db")
+    else:
+        DB_PATH = os.path.realpath(WORKING_DIR / "research_db")
+
 else:
-    DB_PATH = os.path.realpath(WORKING_DIR / "research_db")
+    DB_PATH = os.path.realpath(WORKING_DIR / "tests/research_db")
 
 
 def main():

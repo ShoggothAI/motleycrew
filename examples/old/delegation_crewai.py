@@ -9,7 +9,6 @@ from motleycrew.agents.crewai import CrewAIMotleyAgent
 from motleycrew.agents.langchain.react import ReActMotleyAgent
 from motleycrew.common import configure_logging
 from motleycrew.tasks import SimpleTask
-from motleycache import enable_cache, disable_cache
 
 WORKING_DIR = Path(os.path.realpath(".."))
 
@@ -91,7 +90,5 @@ def main():
 
 if __name__ == "__main__":
     configure_logging(verbose=True)
-    enable_cache()
     load_dotenv()
     main()
-    disable_cache()

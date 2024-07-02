@@ -22,6 +22,7 @@ class ReActLlamaIndexMotleyAgent(LlamaIndexMotleyAgent):
     def __init__(
         self,
         description: str | None = None,
+        prompt_prefix: str | None = None,
         name: str | None = None,
         tools: Sequence[MotleySupportedTool] | None = None,
         llm: LLM | None = None,
@@ -33,6 +34,7 @@ class ReActLlamaIndexMotleyAgent(LlamaIndexMotleyAgent):
 
         Args:
             description (:obj:`str`, optional):
+            prompt_prefix (:obj:`str`, optional):
             name (:obj:`str`, optional):
             tools (:obj:`Sequence[MotleySupportedTool]`, optional):
             llm (:obj:`LLM`, optional):
@@ -56,6 +58,7 @@ class ReActLlamaIndexMotleyAgent(LlamaIndexMotleyAgent):
 
         super().__init__(
             description=description,
+            prompt_prefix=prompt_prefix,
             name=name,
             agent_factory=agent_factory,
             tools=tools,

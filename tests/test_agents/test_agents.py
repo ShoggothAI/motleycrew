@@ -22,9 +22,10 @@ class TestAgents:
         agent = CrewAIMotleyAgent(
             role="Senior Research Analyst",
             goal="Uncover cutting-edge developments in AI and data science",
-            backstory="""You work at a leading tech think tank.
+            prompt_prefix="""You work at a leading tech think tank.
            Your expertise lies in identifying emerging trends.
            You have a knack for dissecting complex data and presenting actionable insights.""",
+            backstory="",
             verbose=True,
             delegation=False,
             tools=[DuckDuckGoSearchRun()],
@@ -35,7 +36,8 @@ class TestAgents:
     def langchain_agent(self):
         agent = ReActToolCallingAgent(
             name="AI writer agent",
-            description="Generate AI-generated content",
+            prompt_prefix="Generate AI-generated content",
+            description="AI-generated content",
             tools=[DuckDuckGoSearchRun()],
             verbose=True,
         )
@@ -44,7 +46,8 @@ class TestAgents:
     @pytest.fixture(scope="class")
     def llama_index_agent(self):
         agent = ReActLlamaIndexMotleyAgent(
-            description="Uncover cutting-edge developments in AI and data science",
+            prompt_prefix="Uncover cutting-edge developments in AI and data science",
+            description="AI researcher",
             tools=[DuckDuckGoSearchRun()],
             verbose=True,
         )
@@ -90,5 +93,5 @@ class TestAgents:
         task_dict = {"topic": "AI"}
         prompt = agent.compose_prompt(input_dict=task_dict, prompt=task_prompt)
 
-        assert str(agent.description) in prompt
+        assert str(agent.prompt_prefix) in prompt
         assert "What are the latest AI trends?" in prompt

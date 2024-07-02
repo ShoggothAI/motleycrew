@@ -247,6 +247,7 @@ class ReActToolCallingAgent(LangchainMotleyAgent):
     def __init__(
         self,
         tools: Sequence[MotleySupportedTool],
+        prompt_prefix: str | None = None,
         description: str | None = None,
         name: str | None = None,
         think_prompt: ChatPromptTemplate | None = None,
@@ -319,6 +320,7 @@ class ReActToolCallingAgent(LangchainMotleyAgent):
             return agent_executor
 
         super().__init__(
+            prompt_prefix=prompt_prefix,
             description=description,
             name=name,
             agent_factory=agent_factory,

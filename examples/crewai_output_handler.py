@@ -41,9 +41,10 @@ def main():
     researcher = CrewAIMotleyAgent(
         role="Senior Research Analyst",
         goal="Uncover cutting-edge developments in AI and data science, doing web search if necessary",
-        backstory="""You work at a leading tech think tank.
+        prompt_prefix="""You work at a leading tech think tank.
     Your expertise lies in identifying emerging trends.
     You have a knack for dissecting complex data and presenting actionable insights.""",
+        backstory="",
         delegation=False,
         output_handler=output_handler,
         verbose=True,

@@ -21,8 +21,8 @@ from motleycrew.common.utils import ensure_module_is_installed
 class ReActLlamaIndexMotleyAgent(LlamaIndexMotleyAgent):
     def __init__(
         self,
-        description: str | None = None,
         prompt_prefix: str | None = None,
+        description: str | None = None,
         name: str | None = None,
         tools: Sequence[MotleySupportedTool] | None = None,
         llm: LLM | None = None,
@@ -33,8 +33,8 @@ class ReActLlamaIndexMotleyAgent(LlamaIndexMotleyAgent):
         """Description
 
         Args:
-            description (:obj:`str`, optional):
             prompt_prefix (:obj:`str`, optional):
+            description (:obj:`str`, optional):
             name (:obj:`str`, optional):
             tools (:obj:`Sequence[MotleySupportedTool]`, optional):
             llm (:obj:`LLM`, optional):
@@ -57,8 +57,8 @@ class ReActLlamaIndexMotleyAgent(LlamaIndexMotleyAgent):
             return agent
 
         super().__init__(
-            description=description,
             prompt_prefix=prompt_prefix,
+            description=description,
             name=name,
             agent_factory=agent_factory,
             tools=tools,

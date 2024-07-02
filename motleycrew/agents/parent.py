@@ -33,8 +33,8 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
 
     def __init__(
         self,
+        prompt_prefix: str | None = None,
         description: str | None = None,
-        prompt_prefix: str | None  = None,
         name: str | None = None,
         agent_factory: MotleyAgentFactory | None = None,
         tools: Sequence[MotleySupportedTool] | None = None,
@@ -44,8 +44,8 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
         """Description
 
         Args:
-            description (:obj:`str`, optional):
             prompt_prefix (:obj:`str`, optional):
+            description (:obj:`str`, optional):
             name (:obj:`str`, optional):
             agent_factory (:obj:`MotleyAgentFactory`, optional):
             tools (:obj:`Sequence[MotleySupportedTool]`, optional):

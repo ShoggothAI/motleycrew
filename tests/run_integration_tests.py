@@ -72,7 +72,8 @@ TIKTOKEN_CACHE_DIR_ENV_VAR = "TIKTOKEN_CACHE_DIR"
 def get_args_parser():
     """Argument parser"""
     parser = argparse.ArgumentParser(
-        description="Run integration tests", formatter_class=argparse.ArgumentDefaultsHelpFormatter
+        description="Run integration tests",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
         "--test-name",
@@ -81,9 +82,14 @@ def get_args_parser():
         help="Name of the test to run (leave empty to run all tests)",
         default=None,
     )
-    parser.add_argument("--cache-dir", type=str, help="Cache directory", default=DEFAULT_CACHE_DIR)
     parser.add_argument(
-        "--golden-dir", type=str, help="Reference data directory", default=DEFAULT_GOLDEN_DIR
+        "--cache-dir", type=str, help="Cache directory", default=DEFAULT_CACHE_DIR
+    )
+    parser.add_argument(
+        "--golden-dir",
+        type=str,
+        help="Reference data directory",
+        default=DEFAULT_GOLDEN_DIR,
     )
     parser.add_argument(
         "--update-golden",
@@ -122,7 +128,9 @@ def build_excepted_content_file_path(
     return os.path.join(golden_dir, "{}.{}".format(test_name, extension))
 
 
-def write_content(golden_dir: str, test_name: str, content: str, extension: str = "json"):
+def write_content(
+    golden_dir: str, test_name: str, content: str, extension: str = "json"
+):
     """Write golden data to file"""
     file_path = build_excepted_content_file_path(golden_dir, test_name, extension)
     with open(file_path, "w") as fd:
@@ -136,7 +144,9 @@ def read_golden_data(golden_dir: str, test_name: str, extension: str = "json"):
         return json.load(fd)
 
 
-def run_ipynb(ipynb_path: str, strong_cache: bool = False, cache_sub_dir: str = None) -> str:
+def run_ipynb(
+    ipynb_path: str, strong_cache: bool = False, cache_sub_dir: str = None
+) -> str:
     """Run jupiter notebook execution"""
     with open(ipynb_path) as f:
         nb = nbformat.read(f, as_version=4)
@@ -161,8 +171,10 @@ def run_ipynb(ipynb_path: str, strong_cache: bool = False, cache_sub_dir: str = 
         # ipynb save final result
         # final_result variable must be present in ipynb and store the result of the execution as a string
         ipynb_result_file_path = os.path.join(cache_sub_dir, "ipynb_result.txt")
-        save_result_command = "with open(r'{}', 'w') as f:\n\tf.write(final_result)".format(
-            ipynb_result_file_path
+        save_result_command = (
+            "with open(r'{}', 'w') as f:\n\tf.write(final_result)".format(
+                ipynb_result_file_path
+            )
         )
         cells = [new_code_cell(save_result_command), new_code_cell("disable_cache()")]
         nb.cells += cells
@@ -248,7 +260,9 @@ def run_integration_tests(
 
         cache_sub_dir = os.path.join(cache_dir, current_test_name)
         if update_golden:
-            logger.info("Update-golden flag is set. Cleaning cache directory %s", cache_sub_dir)
+            logger.info(
+                "Update-golden flag is set. Cleaning cache directory %s", cache_sub_dir
+            )
             shutil.rmtree(cache_sub_dir, ignore_errors=True)
             os.makedirs(cache_sub_dir, exist_ok=True)
             os.makedirs(golden_dir, exist_ok=True)
@@ -260,7 +274,10 @@ def run_integration_tests(
         set_cache_location(cache_sub_dir)
 
         if current_test_name in IPYNB_INTEGRATION_TESTS:
-            test_fn_kwargs = {"strong_cache": strong_cache, "cache_sub_dir": cache_sub_dir}
+            test_fn_kwargs = {
+                "strong_cache": strong_cache,
+                "cache_sub_dir": cache_sub_dir,
+            }
         else:
             test_fn_kwargs = {}
 
@@ -272,14 +289,15 @@ def run_integration_tests(
             ):
                 if update_golden:
                     logger.info(
-                        "Skipping check and updating golden data for test: %s", current_test_name
+                        "Skipping check and updating golden data for test: %s",
+                        current_test_name,
                     )
                     write_content(golden_dir, current_test_name, test_result)
                 else:
                     excepted_result = read_golden_data(golden_dir, current_test_name)
                     compare_results(test_result, excepted_result)
 
-        except Exception as e:
+        except BaseException as e:
             logger.error("Test %s failed: %s", current_test_name, str(e))
             failed_tests[current_test_name] = traceback.format_exc()
 

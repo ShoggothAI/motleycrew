@@ -14,8 +14,8 @@ class CrewAIMotleyAgent(CrewAIMotleyAgentParent):
             self,
             role: str,
             goal: str,
-            prompt_prefix: str,
             backstory: str,
+            prompt_prefix: str | None = None,
             description: str | None = None,
             delegation: bool = False,
             tools: Sequence[MotleySupportedTool] | None = None,
@@ -28,8 +28,8 @@ class CrewAIMotleyAgent(CrewAIMotleyAgentParent):
         Args:
             role (str):
             goal (str):
-            prompt_prefix (str):
             backstory (str):
+            prompt_prefix (str):
             description (str, optional):
             delegation (bool):
             tools (:obj:`Sequence[MotleySupportedTool]`, optional):

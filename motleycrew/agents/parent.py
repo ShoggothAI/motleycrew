@@ -251,7 +251,9 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
         # To be specialized if we expect structured input
         return MotleyTool.from_langchain_tool(
             Tool(
-                name=self.name,
+                name=self.name.replace(
+                    " ", "_"
+                ).lower(),  # OpenAI doesn't accept spaces in function names
                 description=self.description,
                 func=call_agent,
                 args_schema=input_schema,

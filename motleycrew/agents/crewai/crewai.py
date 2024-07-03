@@ -3,6 +3,8 @@
 from typing import Any, Optional, Sequence
 
 from langchain_core.runnables import RunnableConfig
+from langchain_core.tools import StructuredTool
+from langchain_core.pydantic_v1 import BaseModel, Field
 
 from motleycrew.agents.crewai import CrewAIAgentWithConfig
 from motleycrew.agents.parent import MotleyAgentParent
@@ -41,7 +43,7 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
         if output_handler:
             raise NotImplementedError(
                 "Output handler is not supported for CrewAI agents "
-                "because of the specificity of CrewAi's prompts."
+                "because of the specificity of CrewAI's prompts."
             )
 
         ensure_module_is_installed("crewai")
@@ -75,9 +77,14 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
         langchain_tools = [tool.to_langchain_tool() for tool in self.tools.values()]
         config = add_default_callbacks_to_langchain_config(config)
 
+        additional_params = input.get("additional_params") or {}
+        expected_output = additional_params.get("expected_output")
+        if not expected_output:
+            raise ValueError("Expected output is required for CrewAI tasks")
+
         crewai_task = CrewAI__Task(
             description=prompt,
-            expected_output=None,  # TODO: support expected_output
+            expected_output=expected_output,
         )
 
         output = self.agent.execute_task(
@@ -141,3 +148,31 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
         )
         wrapped_agent._agent = agent
         return wrapped_agent
+
+    def as_tool(self) -> MotleyTool:
+        if not self.description:
+            raise ValueError("Agent must have a description to be called as a tool")
+
+        class CrewAIAgentInputSchema(BaseModel):
+            prompt: str = Field(..., description="Prompt to be passed to the agent")
+            expected_output: str = Field(
+                ..., description="Expected output of the agent"
+            )
+
+        def call_agent(prompt: str, expected_output: str):
+            return self.invoke(
+                {
+                    "prompt": prompt,
+                    "additional_params": {"expected_output": expected_output},
+                }
+            )
+
+        # To be specialized if we expect structured input
+        return MotleyTool.from_langchain_tool(
+            StructuredTool(
+                name=self.name,
+                description=self.description,
+                func=call_agent,
+                args_schema=CrewAIAgentInputSchema,
+            )
+        )

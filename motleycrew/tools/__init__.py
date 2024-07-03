@@ -7,3 +7,4 @@ from .mermaid_evaluator_tool import MermaidEvaluatorTool
 from .python_repl import PythonREPLTool
 from .code.postgresql_linter import PostgreSQLLinterTool
 from .code.python_linter import PythonLinterTool
+from .html_render_tool import HtmlRenderTool

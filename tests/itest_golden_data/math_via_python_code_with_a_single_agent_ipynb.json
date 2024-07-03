@@ -1,1 +1,1 @@
-"Agent stopped due to iteration limit or time limit."
+"To solve the system of linear equations given by:\n\n\\[ 725x + 727y = 1500 \\]\n\\[ 729x + 731y = 1508 \\]\n\nwe used the sympy library to find the values of \\( x \\) and \\( y \\). The solution to the system of equations is:\n\n\\[ x = -23 \\]\n\\[ y = 25 \\]\n\nTo find \\( x - y \\):\n\n\\[ x - y = -23 - 25 = -48 \\]\n\nThus, the values are:\n\n\\[ x = -23 \\]\n\\[ y = 25 \\]\n\\[ x - y = -48 \\]\n```"

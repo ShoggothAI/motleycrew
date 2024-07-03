@@ -12,15 +12,17 @@ from motleycrew.agents.crewai import CrewAIAgentWithConfig
 
 class CrewAIMotleyAgent(CrewAIMotleyAgentParent):
     def __init__(
-        self,
-        role: str,
-        goal: str,
-        backstory: str,
-        delegation: bool = False,
-        tools: Sequence[MotleySupportedTool] | None = None,
-        llm: Optional[Any] = None,
-        output_handler: MotleySupportedTool | None = None,
-        verbose: bool = False,
+            self,
+            role: str,
+            goal: str,
+            backstory: str,
+            prompt_prefix: str | None = None,
+            description: str | None = None,
+            delegation: bool = False,
+            tools: Sequence[MotleySupportedTool] | None = None,
+            llm: Optional[Any] = None,
+            output_handler: MotleySupportedTool | None = None,
+            verbose: bool = False,
     ):
         """Description
 
@@ -28,6 +30,8 @@ class CrewAIMotleyAgent(CrewAIMotleyAgentParent):
             role (str):
             goal (str):
             backstory (str):
+            prompt_prefix (str):
+            description (str, optional):
             delegation (bool):
             tools (:obj:`Sequence[MotleySupportedTool]`, optional):
             llm (:obj:'Any', optional):
@@ -60,6 +64,8 @@ class CrewAIMotleyAgent(CrewAIMotleyAgentParent):
 
         super().__init__(
             goal=goal,
+            prompt_prefix=prompt_prefix,
+            description=description,
             name=role,
             agent_factory=agent_factory,
             tools=tools,

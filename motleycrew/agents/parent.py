@@ -33,6 +33,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
 
     def __init__(
         self,
+        prompt_prefix: str | None = None,
         description: str | None = None,
         name: str | None = None,
         agent_factory: MotleyAgentFactory | None = None,
@@ -43,6 +44,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
         """Description
 
         Args:
+            prompt_prefix (:obj:`str`, optional):
             description (:obj:`str`, optional):
             name (:obj:`str`, optional):
             agent_factory (:obj:`MotleyAgentFactory`, optional):
@@ -52,6 +54,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
         """
         self.name = name or description
         self.description = description  # becomes tool description
+        self.prompt_prefix = prompt_prefix
         self.agent_factory = agent_factory
         self.tools: dict[str, MotleyTool] = {}
         self.output_handler = output_handler
@@ -75,15 +78,15 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
         # TODO: always cast description and prompt to ChatPromptTemplate first?
         prompt_messages = []
 
-        if not self.description and not prompt:
+        if not self.prompt_prefix and not prompt:
             raise Exception("Cannot compose agent prompt without description or prompt")
 
-        if self.description:
-            if isinstance(self.description, ChatPromptTemplate):
-                prompt_messages += self.description.invoke(input_dict).to_messages()
+        if self.prompt_prefix:
+            if isinstance(self.prompt_prefix, ChatPromptTemplate):
+                prompt_messages += self.prompt_prefix.invoke(input_dict).to_messages()
 
-            elif isinstance(self.description, str):
-                prompt_messages.append(SystemMessage(content=self.description))
+            elif isinstance(self.prompt_prefix, str):
+                prompt_messages.append(SystemMessage(content=self.prompt_prefix))
 
             else:
                 raise ValueError("Agent description must be a string or a ChatPromptTemplate")

@@ -27,6 +27,7 @@ class LlamaIndexMotleyAgent(MotleyAgentParent):
 
     def __init__(
         self,
+        prompt_prefix: str | None = None,
         description: str | None = None,
         name: str | None = None,
         agent_factory: MotleyAgentFactory[AgentRunner] | None = None,
@@ -37,6 +38,7 @@ class LlamaIndexMotleyAgent(MotleyAgentParent):
         """Description
 
         Args:
+            prompt_prefix (:obj:`str`, optional):
             description (:obj:`str`, optional):
             name (:obj:`str`, optional):
             agent_factory (:obj:`MotleyAgentFactory`, optional):
@@ -45,6 +47,7 @@ class LlamaIndexMotleyAgent(MotleyAgentParent):
         """
         super().__init__(
             description=description,
+            prompt_prefix=prompt_prefix,
             name=name,
             agent_factory=agent_factory,
             tools=tools,
@@ -55,6 +58,7 @@ class LlamaIndexMotleyAgent(MotleyAgentParent):
     def run_step_decorator(self):
         """Decorator for inclusion in the call chain of the agent, the output handler tool"""
         ensure_module_is_installed("llama_index")
+
         def decorator(func):
             def wrapper(
                 task_id: str,
@@ -133,6 +137,7 @@ class LlamaIndexMotleyAgent(MotleyAgentParent):
     def from_agent(
         agent: AgentRunner,
         description: Optional[str] = None,
+        prompt_prefix: Optional[str] = None,
         tools: Sequence[MotleySupportedTool] | None = None,
         verbose: bool = False,
     ) -> "LlamaIndexMotleyAgent":
@@ -141,6 +146,7 @@ class LlamaIndexMotleyAgent(MotleyAgentParent):
         Args:
             agent (AgentRunner):
             description (:obj:`str`, optional):
+            prompt_prefix (:obj:`str`, optional):
             tools (:obj:`Sequence[MotleySupportedTool]`, optional):
             verbose (:obj:`bool`, optional):
 
@@ -148,6 +154,8 @@ class LlamaIndexMotleyAgent(MotleyAgentParent):
             LlamaIndexMotleyAgent:
         """
         ensure_module_is_installed("llama_index")
-        wrapped_agent = LlamaIndexMotleyAgent(description=description, tools=tools, verbose=verbose)
+        wrapped_agent = LlamaIndexMotleyAgent(
+            description=description, prompt_prefix=prompt_prefix, tools=tools, verbose=verbose
+        )
         wrapped_agent._agent = agent
         return wrapped_agent

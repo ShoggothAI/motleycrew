@@ -17,6 +17,7 @@ from motleycrew.tracking import add_default_callbacks_to_langchain_config
 class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin):
     def __init__(
         self,
+        prompt_prefix: str | None = None,
         description: str | None = None,
         name: str | None = None,
         agent_factory: MotleyAgentFactory[AgentExecutor] | None = None,
@@ -28,6 +29,7 @@ class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin)
         """Description
 
         Args:
+            prompt_prefix (:obj:`str`, optional):
             description (:obj:`str`, optional):
             name (:obj:`str`, optional):
             agent_factory (:obj:`MotleyAgentFactory`, optional):
@@ -40,6 +42,7 @@ class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin)
             See Langchain `RunnableWithMessageHistory` get_session_history param for more details.
         """
         super().__init__(
+            prompt_prefix=prompt_prefix,
             description=description,
             name=name,
             agent_factory=agent_factory,
@@ -139,6 +142,7 @@ class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin)
     def from_agent(
         agent: AgentExecutor,
         goal: str,
+        description: str | None = None,
         tools: Sequence[MotleySupportedTool] | None = None,
         verbose: bool = False,
     ) -> "LangchainMotleyAgent":
@@ -147,6 +151,7 @@ class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin)
         Args:
             agent (AgentExecutor):
             goal (str):
+            description (:obj:`str`, optional)
             tools(:obj:`Sequence[MotleySupportedTool]`, optional):
             verbose (bool):
 
@@ -160,6 +165,8 @@ class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin)
         if tools or agent.tools:
             tools = list(tools or []) + list(agent.tools or [])
 
-        wrapped_agent = LangchainMotleyAgent(description=goal, tools=tools, verbose=verbose)
+        wrapped_agent = LangchainMotleyAgent(
+            prompt_prefix=goal, description=description, tools=tools, verbose=verbose
+        )
         wrapped_agent._agent = agent
         return wrapped_agent

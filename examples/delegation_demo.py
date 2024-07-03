@@ -25,11 +25,15 @@ except ImportError:
     motleycrew_location = os.path.realpath(WORKING_DIR / "..")
     sys.path.append(motleycrew_location)
 
-if "Dropbox" in WORKING_DIR.parts and platform.system() == "Windows":
-    # On Windows, kuzu has file locking issues with Dropbox
-    DB_PATH = os.path.realpath(os.path.expanduser("~") + "/Documents/research_db")
+if __name__ == '__main__':
+    if "Dropbox" in WORKING_DIR.parts and platform.system() == "Windows":
+        # On Windows, kuzu has file locking issues with Dropbox
+        DB_PATH = os.path.realpath(os.path.expanduser("~") + "/Documents/research_db")
+    else:
+        DB_PATH = os.path.realpath(WORKING_DIR / "research_db")
+
 else:
-    DB_PATH = os.path.realpath(WORKING_DIR / "research_db")
+    DB_PATH = os.path.realpath(WORKING_DIR / "tests/research_db")
 
 
 def main():
@@ -43,9 +47,10 @@ def main():
     researcher = CrewAIMotleyAgent(
         role="Senior Research Analyst",
         goal="Uncover cutting-edge developments in AI and data science, doing web search if necessary",
+
         backstory="""You work at a leading tech think tank.
-    Your expertise lies in identifying emerging trends.
-    You have a knack for dissecting complex data and presenting actionable insights.""",
+        Your expertise lies in identifying emerging trends.
+        You have a knack for dissecting complex data and presenting actionable insights.""",
         verbose=True,
         tools=[search_tool],
     )
@@ -53,7 +58,8 @@ def main():
     # You can give agents as tools to other agents
     writer = ReActMotleyAgent(
         name="AI writer agent",
-        description="You are an experienced writer with a passion for technology.",
+        prompt_prefix="You are an experienced writer with a passion for technology.",
+        description="Experienced writer with a passion for technology.",
         tools=[researcher],
         verbose=True,
     )
@@ -61,7 +67,7 @@ def main():
     # Illustrator
     illustrator = ReActLlamaIndexMotleyAgent(
         name="Illustrator",
-        description="Create beautiful and insightful illustrations for a blog post",
+        prompt_prefix="Create beautiful and insightful illustrations for a blog post",
         tools=[DallEImageGeneratorTool(os.path.realpath("./images"))],
     )
 

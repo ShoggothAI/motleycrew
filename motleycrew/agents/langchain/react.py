@@ -26,6 +26,7 @@ class ReActMotleyAgent(LangchainMotleyAgent):
     def __init__(
         self,
         tools: Sequence[MotleySupportedTool],
+        prompt_prefix: str | None = None,
         description: str | None = None,
         name: str | None = None,
         prompt: str | None = None,
@@ -41,6 +42,7 @@ class ReActMotleyAgent(LangchainMotleyAgent):
 
         Args:
             tools (Sequence[MotleySupportedTool]):
+            prompt_prefix (:obj:`str`, optional):
             description (:obj:`str`, optional):
             name (:obj:`str`, optional):
             prompt (:obj:`str`, optional): Prompt to use. If not provided, uses hwchase17/react.
@@ -88,6 +90,7 @@ class ReActMotleyAgent(LangchainMotleyAgent):
             return agent_executor
 
         super().__init__(
+            prompt_prefix=prompt_prefix,
             description=description,
             name=name,
             agent_factory=agent_factory,

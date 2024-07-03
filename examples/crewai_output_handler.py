@@ -29,7 +29,9 @@ def main():
 
     def check_output(output: str):
         if "medicine" not in output.lower():
-            raise InvalidOutput("Add more information about AI applications in medicine.")
+            raise InvalidOutput(
+                "Add more information about AI applications in medicine."
+            )
         return {"checked_output": output.lower()}
 
     output_handler = StructuredTool.from_function(
@@ -58,6 +60,7 @@ def main():
         description="""Conduct a comprehensive analysis of the latest advancements in AI in 2024.
     Identify key trends, breakthrough technologies, and potential industry impacts.
     Your final answer MUST be a full analysis report""",
+        additional_params={"expected_output": "full analysis report"},
         agent=researcher,
     )
 

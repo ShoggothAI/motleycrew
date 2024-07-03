@@ -1,11 +1,11 @@
 """ Module description """
+
 from typing import Optional, Any, Sequence
 
 from motleycrew.tools import MotleyTool
 from motleycrew.common import MotleySupportedTool
 from motleycrew.common import LLMFramework
 from motleycrew.common.llms import init_llm
-from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
 from motleycrew.agents.crewai import CrewAIMotleyAgentParent
 from motleycrew.agents.crewai import CrewAIAgentWithConfig
 
@@ -22,7 +22,7 @@ class CrewAIMotleyAgent(CrewAIMotleyAgentParent):
         output_handler: MotleySupportedTool | None = None,
         verbose: bool = False,
     ):
-        """ Description
+        """Description
 
         Args:
             role (str):

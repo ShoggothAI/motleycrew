@@ -48,10 +48,9 @@ def main():
         role="Senior Research Analyst",
         goal="Uncover cutting-edge developments in AI and data science, doing web search if necessary",
 
-        prompt_prefix="""You work at a leading tech think tank.
+        backstory="""You work at a leading tech think tank.
         Your expertise lies in identifying emerging trends.
         You have a knack for dissecting complex data and presenting actionable insights.""",
-        backstory="",
         verbose=True,
         tools=[search_tool],
     )

@@ -44,8 +44,7 @@ def main():
     developer = CrewAIMotleyAgent(
         role="Software Engineer",
         goal="Writing unit tests",
-        prompt_prefix="You are a lead software engineer working in a big tech company.",
-        backstory="",
+        backstory="You are a lead software engineer working in a big tech company.",
         delegation=False,
         verbose=True,
         tools=[aider_tool, shell_tool],

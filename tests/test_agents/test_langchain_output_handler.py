@@ -20,7 +20,7 @@ class ReportOutputHandler(MotleyOutputHandler):
         return {"checked_output": output}
 
 
-def fake_agent_plan(intermediate_steps, step):
+def fake_agent_plan(intermediate_steps, step, additional_notes):
     return step
 
 
@@ -47,7 +47,9 @@ def agent():
     )
     agent.materialize()
     object.__setattr__(agent._agent, "plan", fake_agent_plan)
-    object.__setattr__(agent.agent, "plan", agent.agent_plan_decorator(agent.agent.plan))
+    object.__setattr__(
+        agent.agent, "plan", agent.agent_plan_decorator(agent.agent.plan)
+    )
 
     object.__setattr__(agent._agent, "_take_next_step", fake_agent_take_next_step)
     object.__setattr__(
@@ -65,12 +67,12 @@ def test_agent_plan(agent):
     assert agent_action == step
 
     return_values = {"output": "test_output"}
-    agent_finish = AgentFinish(return_values=return_values, log="agent finish log")
+    agent_finish = AgentFinish(return_values=return_values, log="test_output")
 
     step = agent_executor.plan([], agent_finish)
     assert isinstance(step, AgentAction)
     assert step.tool == agent._agent_finish_blocker_tool.name
-    assert step.tool_input == return_values
+    assert step.tool_input == "test_output"
 
 
 def test_agent_take_next_step(agent):

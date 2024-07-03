@@ -66,7 +66,9 @@ def test_run_step(agent):
         return
 
     task = Task(input="User input", memory=agent._agent.memory)
-    task_step = TaskStep(task_id=task.task_id, step_id=str(uuid.uuid4()), input="Test input")
+    task_step = TaskStep(
+        task_id=task.task_id, step_id=str(uuid.uuid4()), input="Test input"
+    )
 
     task_state = TaskState(
         task=task,
@@ -98,8 +100,11 @@ def test_run_step(agent):
     _task_step = step_queue.pop()
 
     assert _task_step.task_id == task.task_id
-    assert _task_step.input == "You must call the {} tool to return the output.".format(
-        agent.output_handler.name
+    assert (
+        _task_step.input
+        == "You must call the `{}` tool to return the output.".format(
+            agent.output_handler.name
+        )
     )
 
     # test direct output

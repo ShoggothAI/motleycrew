@@ -88,7 +88,7 @@ class LlamaIndexMotleyAgent(MotleyAgentParent):
                     output_task_step = TaskStep(
                         task_id=task_id,
                         step_id=str(uuid.uuid4()),
-                        input="You must call the {} tool to return the output.".format(
+                        input="You must call the `{}` tool to return the output.".format(
                             self.output_handler.name
                         ),
                     )

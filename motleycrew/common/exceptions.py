@@ -1,16 +1,18 @@
 """ Module description"""
+
 from typing import Any, Optional
 
 from motleycrew.common import Defaults
 
 
 class LLMFamilyNotSupported(Exception):
-    """ Description
+    """Description
 
     Args:
         llm_framework (str):
         llm_family (str):
     """
+
     def __init__(self, llm_framework: str, llm_family: str):
         self.llm_framework = llm_framework
         self.llm_family = llm_family
@@ -21,7 +23,7 @@ class LLMFamilyNotSupported(Exception):
 
 class LLMFrameworkNotSupported(Exception):
     def __init__(self, llm_framework: str):
-        """ Description
+        """Description
 
         Args:
             llm_framework (str):
@@ -33,11 +35,12 @@ class LLMFrameworkNotSupported(Exception):
 
 
 class AgentNotMaterialized(Exception):
-    """ Description
+    """Description
 
-   Args:
-       agent_name (str):
-   """
+    Args:
+        agent_name (str):
+    """
+
     def __init__(self, agent_name: str):
         self.agent_name = agent_name
 
@@ -46,11 +49,12 @@ class AgentNotMaterialized(Exception):
 
 
 class CannotModifyMaterializedAgent(Exception):
-    """ Description
+    """Description
 
     Args:
         agent_name (str):
     """
+
     def __init__(self, agent_name: str | None):
         self.agent_name = agent_name
 
@@ -65,7 +69,7 @@ class TaskDependencyCycleError(Exception):
 
 
 class IntegrationTestException(Exception):
-    """ Integration tests exception
+    """Integration tests exception
 
     Args:
         test_names (list[str]): list of names of failed integration tests
@@ -79,18 +83,21 @@ class IntegrationTestException(Exception):
 
 
 class IpynbIntegrationTestResultNotFound(Exception):
-    """ Ipynb integration test not found result file exception
+    """Ipynb integration test not found result file exception
 
     Args:
         ipynb_path (str): path to running ipynb
         result_path (str): path to execution result file
     """
+
     def __init__(self, ipynb_path: str, result_path: str):
         self.ipynb_path = ipynb_path
         self.result_path = result_path
 
     def __str__(self):
-        return "File result {} of the ipynb {} execution, not found.".format(self.result_path, self.ipynb_path)
+        return "File result {} of the ipynb {} execution, not found.".format(
+            self.result_path, self.ipynb_path
+        )
 
 
 class ModuleNotInstalled(Exception):
@@ -111,7 +118,7 @@ class ModuleNotInstalled(Exception):
         msg = "{} is not installed".format(self.module_name)
 
         if self.install_command is not None:
-            msg = "{}, {}".format(msg, self.install_command)
+            msg = "{}, please install ({})".format(msg, self.install_command)
 
         return "{}.".format(msg)
 
@@ -133,4 +140,5 @@ class InvalidToolInput(Exception):
 
 class InvalidOutput(Exception):
     """Raised in output handlers when an agent's output is not accepted"""
+
     pass

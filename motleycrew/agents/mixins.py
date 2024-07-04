@@ -13,6 +13,7 @@ class LangchainOutputHandlingAgentMixin:
     """A mixin for Langchain-based agents that support output handlers."""
 
     output_handler: Optional[MotleyTool] = None
+    _agent_finish_blocker_tool: Optional[MotleyTool] = None
 
     def _create_agent_finish_blocker_tool(self) -> BaseTool:
         """Create a tool that will force the agent to retry if it attempts to return the output
@@ -20,7 +21,9 @@ class LangchainOutputHandlingAgentMixin:
         """
 
         def create_agent_finish_blocking_message(input: Any = None) -> str:
-            return f"You must use {self.output_handler.name} to return the final output.\n"
+            return (
+                f"You must call the `{self.output_handler.name}` tool to return the final output.\n"
+            )
 
         return Tool.from_function(
             name="agent_finish_blocker",
@@ -37,27 +40,28 @@ class LangchainOutputHandlingAgentMixin:
     def agent_plan_decorator(self, func: Callable):
         """Decorator for Agent.plan() method that intercepts AgentFinish events"""
 
-        additional_inputs = set()
-
         def wrapper(
             intermediate_steps: List[Tuple[AgentAction, str]],
             callbacks: "Callbacks" = None,
             **kwargs: Any,
         ) -> Union[AgentAction, AgentFinish]:
+            additional_notes = []
 
             if self.output_handler:
                 to_remove_steps = []
                 for intermediate_step in intermediate_steps:
                     action, action_output = intermediate_step
                     if self._is_blocker_action(action):
-                        additional_inputs.add(action_output)
+                        # Add the interaction telling the LLM that it must use the output handler
+                        additional_notes.append(("ai", action.tool_input))
+                        additional_notes.append(("user", action_output))
                         to_remove_steps.append(intermediate_step)
 
                 for to_remove_step in to_remove_steps:
                     intermediate_steps.remove(to_remove_step)
 
-                if additional_inputs:
-                    kwargs["input"] = kwargs["input"] + "\n{}".format("\n".join(additional_inputs))
+            if additional_notes:
+                kwargs["additional_notes"] = additional_notes
 
             step = func(intermediate_steps, callbacks, **kwargs)
 
@@ -67,7 +71,7 @@ class LangchainOutputHandlingAgentMixin:
             if self.output_handler is not None:
                 return AgentAction(
                     tool=self._agent_finish_blocker_tool.name,
-                    tool_input=step.return_values,
+                    tool_input=step.log,
                     log="\nDetected AgentFinish, blocking it to force output via output handler.\n",
                 )
             return step

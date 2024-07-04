@@ -1,13 +1,11 @@
 import pytest
-
 from langchain_community.tools import DuckDuckGoSearchRun
 from langchain_core.agents import AgentFinish, AgentAction
 
-from motleycrew.agents.langchain.tool_calling_react import ReActToolCallingAgent
 from motleycrew.agents import MotleyOutputHandler
+from motleycrew.agents.langchain.tool_calling_react import ReActToolCallingAgent
 from motleycrew.agents.parent import DirectOutput
 from motleycrew.common.exceptions import InvalidOutput
-
 
 invalid_output = "Add more information about AI applications in medicine."
 
@@ -20,7 +18,7 @@ class ReportOutputHandler(MotleyOutputHandler):
         return {"checked_output": output}
 
 
-def fake_agent_plan(intermediate_steps, step):
+def fake_agent_plan(intermediate_steps, step, **kwargs):
     return step
 
 
@@ -65,12 +63,12 @@ def test_agent_plan(agent):
     assert agent_action == step
 
     return_values = {"output": "test_output"}
-    agent_finish = AgentFinish(return_values=return_values, log="agent finish log")
+    agent_finish = AgentFinish(return_values=return_values, log="test_output")
 
     step = agent_executor.plan([], agent_finish)
     assert isinstance(step, AgentAction)
     assert step.tool == agent._agent_finish_blocker_tool.name
-    assert step.tool_input == return_values
+    assert step.tool_input == "test_output"
 
 
 def test_agent_take_next_step(agent):

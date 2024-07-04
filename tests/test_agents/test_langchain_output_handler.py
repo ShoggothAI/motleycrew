@@ -1,13 +1,11 @@
 import pytest
-
 from langchain_community.tools import DuckDuckGoSearchRun
 from langchain_core.agents import AgentFinish, AgentAction
 
-from motleycrew.agents.langchain.tool_calling_react import ReActToolCallingAgent
 from motleycrew.agents import MotleyOutputHandler
+from motleycrew.agents.langchain.tool_calling_react import ReActToolCallingAgent
 from motleycrew.agents.parent import DirectOutput
 from motleycrew.common.exceptions import InvalidOutput
-
 
 invalid_output = "Add more information about AI applications in medicine."
 
@@ -20,7 +18,7 @@ class ReportOutputHandler(MotleyOutputHandler):
         return {"checked_output": output}
 
 
-def fake_agent_plan(intermediate_steps, step, additional_notes):
+def fake_agent_plan(intermediate_steps, step, **kwargs):
     return step
 
 
@@ -47,9 +45,7 @@ def agent():
     )
     agent.materialize()
     object.__setattr__(agent._agent, "plan", fake_agent_plan)
-    object.__setattr__(
-        agent.agent, "plan", agent.agent_plan_decorator(agent.agent.plan)
-    )
+    object.__setattr__(agent.agent, "plan", agent.agent_plan_decorator(agent.agent.plan))
 
     object.__setattr__(agent._agent, "_take_next_step", fake_agent_take_next_step)
     object.__setattr__(

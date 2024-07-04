@@ -7,9 +7,9 @@ try:
     from selenium import webdriver
     from selenium.webdriver.chrome.service import Service
 except ImportError:
-    ensure_module_is_installed(
-        "selenium", "documentation https://pypi.org/project/selenium/ we use Chrome driver"
-    )
+    webdriver = None
+    Service = None
+
 from langchain.tools import Tool
 from langchain_core.pydantic_v1 import BaseModel, Field
 
@@ -24,6 +24,10 @@ class HtmlRender:
         executable_path: str | None,
     ):
         """Class for rendering html code to image"""
+        ensure_module_is_installed(
+            "selenium",
+            "documentation https://pypi.org/project/selenium/ we use Chrome driver"
+        )
 
         self.work_dir = Path(work_dir).resolve()
         self.html_dir = self.work_dir / "html"

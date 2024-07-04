@@ -60,7 +60,8 @@ class LangchainOutputHandlingAgentMixin:
                 for to_remove_step in to_remove_steps:
                     intermediate_steps.remove(to_remove_step)
 
-            kwargs["additional_notes"] = additional_notes
+            if additional_notes:
+                kwargs["additional_notes"] = additional_notes
 
             step = func(intermediate_steps, callbacks, **kwargs)
 

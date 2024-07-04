@@ -236,9 +236,7 @@ def create_tool_calling_react_agent(
             agent_scratchpad=lambda x: merge_consecutive_messages(
                 format_to_tool_messages(x["intermediate_steps"])
             ),
-            additional_notes=lambda x: [
-                HumanMessage(x["additional_notes"]) if x.get("additional_notes") else None
-            ],
+            additional_notes=lambda x: x.get("additional_notes") or [],
         )
         | {"thought": think_chain, "background": RunnablePassthrough()}
         | RunnableLambda(print_passthrough)

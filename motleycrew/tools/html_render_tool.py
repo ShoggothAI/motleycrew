@@ -1,6 +1,7 @@
 from datetime import datetime
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, Optional
+
 from motleycrew.common.utils import ensure_module_is_installed
 
 try:
@@ -17,16 +18,18 @@ from motleycrew.tools import MotleyTool
 from motleycrew.common import logger
 
 
-class HtmlRender:
+class HTMLRenderer:
     def __init__(
         self,
         work_dir: str,
-        executable_path: str | None,
+        executable_path: str | None = None,
+        headless: bool = True,
+        window_size: Optional[Tuple[int, int]] = None,
     ):
-        """Class for rendering html code to image"""
+        """Helper for rendering HTML code as an image"""
         ensure_module_is_installed(
             "selenium",
-            "documentation https://pypi.org/project/selenium/ we use Chrome driver"
+            "see documentation: https://pypi.org/project/selenium/, ChromeDriver is also required",
         )
 
         self.work_dir = Path(work_dir).resolve()
@@ -34,8 +37,11 @@ class HtmlRender:
         self.images_dir = self.work_dir / "images"
 
         self.options = webdriver.ChromeOptions()
-        self.options.add_argument("--headless")
+        if headless:
+            self.options.add_argument("--headless")
         self.service = Service(executable_path=executable_path)
+
+        self.window_size = window_size
 
     def render_image(self, html: str, file_name: str | None = None):
         """Create image with png extension from html code
@@ -46,25 +52,31 @@ class HtmlRender:
         Returns:
             file path to created image
         """
-
+        logger.info("Trying to render image from HTML code")
         html_path, image_path = self.build_save_file_paths(file_name)
         browser = webdriver.Chrome(options=self.options, service=self.service)
         try:
+            if self.window_size:
+                logger.info("Setting window size to {}".format(self.window_size))
+                browser.set_window_size(*self.window_size)
+
             url = "data:text/html;charset=utf-8,{}".format(html)
             browser.get(url)
+
+            logger.info("Taking screenshot")
             is_created_img = browser.get_screenshot_as_file(image_path)
         finally:
             browser.close()
             browser.quit()
 
         if not is_created_img:
-            logger.error("Failed to create image from html code {}".format(image_path))
-            return "Failed to create image from html code"
+            logger.error("Failed to render image from HTML code {}".format(image_path))
+            return "Failed to render image from HTML code"
 
         with open(html_path, "w") as f:
             f.write(html)
-        logger.info("Save html code to {}".format(html_path))
-        logger.info("Save image from html code to {}".format(image_path))
+        logger.info("Saved the HTML code to {}".format(html_path))
+        logger.info("Saved the rendered HTML screenshot to {}".format(image_path))
 
         return image_path
 
@@ -90,38 +102,49 @@ class HtmlRender:
         return str(html_path), str(image_path)
 
 
-class HtmlRenderTool(MotleyTool):
+class HTMLRenderTool(MotleyTool):
 
-    def __init__(self, work_dir: str, executable_path: str | None = None):
-        """Tool for displaying html as images
+    def __init__(
+        self,
+        work_dir: str,
+        executable_path: str | None = None,
+        headless: bool = True,
+        window_size: Optional[Tuple[int, int]] = None,
+    ):
+        """Tool for rendering HTML as image
 
         Args:
-            work_dir (str): Directory for save images and html files
+            work_dir (str): Directory for saving images and html files
         """
-        renderer = HtmlRender(work_dir, executable_path)
+        renderer = HTMLRenderer(
+            work_dir=work_dir,
+            executable_path=executable_path,
+            headless=headless,
+            window_size=window_size,
+        )
         langchain_tool = create_render_tool(renderer)
-        super(HtmlRenderTool, self).__init__(langchain_tool)
+        super(HTMLRenderTool, self).__init__(langchain_tool)
 
 
-class HtmlRenderInput(BaseModel):
-    """Input for the HtmlRenderTool.
+class HTMLRenderToolInput(BaseModel):
+    """Input for the HTMLRenderTool.
 
     Attributes:
         html (str):
     """
 
-    html: str = Field(description="Html code for rendering to an image")
+    html: str = Field(description="HTML code for rendering")
 
 
-def create_render_tool(renderer: HtmlRender):
-    """Create langchain tool from HtmlRender.render_image method
+def create_render_tool(renderer: HTMLRenderer):
+    """Create langchain tool from HTMLRenderer.render_image method
 
     Returns:
         Tool:
     """
     return Tool.from_function(
         func=renderer.render_image,
-        name="html render tool",
-        description="A tool for rendering html as an image",
-        args_schema=HtmlRenderInput,
+        name="HTML rendering tool",
+        description="A tool for rendering HTML code as an image",
+        args_schema=HTMLRenderToolInput,
     )

@@ -55,6 +55,7 @@ Begin!
         MessagesPlaceholder(variable_name="chat_history", optional=True),
         ("user", "{input}"),
         MessagesPlaceholder(variable_name="agent_scratchpad"),
+        MessagesPlaceholder(variable_name="additional_notes", optional=True),
     ]
 )
 
@@ -78,6 +79,7 @@ message contains the words "Final Answer"; {output_instruction}
         MessagesPlaceholder(variable_name="chat_history", optional=True),
         ("user", "{input}"),
         MessagesPlaceholder(variable_name="agent_scratchpad"),
+        MessagesPlaceholder(variable_name="additional_notes", optional=True),
     ]
 )
 default_act_prompt_without_output_handler = default_act_prompt.partial(
@@ -233,7 +235,8 @@ def create_tool_calling_react_agent(
         RunnablePassthrough.assign(
             agent_scratchpad=lambda x: merge_consecutive_messages(
                 format_to_tool_messages(x["intermediate_steps"])
-            )
+            ),
+            additional_notes=lambda x: x.get("additional_notes") or [],
         )
         | {"thought": think_chain, "background": RunnablePassthrough()}
         | RunnableLambda(print_passthrough)

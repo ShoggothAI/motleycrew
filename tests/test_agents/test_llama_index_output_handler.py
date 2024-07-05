@@ -2,7 +2,6 @@ import uuid
 from collections import deque
 import pytest
 
-from langchain_community.tools import DuckDuckGoSearchRun
 from langchain_core.tools import StructuredTool
 
 try:
@@ -20,9 +19,9 @@ from motleycrew.agents.llama_index import ReActLlamaIndexMotleyAgent
 from motleycrew.agents import MotleyOutputHandler
 from motleycrew.common.exceptions import (
     InvalidOutput,
-    ModuleNotInstalled,
     OutputHandlerMaxIterationsExceeded,
 )
+from tests.test_agents import MockTool
 
 
 invalid_output = "Add more information about AI applications in medicine."
@@ -49,20 +48,16 @@ def fake_run_step(*args, **kwargs):
 
 @pytest.fixture
 def agent():
-    try:
-        search_tool = DuckDuckGoSearchRun()
-        agent = ReActLlamaIndexMotleyAgent(
-            description="Your goal is to uncover cutting-edge developments in AI and data science",
-            tools=[search_tool],
-            output_handler=ReportOutputHandler(max_iterations=5),
-            verbose=True,
-        )
-        agent.materialize()
-        agent._agent._run_step = fake_run_step
-        agent._agent._run_step = agent.run_step_decorator()(agent._agent._run_step)
 
-    except ModuleNotInstalled:
-        return
+    agent = ReActLlamaIndexMotleyAgent(
+        description="Your goal is to uncover cutting-edge developments in AI and data science",
+        tools=[MockTool()],
+        output_handler=ReportOutputHandler(max_iterations=5),
+        verbose=True,
+    )
+    agent.materialize()
+    agent._agent._run_step = fake_run_step
+    agent._agent._run_step = agent.run_step_decorator()(agent._agent._run_step)
 
     return agent
 

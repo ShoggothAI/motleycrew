@@ -1,11 +1,11 @@
 import pytest
-from langchain_community.tools import DuckDuckGoSearchRun
 from langchain_core.agents import AgentFinish, AgentAction
 
 from motleycrew.agents import MotleyOutputHandler
 from motleycrew.agents.langchain.tool_calling_react import ReActToolCallingAgent
 from motleycrew.agents.parent import DirectOutput
 from motleycrew.common.exceptions import InvalidOutput, OutputHandlerMaxIterationsExceeded
+from tests.test_agents import MockTool
 
 invalid_output = "Add more information about AI applications in medicine."
 
@@ -38,7 +38,7 @@ def fake_agent_take_next_step(
 @pytest.fixture
 def agent():
     agent = ReActToolCallingAgent(
-        tools=[DuckDuckGoSearchRun()],
+        tools=[MockTool()],
         verbose=True,
         chat_history=True,
         output_handler=ReportOutputHandler(max_iterations=5),

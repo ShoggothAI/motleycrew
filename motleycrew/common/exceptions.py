@@ -152,4 +152,4 @@ class OutputHandlerMaxIterationsExceeded(BaseException):
         self.kwargs = kwargs
 
     def __str__(self):
-        return "\n    args: {}\n    kwargs: {}".format(self.args, self.kwargs)
+        return "Maximum number of output handler iterations exceeded"

@@ -1,7 +1,6 @@
 import os
 import pytest
 
-from langchain_community.tools import DuckDuckGoSearchRun
 from langchain_core.prompts.chat import ChatPromptTemplate
 from motleycrew.agents.crewai.crewai_agent import CrewAIMotleyAgent
 from motleycrew.agents.langchain.tool_calling_react import ReActToolCallingAgent
@@ -9,6 +8,7 @@ from motleycrew.agents.llama_index.llama_index_react import ReActLlamaIndexMotle
 from motleycrew.common.exceptions import AgentNotMaterialized, CannotModifyMaterializedAgent
 from motleycrew.tools.python_repl import create_repl_tool
 from motleycrew.tools.tool import MotleyTool
+from tests.test_agents import MockTool
 
 os.environ["OPENAI_API_KEY"] = "YOUR OPENAI API KEY"
 
@@ -28,7 +28,7 @@ class TestAgents:
             backstory="",
             verbose=True,
             delegation=False,
-            tools=[DuckDuckGoSearchRun()],
+            tools=[MockTool()],
         )
         return agent
 
@@ -38,7 +38,7 @@ class TestAgents:
             name="AI writer agent",
             prompt_prefix="Generate AI-generated content",
             description="AI-generated content",
-            tools=[DuckDuckGoSearchRun()],
+            tools=[MockTool()],
             verbose=True,
         )
         return agent
@@ -48,7 +48,7 @@ class TestAgents:
         agent = ReActLlamaIndexMotleyAgent(
             prompt_prefix="Uncover cutting-edge developments in AI and data science",
             description="AI researcher",
-            tools=[DuckDuckGoSearchRun()],
+            tools=[MockTool()],
             verbose=True,
         )
         return agent
@@ -65,7 +65,7 @@ class TestAgents:
     @pytest.mark.parametrize("agent", test_agents_names, indirect=True)
     def test_add_tools(self, agent):
         assert len(agent.tools) == 1
-        tools = [DuckDuckGoSearchRun()]
+        tools = [MockTool()]
         agent.add_tools(tools)
         assert len(agent.tools) == 1
 

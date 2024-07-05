@@ -142,3 +142,14 @@ class InvalidOutput(Exception):
     """Raised in output handlers when an agent's output is not accepted"""
 
     pass
+
+
+class OutputHandlerMaxIterationsExceeded(BaseException):
+    """Raised when the output handlers iteration limit is exceeded"""
+
+    def __init__(self, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
+
+    def __str__(self):
+        return "\n    args: {}\n    kwargs: {}".format(self.args, self.kwargs)

@@ -5,6 +5,7 @@ from langchain_core.pydantic_v1 import BaseModel
 
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
 from motleycrew.common.exceptions import InvalidOutput
+from motleycrew.common import Defaults
 from motleycrew.tools import MotleyTool
 
 
@@ -22,7 +23,8 @@ class MotleyOutputHandler(MotleyTool, ABC):
     _exceptions_to_handle: tuple[Exception] = (InvalidOutput,)
     """Exceptions that should be returned to the agent when raised in the `handle_output` method."""
 
-    def __init__(self):
+    def __init__(self, max_iterations: int = Defaults.DEFAULT_OUTPUT_HANDLER_MAX_ITERATIONS):
+        self.max_iterations = max_iterations  # number of iterations of catching an exception
         langchain_tool = self._create_langchain_tool()
         super().__init__(langchain_tool)
 

@@ -6,14 +6,14 @@ Attributes:
 """
 
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any, Sequence, List, Optional
 
-from motleycrew.tasks.task import Task
-from motleycrew.tasks import TaskUnit
-
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
-from motleycrew.tools import MotleyTool
 from motleycrew.common import logger
+from motleycrew.tasks import TaskUnit
+from motleycrew.tasks.task import Task
+from motleycrew.tools import MotleyTool
 
 if TYPE_CHECKING:
     from motleycrew.crew import MotleyCrew
@@ -72,7 +72,7 @@ class SimpleTaskUnit(TaskUnit):
 
     name: str
     prompt: str
-    additional_params: dict[str, Any]
+    additional_params: Optional[dict[str, Any]] = None
 
 
 class SimpleTask(Task):
@@ -97,9 +97,7 @@ class SimpleTask(Task):
             documents (:obj:`Sequence[Any]`, optional):
             additional_kwargs (:obj:`dict`, optional):
         """
-        super().__init__(
-            name=name or description, task_unit_class=SimpleTaskUnit, crew=crew
-        )
+        super().__init__(name=name or description, task_unit_class=SimpleTaskUnit, crew=crew)
         self.description = description
         self.agent = agent  # to be auto-assigned at crew creation if missing?
         self.tools = tools or []
@@ -137,21 +135,15 @@ class SimpleTask(Task):
         if not all(task.done for task in upstream_tasks):
             return None
 
-        upstream_task_units = [
-            unit for task in upstream_tasks for unit in task.get_units()
-        ]
-        prompt = compose_simple_task_prompt_with_dependencies(
-            self.description, upstream_task_units
-        )
+        upstream_task_units = [unit for task in upstream_tasks for unit in task.get_units()]
+        prompt = compose_simple_task_prompt_with_dependencies(self.description, upstream_task_units)
         return SimpleTaskUnit(
             name=self.name,
             prompt=prompt,
             additional_params=self.additional_params,
         )
 
-    def get_worker(
-        self, tools: Optional[List[MotleyTool]]
-    ) -> MotleyAgentAbstractParent:
+    def get_worker(self, tools: Optional[List[MotleyTool]]) -> MotleyAgentAbstractParent:
         """Description
 
         Args:
@@ -165,11 +157,7 @@ class SimpleTask(Task):
         if self.agent is None:
             raise ValueError("Task is not associated with an agent")
 
-        if (
-            hasattr(self.agent, "is_materialized")
-            and self.agent.is_materialized
-            and tools
-        ):
+        if hasattr(self.agent, "is_materialized") and self.agent.is_materialized and tools:
             logger.warning(
                 "Agent %s is already materialized, can't add extra tools %s",
                 self.agent,

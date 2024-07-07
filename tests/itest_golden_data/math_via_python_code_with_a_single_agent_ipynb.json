@@ -1,1 +1,1 @@
-"\\[\n\\begin{aligned}\nx &= \\frac{367}{71} \\\\\ny &= -\\frac{25}{49} \\\\\nx - y &= 2\n\\end{aligned}\n\\]"
+"To solve the system of linear equations given by:\n\n\\[ 725x + 727y = 1500 \\]\n\\[ 729x + 731y = 1508 \\]\n\nwe first set up the equations and solve them using the sympy library. The solutions are:\n\n\\[ x = -23 \\]\n\\[ y = 25 \\]\n\nTo find \\( x - y \\):\n\n\\[ x - y = -23 - 25 = -48 \\]\n\nThus, the values are:\n\n\\[ x = -23 \\]\n\\[ y = 25 \\]\n\\[ x - y = -48 \\]\n```"

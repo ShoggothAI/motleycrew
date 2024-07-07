@@ -1,6 +1,6 @@
 """ Module description"""
 
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 
 from motleycrew.common import Defaults
 
@@ -142,3 +142,20 @@ class InvalidOutput(Exception):
     """Raised in output handlers when an agent's output is not accepted"""
 
     pass
+
+
+class OutputHandlerMaxIterationsExceeded(BaseException):
+    """Raised when the output handlers iteration limit is exceeded"""
+
+    def __init__(
+        self,
+        last_call_args: tuple,
+        last_call_kwargs: Dict[str, Any],
+        last_exception: Exception,
+    ):
+        self.last_call_args = last_call_args
+        self.last_call_kwargs = last_call_kwargs
+        self.last_exception = last_exception
+
+    def __str__(self):
+        return "Maximum number of output handler iterations exceeded"

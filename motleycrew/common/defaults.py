@@ -1,10 +1,11 @@
 """ Module description """
+
 from motleycrew.common import LLMFamily
 from motleycrew.common import GraphStoreType
 
 
 class Defaults:
-    """ Description
+    """Description
 
     Attributes:
         DEFAULT_LLM_FAMILY (str):
@@ -15,8 +16,10 @@ class Defaults:
         MODULE_INSTALL_COMMANDS (dict):
         DEFAULT_NUM_THREADS (int):
         DEFAULT_EVENT_LOOP_SLEEP (int):
+        DEFAULT_OUTPUT_HANDLER_MAX_ITERATIONS (int):
 
     """
+
     DEFAULT_LLM_FAMILY = LLMFamily.OPENAI
     DEFAULT_LLM_NAME = "gpt-4o"
     DEFAULT_LLM_TEMPERATURE = 0.0
@@ -35,3 +38,4 @@ class Defaults:
 
     DEFAULT_NUM_THREADS = 4
     DEFAULT_EVENT_LOOP_SLEEP = 1
+    DEFAULT_OUTPUT_HANDLER_MAX_ITERATIONS = 5

@@ -1,11 +1,11 @@
 import pytest
-from langchain_community.tools import DuckDuckGoSearchRun
 from langchain_core.agents import AgentFinish, AgentAction
 
 from motleycrew.agents import MotleyOutputHandler
 from motleycrew.agents.langchain.tool_calling_react import ReActToolCallingAgent
 from motleycrew.agents.parent import DirectOutput
-from motleycrew.common.exceptions import InvalidOutput
+from motleycrew.common.exceptions import InvalidOutput, OutputHandlerMaxIterationsExceeded
+from tests.test_agents import MockTool
 
 invalid_output = "Add more information about AI applications in medicine."
 
@@ -38,10 +38,10 @@ def fake_agent_take_next_step(
 @pytest.fixture
 def agent():
     agent = ReActToolCallingAgent(
-        tools=[DuckDuckGoSearchRun()],
+        tools=[MockTool()],
         verbose=True,
         chat_history=True,
-        output_handler=ReportOutputHandler(),
+        output_handler=ReportOutputHandler(max_iterations=5),
     )
     agent.materialize()
     object.__setattr__(agent._agent, "plan", fake_agent_plan)
@@ -54,6 +54,19 @@ def agent():
         agent.take_next_step_decorator(agent.agent._take_next_step),
     )
     return agent
+
+
+@pytest.fixture
+def run_kwargs(agent):
+    agent_executor = agent.agent.bound.bound.steps[1].bound
+
+    run_kwargs = {
+        "name_to_tool_map": {tool.name: tool for tool in agent_executor.tools},
+        "color_mapping": {},
+        "inputs": {},
+        "intermediate_steps": [],
+    }
+    return run_kwargs
 
 
 def test_agent_plan(agent):
@@ -71,15 +84,7 @@ def test_agent_plan(agent):
     assert step.tool_input == "test_output"
 
 
-def test_agent_take_next_step(agent):
-    agent_executor = agent.agent.bound.bound.steps[1].bound
-
-    run_kwargs = {
-        "name_to_tool_map": {tool.name: tool for tool in agent_executor.tools},
-        "color_mapping": {},
-        "inputs": {},
-        "intermediate_steps": [],
-    }
+def test_agent_take_next_step(agent, run_kwargs):
 
     # test wrong output
     input_data = "Latest advancements in AI in 2024."
@@ -95,3 +100,14 @@ def test_agent_take_next_step(agent):
     assert isinstance(step_result.return_values, dict)
     output_result = step_result.return_values.get("output")
     assert output_result == {"checked_output": input_data}
+
+
+def test_output_handler_max_iteration(agent, run_kwargs):
+    input_data = "Latest advancements in AI in 2024."
+    run_kwargs["inputs"] = input_data
+
+    with pytest.raises(OutputHandlerMaxIterationsExceeded):
+        for iteration in range(agent.output_handler.max_iterations + 1):
+            agent.agent._take_next_step(**run_kwargs)
+
+    assert iteration == agent.output_handler.max_iterations

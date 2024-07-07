@@ -12,11 +12,12 @@ from pydantic import BaseModel
 
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
 from motleycrew.common import MotleyAgentFactory, MotleySupportedTool
-from motleycrew.common import logger
+from motleycrew.common import logger, Defaults
 from motleycrew.common.exceptions import (
     AgentNotMaterialized,
     CannotModifyMaterializedAgent,
     InvalidOutput,
+    OutputHandlerMaxIterationsExceeded,
 )
 from motleycrew.tools import MotleyTool
 
@@ -131,18 +132,32 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
         if isinstance(self.output_handler, MotleyOutputHandler):
             exceptions_to_handle = self.output_handler.exceptions_to_handle
             description = self.output_handler.description
+            max_iterations = self.output_handler.max_iterations
+
         else:
             exceptions_to_handle = (InvalidOutput,)
             description = self.output_handler.description or f"Output handler"
             assert isinstance(description, str)
             description += "\n ONLY RETURN THE FINAL RESULT USING THIS TOOL!"
+            max_iterations = Defaults.DEFAULT_OUTPUT_HANDLER_MAX_ITERATIONS
+
+        iteration = 0
 
         def handle_agent_output(*args, **kwargs):
             assert self.output_handler
+            nonlocal iteration
+
             try:
+                iteration += 1
                 output = self.output_handler._run(*args, **kwargs)
             except exceptions_to_handle as exc:
-                return f"{exc.__class__.__name__}: {str(exc)}"
+                if iteration <= max_iterations:
+                    return f"{exc.__class__.__name__}: {str(exc)}"
+                raise OutputHandlerMaxIterationsExceeded(
+                    last_call_args=args,
+                    last_call_kwargs=kwargs,
+                    last_exception=exc,
+                )
 
             raise DirectOutput(output)
 

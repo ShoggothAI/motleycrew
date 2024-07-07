@@ -24,7 +24,15 @@ class MotleyOutputHandler(MotleyTool, ABC):
     """Exceptions that should be returned to the agent when raised in the `handle_output` method."""
 
     def __init__(self, max_iterations: int = Defaults.DEFAULT_OUTPUT_HANDLER_MAX_ITERATIONS):
-        self.max_iterations = max_iterations  # number of iterations of catching an exception
+        """Initialize the output handler tool.
+
+        Args:
+            max_iterations (int): Maximum number of iterations to run the output handler.
+                If an exception is raised in the `handle_output` method, the output handler will return
+                the exception to the agent unless the number of iterations exceeds `max_iterations`,
+                in which case the output handler will raise OutputHandlerMaxIterationsExceeded.
+        """
+        self.max_iterations = max_iterations
         langchain_tool = self._create_langchain_tool()
         super().__init__(langchain_tool)
 

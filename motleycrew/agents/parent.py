@@ -153,7 +153,11 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
             except exceptions_to_handle as exc:
                 if iteration <= max_iterations:
                     return f"{exc.__class__.__name__}: {str(exc)}"
-                raise OutputHandlerMaxIterationsExceeded(*args, **kwargs)
+                raise OutputHandlerMaxIterationsExceeded(
+                    last_call_args=args,
+                    last_call_kwargs=kwargs,
+                    last_exception=exc,
+                )
 
             raise DirectOutput(output)
 

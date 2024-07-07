@@ -4,10 +4,13 @@ from typing import Union
 from langchain_core.tools import StructuredTool
 from langchain_core.pydantic_v1 import BaseModel, Field
 
+try:
+    from aider.linter import Linter
+except ImportError:
+    Linter = None
+
 from motleycrew.common.utils import ensure_module_is_installed
 from motleycrew.tools import MotleyTool
-
-Linter = None
 
 
 class PythonLinterTool(MotleyTool):

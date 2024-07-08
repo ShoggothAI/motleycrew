@@ -7,7 +7,7 @@ import logging
 
 
 from langchain_community.tools import ShellTool
-from motleycrew.agents.crewai import CrewAIMotleyAgent
+from motleycrew.agents.langchain import ReActMotleyAgent
 from motleycrew.common import configure_logging
 from motleycrew.tasks import SimpleTask
 from motleycache import logger
@@ -41,11 +41,10 @@ def main():
     aider_tool = AiderTool(fnames=target_files, git_dname=git_repo_path, auto_commits=False)
     shell_tool = ShellTool()
 
-    developer = CrewAIMotleyAgent(
-        role="Software Engineer",
-        goal="Writing unit tests",
-        backstory="You are a lead software engineer working in a big tech company.",
-        delegation=False,
+    developer = ReActMotleyAgent(
+        name="Software Engineer",
+        description="Writing unit tests",
+        prompt_prefix="You are a lead tester working in a big tech company, your main goal is to write and run tests",
         verbose=True,
         tools=[aider_tool, shell_tool],
     )

@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 
 from motleycrew import MotleyCrew
-from motleycrew.agents.crewai import CrewAIMotleyAgent
+from motleycrew.agents.langchain import ReActMotleyAgent
 from motleycrew.tools import PythonREPLTool
 from motleycrew.common import configure_logging
 
@@ -11,15 +11,14 @@ def main():
     repl_tool = PythonREPLTool()
 
     # Define your agents with roles and goals
-    solver1 = CrewAIMotleyAgent(
-        role="High School Math Teacher",
-        goal="Generate great solutions to math problems",
-        backstory="""You are a high school math teacher with a passion for problem-solving.
-    To solve a math problem, you first reason about it, step by step, then generate the code to solve it exactly,
-    using sympy, then use the REPL tool to evaluate that code, and then
-    use the output to generate a human-readable solution.""",
+    solver1 = ReActMotleyAgent(
+        name="High School Math Teacher",
+        prompt_prefix="""You are a high school math teacher with a passion for problem-solving.
+        To solve a math problem, you first reason about it, step by step, then generate the code to solve it exactly,
+        using sympy, then use the REPL tool to evaluate that code, and then
+        use the output to generate a human-readable solution.""",
         verbose=True,
-        delegation=False,
+        description="Generate great solutions to math problems",
         tools=[repl_tool],
     )
 

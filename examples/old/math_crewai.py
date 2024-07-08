@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 
 from motleycrew import MotleyCrew
-from motleycrew.agents.langchain import ReActMotleyAgent
+from motleycrew.agents.llama_index import ReActLlamaIndexMotleyAgent
 from motleycrew.tools import PythonREPLTool
 from motleycrew.common import configure_logging
 
@@ -11,7 +11,7 @@ def main():
     repl_tool = PythonREPLTool()
 
     # Define your agents with roles and goals
-    solver1 = ReActMotleyAgent(
+    solver1 = ReActLlamaIndexMotleyAgent(
         name="High School Math Teacher",
         prompt_prefix="""You are a high school math teacher with a passion for problem-solving.
         To solve a math problem, you first reason about it, step by step, then generate the code to solve it exactly,

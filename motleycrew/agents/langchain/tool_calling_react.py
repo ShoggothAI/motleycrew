@@ -1,28 +1,25 @@
 from typing import Sequence, List, Optional
 
-from langchain_core.messages import BaseMessage, HumanMessage, ToolMessage
+from langchain.agents import AgentExecutor
+from langchain.agents.format_scratchpad.tools import format_to_tool_messages
+from langchain.agents.output_parsers.tools import ToolsAgentOutputParser
+from langchain.tools.render import render_text_description
+from langchain_core.agents import AgentFinish, AgentActionMessageLog
 from langchain_core.language_models import BaseChatModel
+from langchain_core.messages import BaseMessage, HumanMessage, ToolMessage
+from langchain_core.messages.base import merge_content
+from langchain_core.prompts import MessagesPlaceholder
 from langchain_core.prompts.chat import ChatPromptTemplate
 from langchain_core.runnables import Runnable, RunnablePassthrough, RunnableLambda
 from langchain_core.runnables.history import GetSessionHistoryCallable
 from langchain_core.tools import BaseTool
-from langchain_core.agents import AgentFinish, AgentActionMessageLog
-from langchain_core.prompts import MessagesPlaceholder
-from langchain_core.messages.base import merge_content
-
-from langchain.agents import AgentExecutor
-from langchain.agents.format_scratchpad.tools import format_to_tool_messages
-from langchain.agents.output_parsers.tools import ToolsAgentOutputParser
-
-from langchain.tools.render import render_text_description
 
 from motleycrew.agents.langchain import LangchainMotleyAgent
-from motleycrew.tools import MotleyTool
-from motleycrew.common import MotleySupportedTool
 from motleycrew.common import LLMFramework
+from motleycrew.common import MotleySupportedTool
 from motleycrew.common.llms import init_llm
 from motleycrew.common.utils import print_passthrough
-
+from motleycrew.tools import MotleyTool
 
 default_think_prompt = ChatPromptTemplate.from_messages(
     [
@@ -58,6 +55,7 @@ Begin!
         MessagesPlaceholder(variable_name="chat_history", optional=True),
         ("user", "{input}"),
         MessagesPlaceholder(variable_name="agent_scratchpad"),
+        MessagesPlaceholder(variable_name="additional_notes", optional=True),
     ]
 )
 
@@ -81,6 +79,7 @@ message contains the words "Final Answer"; {output_instruction}
         MessagesPlaceholder(variable_name="chat_history", optional=True),
         ("user", "{input}"),
         MessagesPlaceholder(variable_name="agent_scratchpad"),
+        MessagesPlaceholder(variable_name="additional_notes", optional=True),
     ]
 )
 default_act_prompt_without_output_handler = default_act_prompt.partial(
@@ -236,7 +235,8 @@ def create_tool_calling_react_agent(
         RunnablePassthrough.assign(
             agent_scratchpad=lambda x: merge_consecutive_messages(
                 format_to_tool_messages(x["intermediate_steps"])
-            )
+            ),
+            additional_notes=lambda x: x.get("additional_notes") or [],
         )
         | {"thought": think_chain, "background": RunnablePassthrough()}
         | RunnableLambda(print_passthrough)
@@ -250,6 +250,7 @@ class ReActToolCallingAgent(LangchainMotleyAgent):
     def __init__(
         self,
         tools: Sequence[MotleySupportedTool],
+        prompt_prefix: str | None = None,
         description: str | None = None,
         name: str | None = None,
         think_prompt: ChatPromptTemplate | None = None,
@@ -322,6 +323,7 @@ class ReActToolCallingAgent(LangchainMotleyAgent):
             return agent_executor
 
         super().__init__(
+            prompt_prefix=prompt_prefix,
             description=description,
             name=name,
             agent_factory=agent_factory,

@@ -1,25 +1,35 @@
 """ Module description """
 
-from typing import TYPE_CHECKING, Optional, Sequence, Any, Callable, Dict, Union, Tuple
-from functools import wraps
 import inspect
+from typing import (
+    TYPE_CHECKING,
+    Optional,
+    Sequence,
+    Any,
+    Callable,
+    Dict,
+    Type,
+    Union,
+    Tuple,
+)
 
-from langchain_core.tools import Tool
-from langchain_core.runnables import Runnable
 from langchain_core.prompts.chat import ChatPromptTemplate, HumanMessage, SystemMessage
+from langchain_core.runnables import Runnable
 from langchain_core.tools import StructuredTool
+from langchain_core.tools import Tool
+from motleycrew.agents.output_handler import MotleyOutputHandler
 from pydantic import BaseModel
 
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
-from motleycrew.agents.output_handler import MotleyOutputHandler
-from motleycrew.tools import MotleyTool
 from motleycrew.common import MotleyAgentFactory, MotleySupportedTool
+from motleycrew.common import logger, Defaults
 from motleycrew.common.exceptions import (
     AgentNotMaterialized,
     CannotModifyMaterializedAgent,
     InvalidOutput,
+    OutputHandlerMaxIterationsExceeded,
 )
-from motleycrew.common import logger
+from motleycrew.tools import MotleyTool
 
 if TYPE_CHECKING:
     from motleycrew import MotleyCrew
@@ -31,8 +41,10 @@ class DirectOutput(BaseException):
 
 
 class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
+
     def __init__(
         self,
+        prompt_prefix: str | None = None,
         description: str | None = None,
         name: str | None = None,
         agent_factory: MotleyAgentFactory | None = None,
@@ -43,6 +55,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
         """Description
 
         Args:
+            prompt_prefix (:obj:`str`, optional):
             description (:obj:`str`, optional):
             name (:obj:`str`, optional):
             agent_factory (:obj:`MotleyAgentFactory`, optional):
@@ -52,6 +65,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
         """
         self.name = name or description
         self.description = description  # becomes tool description
+        self.prompt_prefix = prompt_prefix
         self.agent_factory = agent_factory
         self.tools: dict[str, MotleyTool] = {}
         self.output_handler = output_handler
@@ -69,22 +83,26 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
     def __str__(self):
         return self.__repr__()
 
-    def compose_prompt(self, input_dict: dict, prompt: ChatPromptTemplate | str) -> str:
+    def compose_prompt(
+        self, input_dict: dict, prompt: ChatPromptTemplate | str
+    ) -> Union[str, ChatPromptTemplate]:
         # TODO: always cast description and prompt to ChatPromptTemplate first?
         prompt_messages = []
 
-        if not self.description and not prompt:
+        if not self.prompt_prefix and not prompt:
             raise Exception("Cannot compose agent prompt without description or prompt")
 
-        if self.description:
-            if isinstance(self.description, ChatPromptTemplate):
-                prompt_messages += self.description.invoke(input_dict).to_messages()
+        if self.prompt_prefix:
+            if isinstance(self.prompt_prefix, ChatPromptTemplate):
+                prompt_messages += self.prompt_prefix.invoke(input_dict).to_messages()
 
-            elif isinstance(self.description, str):
-                prompt_messages.append(SystemMessage(content=self.description))
+            elif isinstance(self.prompt_prefix, str):
+                prompt_messages.append(SystemMessage(content=self.prompt_prefix))
 
             else:
-                raise ValueError("Agent description must be a string or a ChatPromptTemplate")
+                raise ValueError(
+                    "Agent description must be a string or a ChatPromptTemplate"
+                )
 
         if prompt:
             if isinstance(prompt, ChatPromptTemplate):
@@ -96,6 +114,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
             else:
                 raise ValueError("Prompt must be a string or a ChatPromptTemplate")
 
+        # TODO: pass the unformatted messages list to agents that can handle it
         prompt = "\n\n".join([m.content for m in prompt_messages]) + "\n"
         return prompt
 
@@ -117,7 +136,6 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
         """
         Wraps the output handler in one more tool layer,
         adding the necessary stuff for returning direct output through output handler.
-        Expects agent's later invocation through _run_and_catch_output method below.
         """
         if not self.output_handler:
             return None
@@ -126,18 +144,32 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
         if isinstance(self.output_handler, MotleyOutputHandler):
             exceptions_to_handle = self.output_handler.exceptions_to_handle
             description = self.output_handler.description
+            max_iterations = self.output_handler.max_iterations
+
         else:
             exceptions_to_handle = (InvalidOutput,)
             description = self.output_handler.description or f"Output handler"
             assert isinstance(description, str)
             description += "\n ONLY RETURN THE FINAL RESULT USING THIS TOOL!"
+            max_iterations = Defaults.DEFAULT_OUTPUT_HANDLER_MAX_ITERATIONS
+
+        iteration = 0
 
         def handle_agent_output(*args, **kwargs):
             assert self.output_handler
+            nonlocal iteration
+
             try:
+                iteration += 1
                 output = self.output_handler._run(*args, **kwargs)
             except exceptions_to_handle as exc:
-                return f"{exc.__class__.__name__}: {str(exc)}"
+                if iteration <= max_iterations:
+                    return f"{exc.__class__.__name__}: {str(exc)}"
+                raise OutputHandlerMaxIterationsExceeded(
+                    last_call_args=args,
+                    last_call_kwargs=kwargs,
+                    last_exception=exc,
+                )
 
             raise DirectOutput(output)
 
@@ -150,32 +182,6 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
 
         return MotleyTool.from_langchain_tool(prepared_output_handler)
 
-    @staticmethod
-    def _run_and_catch_output(
-        action: Callable, action_args: tuple, action_kwargs: Dict[str, Any]
-    ) -> Tuple[bool, Any]:
-        """
-        Catcher for the direct output from the output handler (see _prepare_output_handler).
-
-        Args:
-            action (Callable): the action inside which the output handler is supposed to be called.
-                Usually the invocation method of the underlying agent.
-            action_args (tuple): the args for the action
-            action_kwargs (tuple): the kwargs for the action
-
-        Returns:
-            tuple[bool, Any]: a tuple with a boolean indicating whether the output was caught
-                via DirectOutput and the output itself
-        """
-        assert callable(action)
-
-        try:
-            output = action(*action_args, **action_kwargs)
-        except DirectOutput as output_exc:
-            return True, output_exc.output
-
-        return False, output
-
     def materialize(self):
         if self.is_materialized:
             logger.info("Agent is already materialized, skipping materialization")
@@ -186,9 +192,13 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
 
         if inspect.signature(self.agent_factory).parameters.get("output_handler"):
             logger.info("Agent factory accepts output handler, passing it")
-            self._agent = self.agent_factory(tools=self.tools, output_handler=output_handler)
+            self._agent = self.agent_factory(
+                tools=self.tools, output_handler=output_handler
+            )
         elif output_handler:
-            logger.info("Agent factory does not accept output handler, passing it as a tool")
+            logger.info(
+                "Agent factory does not accept output handler, passing it as a tool"
+            )
             tools_with_output_handler = self.tools.copy()
             tools_with_output_handler[output_handler.name] = output_handler
             self._agent = self.agent_factory(tools=tools_with_output_handler)
@@ -232,11 +242,11 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
             if motley_tool.name not in self.tools:
                 self.tools[motley_tool.name] = motley_tool
 
-    def as_tool(self, input_schema: Optional[BaseModel] = None) -> MotleyTool:
+    def as_tool(self, input_schema: Optional[Type[BaseModel]] = None) -> MotleyTool:
         """Description
 
         Args:
-            input_schema (:obj:`BaseModel`, optional):
+            input_schema (:obj:`Type[BaseModel]`, optional):
 
         Returns:
             MotleyTool:
@@ -256,7 +266,9 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
         # To be specialized if we expect structured input
         return MotleyTool.from_langchain_tool(
             Tool(
-                name=self.name,
+                name=self.name.replace(
+                    " ", "_"
+                ).lower(),  # OpenAI doesn't accept spaces in function names
                 description=self.description,
                 func=call_agent,
                 args_schema=input_schema,

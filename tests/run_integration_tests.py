@@ -1,39 +1,35 @@
-import shutil
-from typing import Optional
-
-import os
 import argparse
-from pathlib import Path
-import traceback
 import difflib
 import json
+import os
+import shutil
+import sys
+import traceback
 from copy import copy
 from functools import partial
+from pathlib import Path
+from typing import Optional
 
-from dotenv import load_dotenv
 import nbformat
+from dotenv import load_dotenv
+from motleycache import enable_cache, set_cache_location, set_strong_cache, set_cache_blacklist
 from nbconvert.preprocessors import ExecutePreprocessor
 from nbformat.v4.nbbase import new_code_cell
 
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, project_root)  # ensure the examples are importable
+
+from examples.delegation_demo import main as delegation_demo_main
+from examples.old.single_llama_index import main as single_llama_index_main
+from motleycrew.common import logger, configure_logging
 from motleycrew.common.exceptions import (
     IntegrationTestException,
     IpynbIntegrationTestResultNotFound,
 )
-from motleycrew.common import logger, configure_logging
-
-from motleycache import (
-    enable_cache,
-    set_cache_location,
-    set_strong_cache,
-)
-
-from examples.old.delegation_crewai import main as delegation_crewai_main
-from examples.old.single_llama_index import main as single_llama_index_main
-
 
 INTEGRATION_TESTS = {
     "single_llama_index": single_llama_index_main,
-    "delegation_crewai": delegation_crewai_main,
+    "delegation_demo": delegation_demo_main,
 }
 
 IPYNB_INTEGRATION_TESTS = {
@@ -72,7 +68,8 @@ TIKTOKEN_CACHE_DIR_ENV_VAR = "TIKTOKEN_CACHE_DIR"
 def get_args_parser():
     """Argument parser"""
     parser = argparse.ArgumentParser(
-        description="Run integration tests", formatter_class=argparse.ArgumentDefaultsHelpFormatter
+        description="Run integration tests",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
         "--test-name",
@@ -83,7 +80,10 @@ def get_args_parser():
     )
     parser.add_argument("--cache-dir", type=str, help="Cache directory", default=DEFAULT_CACHE_DIR)
     parser.add_argument(
-        "--golden-dir", type=str, help="Reference data directory", default=DEFAULT_GOLDEN_DIR
+        "--golden-dir",
+        type=str,
+        help="Reference data directory",
+        default=DEFAULT_GOLDEN_DIR,
     )
     parser.add_argument(
         "--update-golden",
@@ -186,22 +186,6 @@ def run_ipynb(ipynb_path: str, strong_cache: bool = False, cache_sub_dir: str = 
     return result
 
 
-def set_tiktoken_cache_dir(cache_dir: str) -> str:
-    """Set tiktoken cache directory to env, return its old value to set it back after the tests"""
-    old_value = os.environ.get(TIKTOKEN_CACHE_DIR_ENV_VAR)
-
-    tiktoken_cache_dir = os.path.join(cache_dir, "tiktoken_cache")
-    os.environ[TIKTOKEN_CACHE_DIR_ENV_VAR] = tiktoken_cache_dir
-    return old_value
-
-
-def unset_tiktoken_cache_dir(old_value: Optional[str] = None):
-    """Restore the tiktoken cache environment variable, so it is not used outside the tests"""
-    if old_value is not None:
-        os.environ[TIKTOKEN_CACHE_DIR_ENV_VAR] = old_value
-    os.environ.pop(TIKTOKEN_CACHE_DIR_ENV_VAR, None)
-
-
 def build_ipynb_integration_tests(is_minimal: bool = False) -> dict:
     """Build and return dict of ipynb integration tests functions"""
     test_functions = {}
@@ -238,8 +222,6 @@ def run_integration_tests(
         integration_test_key = "minimal_{}".format(test_key)
         integration_tests[integration_test_key] = test_value
 
-    old_tiktoken_cache_dir = set_tiktoken_cache_dir(cache_dir)
-
     for current_test_name, test_fn in integration_tests.items():
         if test_name is not None and test_name != current_test_name:
             continue
@@ -260,7 +242,10 @@ def run_integration_tests(
         set_cache_location(cache_sub_dir)
 
         if current_test_name in IPYNB_INTEGRATION_TESTS:
-            test_fn_kwargs = {"strong_cache": strong_cache, "cache_sub_dir": cache_sub_dir}
+            test_fn_kwargs = {
+                "strong_cache": strong_cache,
+                "cache_sub_dir": cache_sub_dir,
+            }
         else:
             test_fn_kwargs = {}
 
@@ -272,14 +257,15 @@ def run_integration_tests(
             ):
                 if update_golden:
                     logger.info(
-                        "Skipping check and updating golden data for test: %s", current_test_name
+                        "Skipping check and updating golden data for test: %s",
+                        current_test_name,
                     )
                     write_content(golden_dir, current_test_name, test_result)
                 else:
                     excepted_result = read_golden_data(golden_dir, current_test_name)
                     compare_results(test_result, excepted_result)
 
-        except Exception as e:
+        except BaseException as e:
             logger.error("Test %s failed: %s", current_test_name, str(e))
             failed_tests[current_test_name] = traceback.format_exc()
 
@@ -291,7 +277,6 @@ def run_integration_tests(
         raise IntegrationTestException(test_names=list(failed_tests.keys()))
 
     logger.info("All tests passed!")
-    unset_tiktoken_cache_dir(old_tiktoken_cache_dir)
 
 
 def main():
@@ -302,6 +287,7 @@ def main():
     args = parser.parse_args()
 
     enable_cache()
+    set_cache_blacklist(["*openaipublic.blob.core.windows.net/encodings*"])
     run_integration_tests(
         cache_dir=args.cache_dir,
         golden_dir=args.golden_dir,

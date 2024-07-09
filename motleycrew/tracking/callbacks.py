@@ -231,7 +231,11 @@ class LlamaIndexLunaryCallbackHandler(BaseCallbackHandler):
 
         params["parent_run_id"] = self.check_parent_id(parent_id)
         params["name"] = tool.name
-        params["input"] = '{{"query":"{}"}}'.format(function_call.get("query"))
+
+        params_inputs = []
+        for k, v in function_call.items():
+            params_inputs.append('{{"{}":"{}"}}'.format(k, v))
+        params["input"] = "\n".join(params_inputs)
 
         return params
 
@@ -254,7 +258,7 @@ class LlamaIndexLunaryCallbackHandler(BaseCallbackHandler):
         params = self._get_initial_track_event_params(
             LunaryRunType.TOOL, LunaryEventName.END, event_id
         )
-        params["output"] = payload.get(EventPayload.FUNCTION_OUTPUT)
+        params["output"] = payload.get(EventPayload.FUNCTION_OUTPUT) if payload is not None else ""
         return params
 
     def _on_agent_step_start(
@@ -302,11 +306,16 @@ class LlamaIndexLunaryCallbackHandler(BaseCallbackHandler):
         Returns:
             dict: dictionary of data to send to lunary
         """
-        response = payload.get(EventPayload.RESPONSE)
         params = self._get_initial_track_event_params(
             LunaryRunType.AGENT, LunaryEventName.END, event_id
         )
-        params["output"] = response.response
+
+        if payload:
+            response = payload.get(EventPayload.RESPONSE)
+            output  = response.response
+        else:
+            output = ""
+        params["output"] = output
 
         return params
 

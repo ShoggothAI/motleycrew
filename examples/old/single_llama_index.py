@@ -6,20 +6,25 @@ from motleycrew import MotleyCrew
 from motleycrew.agents.llama_index import ReActLlamaIndexMotleyAgent
 from motleycrew.common import configure_logging
 from motleycrew.tasks import SimpleTask
+from motleycrew.common.exceptions import InvalidOutput
+from motleycrew.common import AsyncBackend
+
+from langchain_core.tools import StructuredTool
 
 
 def main():
     """Main function of running the example."""
     search_tool = DuckDuckGoSearchRun()
 
+
     # TODO: add LlamaIndex native tools
     researcher = ReActLlamaIndexMotleyAgent(
-        description="Your goal is to uncover cutting-edge developments in AI and data science",
+        prompt_prefix="Your goal is to uncover cutting-edge developments in AI and data science",
         tools=[search_tool],
         verbose=True,
     )
 
-    crew = MotleyCrew()
+    crew = MotleyCrew(async_backend=AsyncBackend.NONE)
 
     # Create tasks for your agents
     task = SimpleTask(

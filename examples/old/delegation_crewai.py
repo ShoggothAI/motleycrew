@@ -31,6 +31,7 @@ def main():
         backstory="""You work at a leading tech think tank.
     Your expertise lies in identifying emerging trends.
     You have a knack for dissecting complex data and presenting actionable insights.""",
+        description="Tool Research Analysis",
         delegation=False,
         verbose=True,
         tools=[search_tool],
@@ -77,7 +78,7 @@ def main():
         agent=writer,
     )
 
-    [analysis_report_task, literature_summary_task] >> blog_post_task
+    # [analysis_report_task, literature_summary_task] >> blog_post_task
 
     # Get your crew to work!
     result = crew.run()
@@ -89,6 +90,5 @@ def main():
 
 if __name__ == "__main__":
     configure_logging(verbose=True)
-
     load_dotenv()
     main()

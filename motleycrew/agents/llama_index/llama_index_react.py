@@ -21,15 +21,19 @@ from motleycrew.common.utils import ensure_module_is_installed
 class ReActLlamaIndexMotleyAgent(LlamaIndexMotleyAgent):
     def __init__(
         self,
+        prompt_prefix: str | None = None,
         description: str | None = None,
         name: str | None = None,
         tools: Sequence[MotleySupportedTool] | None = None,
         llm: LLM | None = None,
+        output_handler: MotleySupportedTool | None = None,
         verbose: bool = False,
+        max_iterations: int = 10,
     ):
         """Description
 
         Args:
+            prompt_prefix (:obj:`str`, optional):
             description (:obj:`str`, optional):
             name (:obj:`str`, optional):
             tools (:obj:`Sequence[MotleySupportedTool]`, optional):
@@ -47,14 +51,17 @@ class ReActLlamaIndexMotleyAgent(LlamaIndexMotleyAgent):
                 tools=llama_index_tools,
                 llm=llm,
                 verbose=verbose,
+                max_iterations=max_iterations,
                 callback_manager=CallbackManager(callbacks),
             )
             return agent
 
         super().__init__(
+            prompt_prefix=prompt_prefix,
             description=description,
             name=name,
             agent_factory=agent_factory,
             tools=tools,
+            output_handler=output_handler,
             verbose=verbose,
         )

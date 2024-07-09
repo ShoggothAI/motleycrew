@@ -1,7 +1,7 @@
 import asyncio
+from typing import Collection, Generator, Sequence, Optional, Any, List, Tuple
 import threading
 import time
-from typing import Collection, Optional, Any, Tuple
 
 from motleycrew.agents.parent import MotleyAgentParent
 from motleycrew.common import logger, AsyncBackend, Defaults
@@ -103,9 +103,8 @@ class MotleyCrew:
 
     def _prepare_next_unit_for_dispatch(
         self, running_sync_tasks: set
-    ) -> Tuple[MotleyAgentParent, Task, TaskUnit]:
+    ) -> Generator[MotleyAgentParent, Task, TaskUnit]:
         """Retrieve and prepare the next unit for dispatch.
-
         Args:
             running_sync_tasks (set): Collection of currently running forced synchronous tasks
 
@@ -262,8 +261,12 @@ class MotleyCrew:
                         done_units=done_units,
                     )
 
-            for agent, next_task, next_unit in self._prepare_next_unit_for_dispatch(running_tasks):
-                async_task = asyncio.create_task(MotleyCrew._async_invoke_agent(agent, next_unit))
+            for agent, next_task, next_unit in self._prepare_next_unit_for_dispatch(
+                running_tasks
+            ):
+                async_task = asyncio.create_task(
+                    MotleyCrew._async_invoke_agent(agent, next_unit)
+                )
                 async_units[async_task] = (next_task, next_unit)
 
             if not async_units:
@@ -289,7 +292,9 @@ class MotleyCrew:
             Task.NODE_CLASS.get_label(),
             Task.TASK_IS_UPSTREAM_LABEL,
         )
-        available_task_nodes = self.graph_store.run_cypher_query(query, container=Task.NODE_CLASS)
+        available_task_nodes = self.graph_store.run_cypher_query(
+            query, container=Task.NODE_CLASS
+        )
         return [task for task in self.tasks if task.node in available_task_nodes]
 
     def add_task_unit_to_graph(self, task: Task, unit: TaskUnitType):

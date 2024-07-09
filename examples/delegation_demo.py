@@ -10,7 +10,7 @@ import kuzu
 from motleycrew.storage import MotleyKuzuGraphStore
 
 from motleycrew.agents.crewai import CrewAIMotleyAgent
-from motleycrew.agents.langchain.react import ReActMotleyAgent
+from motleycrew.agents.langchain.tool_calling_react import ReActToolCallingAgent
 from motleycrew.agents.llama_index import ReActLlamaIndexMotleyAgent
 from motleycrew.tools.image.dall_e import DallEImageGeneratorTool
 from motleycrew.common import configure_logging
@@ -56,7 +56,7 @@ def main():
     )
 
     # You can give agents as tools to other agents
-    writer = ReActMotleyAgent(
+    writer = ReActToolCallingAgent(
         name="AI writer agent",
         prompt_prefix="You are an experienced writer with a passion for technology.",
         description="Experienced writer with a passion for technology.",

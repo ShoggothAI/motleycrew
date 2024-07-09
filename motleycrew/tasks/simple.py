@@ -4,15 +4,16 @@ Attributes:
    PROMPT_TEMPLATE_WITH_DEPS (str):
 
 """
+
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any, Sequence, List, Optional
 
-from motleycrew.tasks.task import Task
-from motleycrew.tasks import TaskUnit
-
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
-from motleycrew.tools import MotleyTool
 from motleycrew.common import logger
+from motleycrew.tasks import TaskUnit
+from motleycrew.tasks.task import Task
+from motleycrew.tools import MotleyTool
 
 if TYPE_CHECKING:
     from motleycrew.crew import MotleyCrew
@@ -28,9 +29,11 @@ You must use the results of these upstream tasks:
 
 
 def compose_simple_task_prompt_with_dependencies(
-    description: str, upstream_task_units: List[TaskUnit], default_task_name: str = "Unnamed task"
+    description: str,
+    upstream_task_units: List[TaskUnit],
+    default_task_name: str = "Unnamed task",
 ) -> str:
-    """ Description
+    """Description
 
     Args:
         description (str):
@@ -59,17 +62,17 @@ def compose_simple_task_prompt_with_dependencies(
 
 
 class SimpleTaskUnit(TaskUnit):
-    """ Description
+    """Description
 
     Attributes:
         name (str):
         prompt (str):
-        message_history (:obj:`list` of :obj:`str`):
 
     """
+
     name: str
     prompt: str
-    message_history: List[str] = []
+    additional_params: Optional[dict[str, Any]] = None
 
 
 class SimpleTask(Task):
@@ -81,10 +84,9 @@ class SimpleTask(Task):
         agent: MotleyAgentAbstractParent | None = None,
         tools: Sequence[MotleyTool] | None = None,
         documents: Sequence[Any] | None = None,
-        creator_name: str | None = None,
-        return_to_creator: bool = False,
+        additional_params: dict[str, Any] | None = None,
     ):
-        """ Description
+        """Description
 
         Args:
             crew (MotleyCrew):
@@ -93,8 +95,7 @@ class SimpleTask(Task):
             agent (:obj:`MotleyAgentAbstractParent`, optional):
             tools (:obj:`Sequence[MotleyTool]`, optional):
             documents (:obj:`Sequence[Any]`, optional):
-            creator_name (:obj:`str`, optional):
-            return_to_creator (:obj:`bool`, optional):
+            additional_kwargs (:obj:`dict`, optional):
         """
         super().__init__(name=name or description, task_unit_class=SimpleTaskUnit, crew=crew)
         self.description = description
@@ -102,14 +103,11 @@ class SimpleTask(Task):
         self.tools = tools or []
         # should tasks own agents or should agents own tasks?
         self.documents = documents  # to be passed to an auto-init'd retrieval, later on
-        self.creator_name = creator_name or "Human"
-        self.return_to_creator = (
-            return_to_creator  # for orchestrator to know to send back to creator
-        )
+        self.additional_params = additional_params or {}
         self.output = None  # to be filled in by the agent(s) once the task is complete
 
     def register_completed_unit(self, unit: SimpleTaskUnit) -> None:
-        """ Description
+        """Description
 
         Args:
             unit (SimpleTaskUnit):
@@ -124,7 +122,7 @@ class SimpleTask(Task):
         self.set_done()
 
     def get_next_unit(self) -> SimpleTaskUnit | None:
-        """ Description
+        """Description
 
         Returns:
             :obj:`SimpleTaskUnit`, None:
@@ -142,10 +140,11 @@ class SimpleTask(Task):
         return SimpleTaskUnit(
             name=self.name,
             prompt=prompt,
+            additional_params=self.additional_params,
         )
 
     def get_worker(self, tools: Optional[List[MotleyTool]]) -> MotleyAgentAbstractParent:
-        """ Description
+        """Description
 
         Args:
             tools (:obj:`List[MotleyTool]`, :obj:`None`):
@@ -160,7 +159,9 @@ class SimpleTask(Task):
 
         if hasattr(self.agent, "is_materialized") and self.agent.is_materialized and tools:
             logger.warning(
-                "Agent %s is already materialized, can't add extra tools %s", self.agent, tools
+                "Agent %s is already materialized, can't add extra tools %s",
+                self.agent,
+                tools,
             )
 
         if hasattr(self.agent, "add_tools") and tools:

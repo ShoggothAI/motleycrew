@@ -1,4 +1,5 @@
 """ Module description """
+
 from typing import Optional, Any, Sequence
 
 from motleycrew.tools import MotleyTool
@@ -23,7 +24,7 @@ class CrewAIMotleyAgent(CrewAIMotleyAgentParent):
             output_handler: MotleySupportedTool | None = None,
             verbose: bool = False,
     ):
-        """ Description
+        """Description
 
         Args:
             role (str):

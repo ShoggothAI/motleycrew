@@ -1,7 +1,17 @@
 """ Module description """
 
 import inspect
-from typing import TYPE_CHECKING, Optional, Sequence, Any, Callable, Dict, Union, Tuple
+from typing import (
+    TYPE_CHECKING,
+    Optional,
+    Sequence,
+    Any,
+    Callable,
+    Dict,
+    Type,
+    Union,
+    Tuple,
+)
 
 from langchain_core.prompts.chat import ChatPromptTemplate, HumanMessage, SystemMessage
 from langchain_core.runnables import Runnable
@@ -90,7 +100,9 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
                 prompt_messages.append(SystemMessage(content=self.prompt_prefix))
 
             else:
-                raise ValueError("Agent description must be a string or a ChatPromptTemplate")
+                raise ValueError(
+                    "Agent description must be a string or a ChatPromptTemplate"
+                )
 
         if prompt:
             if isinstance(prompt, ChatPromptTemplate):
@@ -180,9 +192,13 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
 
         if inspect.signature(self.agent_factory).parameters.get("output_handler"):
             logger.info("Agent factory accepts output handler, passing it")
-            self._agent = self.agent_factory(tools=self.tools, output_handler=output_handler)
+            self._agent = self.agent_factory(
+                tools=self.tools, output_handler=output_handler
+            )
         elif output_handler:
-            logger.info("Agent factory does not accept output handler, passing it as a tool")
+            logger.info(
+                "Agent factory does not accept output handler, passing it as a tool"
+            )
             tools_with_output_handler = self.tools.copy()
             tools_with_output_handler[output_handler.name] = output_handler
             self._agent = self.agent_factory(tools=tools_with_output_handler)
@@ -226,11 +242,11 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
             if motley_tool.name not in self.tools:
                 self.tools[motley_tool.name] = motley_tool
 
-    def as_tool(self, input_schema: Optional[BaseModel] = None) -> MotleyTool:
+    def as_tool(self, input_schema: Optional[Type[BaseModel]] = None) -> MotleyTool:
         """Description
 
         Args:
-            input_schema (:obj:`BaseModel`, optional):
+            input_schema (:obj:`Type[BaseModel]`, optional):
 
         Returns:
             MotleyTool:
@@ -250,7 +266,9 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
         # To be specialized if we expect structured input
         return MotleyTool.from_langchain_tool(
             Tool(
-                name=self.name,
+                name=self.name.replace(
+                    " ", "_"
+                ).lower(),  # OpenAI doesn't accept spaces in function names
                 description=self.description,
                 func=call_agent,
                 args_schema=input_schema,

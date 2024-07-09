@@ -34,11 +34,15 @@ except ImportError:
 def main():
     crew = MotleyCrew()
 
-    git_repo_path = r"../../motleycrew-code-generation-example"  # cloned repository path
+    git_repo_path = (
+        r"../../motleycrew-code-generation-example"  # cloned repository path
+    )
     tests_file = os.path.join(git_repo_path, "test_math_functions.py")
     target_files = [tests_file]
 
-    aider_tool = AiderTool(fnames=target_files, git_dname=git_repo_path, auto_commits=False)
+    aider_tool = AiderTool(
+        fnames=target_files, git_dname=git_repo_path, auto_commits=False
+    )
     shell_tool = ShellTool()
 
     developer = CrewAIMotleyAgent(
@@ -59,6 +63,7 @@ def main():
         f"After go to the directory {git_repo_path} and run created unit tests. "
         f"If the tests were executed successfully, return the result of execution, "
         f"if not, rewrite the tests and rerun them until they are working.",
+        additional_params={"expected_output": "result of tests execution"},
         agent=developer,
     )
 

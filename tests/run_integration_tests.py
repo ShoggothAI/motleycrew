@@ -12,11 +12,7 @@ from typing import Optional
 
 import nbformat
 from dotenv import load_dotenv
-from motleycache import (
-    enable_cache,
-    set_cache_location,
-    set_strong_cache,
-)
+from motleycache import enable_cache, set_cache_location, set_strong_cache, set_cache_blacklist
 from nbconvert.preprocessors import ExecutePreprocessor
 from nbformat.v4.nbbase import new_code_cell
 
@@ -82,9 +78,7 @@ def get_args_parser():
         help="Name of the test to run (leave empty to run all tests)",
         default=None,
     )
-    parser.add_argument(
-        "--cache-dir", type=str, help="Cache directory", default=DEFAULT_CACHE_DIR
-    )
+    parser.add_argument("--cache-dir", type=str, help="Cache directory", default=DEFAULT_CACHE_DIR)
     parser.add_argument(
         "--golden-dir",
         type=str,
@@ -128,9 +122,7 @@ def build_excepted_content_file_path(
     return os.path.join(golden_dir, "{}.{}".format(test_name, extension))
 
 
-def write_content(
-    golden_dir: str, test_name: str, content: str, extension: str = "json"
-):
+def write_content(golden_dir: str, test_name: str, content: str, extension: str = "json"):
     """Write golden data to file"""
     file_path = build_excepted_content_file_path(golden_dir, test_name, extension)
     with open(file_path, "w") as fd:
@@ -144,9 +136,7 @@ def read_golden_data(golden_dir: str, test_name: str, extension: str = "json"):
         return json.load(fd)
 
 
-def run_ipynb(
-    ipynb_path: str, strong_cache: bool = False, cache_sub_dir: str = None
-) -> str:
+def run_ipynb(ipynb_path: str, strong_cache: bool = False, cache_sub_dir: str = None) -> str:
     """Run jupiter notebook execution"""
     with open(ipynb_path) as f:
         nb = nbformat.read(f, as_version=4)
@@ -171,10 +161,8 @@ def run_ipynb(
         # ipynb save final result
         # final_result variable must be present in ipynb and store the result of the execution as a string
         ipynb_result_file_path = os.path.join(cache_sub_dir, "ipynb_result.txt")
-        save_result_command = (
-            "with open(r'{}', 'w') as f:\n\tf.write(final_result)".format(
-                ipynb_result_file_path
-            )
+        save_result_command = "with open(r'{}', 'w') as f:\n\tf.write(final_result)".format(
+            ipynb_result_file_path
         )
         cells = [new_code_cell(save_result_command), new_code_cell("disable_cache()")]
         nb.cells += cells
@@ -196,22 +184,6 @@ def run_ipynb(
         result = ""
 
     return result
-
-
-def set_tiktoken_cache_dir(cache_dir: str) -> str:
-    """Set tiktoken cache directory to env, return its old value to set it back after the tests"""
-    old_value = os.environ.get(TIKTOKEN_CACHE_DIR_ENV_VAR)
-
-    tiktoken_cache_dir = os.path.join(cache_dir, "tiktoken_cache")
-    os.environ[TIKTOKEN_CACHE_DIR_ENV_VAR] = tiktoken_cache_dir
-    return old_value
-
-
-def unset_tiktoken_cache_dir(old_value: Optional[str] = None):
-    """Restore the tiktoken cache environment variable, so it is not used outside the tests"""
-    if old_value is not None:
-        os.environ[TIKTOKEN_CACHE_DIR_ENV_VAR] = old_value
-    os.environ.pop(TIKTOKEN_CACHE_DIR_ENV_VAR, None)
 
 
 def build_ipynb_integration_tests(is_minimal: bool = False) -> dict:
@@ -250,8 +222,6 @@ def run_integration_tests(
         integration_test_key = "minimal_{}".format(test_key)
         integration_tests[integration_test_key] = test_value
 
-    old_tiktoken_cache_dir = set_tiktoken_cache_dir(cache_dir)
-
     for current_test_name, test_fn in integration_tests.items():
         if test_name is not None and test_name != current_test_name:
             continue
@@ -260,9 +230,7 @@ def run_integration_tests(
 
         cache_sub_dir = os.path.join(cache_dir, current_test_name)
         if update_golden:
-            logger.info(
-                "Update-golden flag is set. Cleaning cache directory %s", cache_sub_dir
-            )
+            logger.info("Update-golden flag is set. Cleaning cache directory %s", cache_sub_dir)
             shutil.rmtree(cache_sub_dir, ignore_errors=True)
             os.makedirs(cache_sub_dir, exist_ok=True)
             os.makedirs(golden_dir, exist_ok=True)
@@ -309,7 +277,6 @@ def run_integration_tests(
         raise IntegrationTestException(test_names=list(failed_tests.keys()))
 
     logger.info("All tests passed!")
-    unset_tiktoken_cache_dir(old_tiktoken_cache_dir)
 
 
 def main():
@@ -320,6 +287,7 @@ def main():
     args = parser.parse_args()
 
     enable_cache()
+    set_cache_blacklist(["*openaipublic.blob.core.windows.net/encodings*"])
     run_integration_tests(
         cache_dir=args.cache_dir,
         golden_dir=args.golden_dir,

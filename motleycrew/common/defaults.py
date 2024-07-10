@@ -34,6 +34,7 @@ class Defaults:
         "lunary": "pip install lunary",
         "aider": "pip install aider-chat",
         "pglast": "pip install pglast",
+        "crewai_tools": "pip install 'crewai[tools]'"
     }
 
     DEFAULT_NUM_THREADS = 4

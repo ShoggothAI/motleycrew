@@ -13,6 +13,13 @@ except ImportError:
     LlamaIndex__BaseTool = None
     LlamaIndex__FunctionTool = None
 
+try:
+    from crewai_tools import BaseTool as Crewai__BaseTool
+    from crewai_tools import Tool as Crewai__Tool
+except ImportError:
+    Crewai__BaseTool = None
+    Crewai__Tool = None
+
 from motleycrew.common.utils import ensure_module_is_installed
 from motleycrew.common.types import MotleySupportedTool
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
@@ -86,6 +93,20 @@ class MotleyTool(Runnable):
         return MotleyTool.from_langchain_tool(langchain_tool=langchain_tool)
 
     @staticmethod
+    def from_crewai_tool(crewai_tool: Crewai__BaseTool) -> "MotleyTool":
+        """Description
+
+        Args:
+            crewai_tool (Crewai__BaseTool):
+
+        Returns:
+            MotleyTool:
+        """
+        ensure_module_is_installed("crewai_tools")
+        langchain_tool = crewai_tool.to_langchain()
+        return MotleyTool.from_langchain_tool(langchain_tool=langchain_tool)
+
+    @staticmethod
     def from_supported_tool(tool: MotleySupportedTool) -> "MotleyTool":
         """Description
 
@@ -103,6 +124,8 @@ class MotleyTool(Runnable):
             return MotleyTool.from_llama_index_tool(tool)
         elif isinstance(tool, MotleyAgentAbstractParent):
             return tool.as_tool()
+        elif Crewai__BaseTool is not None and isinstance(tool, Crewai__BaseTool):
+            return MotleyTool.from_crewai_tool(tool)
         else:
             raise Exception(
                 f"Tool type `{type(tool)}` is not supported, please convert to MotleyTool first"
@@ -148,3 +171,18 @@ class MotleyTool(Runnable):
             return self.invoke({field_name: input})
 
         return autogen_tool_fn
+
+    def to_crewai_tool(self) -> Crewai__BaseTool:
+        """Description
+
+        Returns:
+            Crewai__BaseTool:
+        """
+        ensure_module_is_installed("crewai_tools")
+        crewai_tool = Crewai__Tool(
+            name=self.tool.name,
+            description=self.tooldescription,
+            func=self.tool._run,
+            args_schema=self.tool.args_schema,
+        )
+        return crewai_tool

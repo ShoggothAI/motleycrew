@@ -17,7 +17,7 @@ class Defaults:
         DEFAULT_NUM_THREADS (int):
         DEFAULT_EVENT_LOOP_SLEEP (int):
         DEFAULT_OUTPUT_HANDLER_MAX_ITERATIONS (int):
-
+        LANGCHAIN_AGENT_NAME (str):
     """
 
     DEFAULT_LLM_FAMILY = LLMFamily.OPENAI
@@ -40,3 +40,4 @@ class Defaults:
     DEFAULT_NUM_THREADS = 4
     DEFAULT_EVENT_LOOP_SLEEP = 1
     DEFAULT_OUTPUT_HANDLER_MAX_ITERATIONS = 5
+    LANGCHAIN_AGENT_NAME = "langchain_agent"

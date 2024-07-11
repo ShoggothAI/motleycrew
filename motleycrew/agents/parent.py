@@ -41,6 +41,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
         tools: Sequence[MotleySupportedTool] | None = None,
         output_handler: MotleySupportedTool | None = None,
         verbose: bool = False,
+        agent_name: str | None = None
     ):
         """Description
 
@@ -52,6 +53,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
             tools (:obj:`Sequence[MotleySupportedTool]`, optional):
             output_handler (:obj:`MotleySupportedTool`, optional):
             verbose (:obj:`bool`, optional):
+            agent_name(:obj:`str`, optional): agent name
         """
         self.name = name or description
         self.description = description  # becomes tool description
@@ -63,6 +65,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
         self.crew: MotleyCrew | None = None
 
         self._agent = None
+        self._agent_name = agent_name
 
         if tools:
             self.add_tools(tools)
@@ -222,7 +225,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
             raise CannotModifyMaterializedAgent(agent_name=self.name)
 
         for t in tools:
-            motley_tool = MotleyTool.from_supported_tool(t)
+            motley_tool = MotleyTool.from_supported_tool(t, self._agent_name)
             if motley_tool.name not in self.tools:
                 self.tools[motley_tool.name] = motley_tool
 

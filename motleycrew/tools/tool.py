@@ -1,5 +1,4 @@
 """ Module description """
-
 from typing import Union, Optional, Dict, Any
 from typing import Callable
 
@@ -22,8 +21,9 @@ except ImportError:
 
 from motleycrew.common.utils import ensure_module_is_installed
 from motleycrew.common.types import MotleySupportedTool
+from motleycrew.common import Defaults
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
-
+from motleycrew.tools.utils import crewai_tool_args_decorator
 
 class MotleyTool(Runnable):
 
@@ -93,26 +93,38 @@ class MotleyTool(Runnable):
         return MotleyTool.from_langchain_tool(langchain_tool=langchain_tool)
 
     @staticmethod
-    def from_crewai_tool(crewai_tool: Crewai__BaseTool) -> "MotleyTool":
+    def from_crewai_tool(crewai_tool: Crewai__BaseTool, agent_name: str|None = None) -> "MotleyTool":
         """Description
 
         Args:
             crewai_tool (Crewai__BaseTool):
-
+            agent_name (str): agent name
         Returns:
             MotleyTool:
         """
         ensure_module_is_installed("crewai_tools")
         langchain_tool = crewai_tool.to_langchain()
+
+        # change tool name punctuation
+        for old_symbol, new_symbol in [(" ", "_"), ("'", "")]:
+            langchain_tool.name = langchain_tool.name.replace(old_symbol, new_symbol)
+
+        args_schema = langchain_tool.args_schema
+        langchain_tool.func = crewai_tool_args_decorator(args_schema)(langchain_tool.func)
+
+        if args_schema and not args_schema.__fields__:
+            if agent_name == Defaults.LANGCHAIN_AGENT_NAME:
+                langchain_tool.args_schema = None
+
         return MotleyTool.from_langchain_tool(langchain_tool=langchain_tool)
 
     @staticmethod
-    def from_supported_tool(tool: MotleySupportedTool) -> "MotleyTool":
+    def from_supported_tool(tool: MotleySupportedTool, agent_name: str|None = None) -> "MotleyTool":
         """Description
 
         Args:
             tool (:obj:`MotleyTool`, :obj:`BaseTool`, :obj:`LlamaIndex__BaseTool`, :obj:`MotleyAgentAbstractParent`):
-
+            agent_name (str): agent name
         Returns:
 
         """
@@ -125,7 +137,7 @@ class MotleyTool(Runnable):
         elif isinstance(tool, MotleyAgentAbstractParent):
             return tool.as_tool()
         elif Crewai__BaseTool is not None and isinstance(tool, Crewai__BaseTool):
-            return MotleyTool.from_crewai_tool(tool)
+            return MotleyTool.from_crewai_tool(tool, agent_name)
         else:
             raise Exception(
                 f"Tool type `{type(tool)}` is not supported, please convert to MotleyTool first"

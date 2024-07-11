@@ -193,7 +193,7 @@ class MotleyTool(Runnable):
         ensure_module_is_installed("crewai_tools")
         crewai_tool = Crewai__Tool(
             name=self.tool.name,
-            description=self.tooldescription,
+            description=self.tool.description,
             func=self.tool._run,
             args_schema=self.tool.args_schema,
         )

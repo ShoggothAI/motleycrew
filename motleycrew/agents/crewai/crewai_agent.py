@@ -1,41 +1,63 @@
-""" Module description """
+from __future__ import annotations
 
 from typing import Optional, Any, Sequence
 
-from motleycrew.tools import MotleyTool
-from motleycrew.common import MotleySupportedTool
-from motleycrew.common import LLMFramework
-from motleycrew.common.llms import init_llm
-from motleycrew.agents.crewai import CrewAIMotleyAgentParent
 from motleycrew.agents.crewai import CrewAIAgentWithConfig
+from motleycrew.agents.crewai import CrewAIMotleyAgentParent
+from motleycrew.common import LLMFramework
+from motleycrew.common import MotleySupportedTool
+from motleycrew.common.llms import init_llm
+from motleycrew.tools import MotleyTool
 
 
 class CrewAIMotleyAgent(CrewAIMotleyAgentParent):
-    def __init__(
-            self,
-            role: str,
-            goal: str,
-            backstory: str,
-            prompt_prefix: str | None = None,
-            description: str | None = None,
-            delegation: bool = False,
-            tools: Sequence[MotleySupportedTool] | None = None,
-            llm: Optional[Any] = None,
-            output_handler: MotleySupportedTool | None = None,
-            verbose: bool = False,
-    ):
-        """Description
+    """MotleyCrew wrapper for CrewAI Agent.
 
+    This wrapper is made to mimic the CrewAI agent's interface.
+    That is why it has mostly the same arguments.
+    """
+
+    def __init__(
+        self,
+        role: str,
+        goal: str,
+        backstory: str,
+        prompt_prefix: str | None = None,
+        description: str | None = None,
+        delegation: bool = False,
+        tools: Sequence[MotleySupportedTool] | None = None,
+        llm: Optional[Any] = None,
+        output_handler: MotleySupportedTool | None = None,
+        verbose: bool = False,
+    ):
+        """
         Args:
-            role (str):
-            goal (str):
-            backstory (str):
-            prompt_prefix (str):
-            description (str, optional):
-            delegation (bool):
-            tools (:obj:`Sequence[MotleySupportedTool]`, optional):
-            llm (:obj:'Any', optional):
-            verbose (bool):
+            role: ``role`` param of the CrewAI Agent.
+
+            goal: ``goal`` param of the CrewAI Agent.
+
+            backstory: ``backstory`` param of the CrewAI Agent.
+
+            prompt_prefix: Prefix to the agent's prompt.
+                Can be used for providing additional context, such as the agent's role or backstory.
+
+            description: Description of the agent.
+
+                Unlike the prompt prefix, it is not included in the prompt.
+                The description is only used for describing the agent's purpose
+                when giving it as a tool to other agents.
+
+            delegation: Whether to allow delegation or not.
+                **Delegation is not supported in this wrapper.**
+                Instead, pass the agents you want to delegate to as tools.
+
+            tools: Tools to add to the agent.
+
+            llm: LLM instance to use.
+
+            output_handler: Output handler for the agent.
+
+            verbose: Whether to log verbose output.
         """
         if tools is None:
             tools = []

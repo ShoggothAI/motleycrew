@@ -1,31 +1,27 @@
-""" Module description"""
-
 from typing import List, Optional
+
 from langchain_core.runnables import Runnable
 
-from motleycrew.crew import MotleyCrew
-from motleycrew.tools import MotleyTool
-from motleycrew.tasks import Task
-from motleycrew.tasks.task_unit import TaskUnitType
-from motleycrew.tasks import TaskUnit
-from motleycrew.applications.research_agent.question import Question, QuestionAnsweringTaskUnit
+from motleycrew.applications.research_agent.question import Question
 from motleycrew.applications.research_agent.question_answerer import AnswerSubQuestionTool
-from motleycrew.storage import MotleyGraphStore
 from motleycrew.common import logger
+from motleycrew.crew import MotleyCrew
+from motleycrew.tasks import Task, TaskUnit
+from motleycrew.tools import MotleyTool
+
+
+class QuestionAnsweringTaskUnit(TaskUnit):
+    question: Question
 
 
 class AnswerTask(Task):
+    """Task to answer a question based on the notes and sub-questions."""
+
     def __init__(
         self,
         crew: MotleyCrew,
         answer_length: int = 1000,
     ):
-        """Description
-
-        Args:
-            crew (MotleyCrew):
-            answer_length (:obj:`int`, optional):
-        """
         super().__init__(
             name="AnswerTask",
             task_unit_class=QuestionAnsweringTaskUnit,
@@ -38,11 +34,10 @@ class AnswerTask(Task):
         )
 
     def get_next_unit(self) -> QuestionAnsweringTaskUnit | None:
-        """Description
+        """Choose an unanswered question to answer.
 
-        Returns:
-            QuestionAnsweringTaskUnit | None:
-        """
+        The question should have a context and no unanswered subquestions."""
+
         query = (
             "MATCH (n1:{}) "
             "WHERE n1.answer IS NULL AND n1.context IS NOT NULL "
@@ -62,12 +57,4 @@ class AnswerTask(Task):
         return None
 
     def get_worker(self, tools: Optional[List[MotleyTool]]) -> Runnable:
-        """Description
-
-        Args:
-            tools (List[MotleyTool]):
-
-        Returns:
-            Runnable:
-        """
         return self.answerer

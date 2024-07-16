@@ -1,9 +1,8 @@
 import pytest
-
 from langchain_community.tools import DuckDuckGoSearchRun
 
-from motleycrew.crew import MotleyCrew
 from motleycrew.agents.langchain.tool_calling_react import ReActToolCallingAgent
+from motleycrew.crew import MotleyCrew
 from motleycrew.storage.graph_store_utils import init_graph_store
 from motleycrew.tasks.simple import (
     SimpleTask,
@@ -50,9 +49,9 @@ class TestSimpleTask:
         unit.output = task1.description
 
         with pytest.raises(AssertionError):
-            task1.register_completed_unit(unit)
+            task1.on_unit_completion(unit)
         unit.set_done()
-        task1.register_completed_unit(unit)
+        task1.on_unit_completion(unit)
         assert task1.done
         assert task1.output == unit.output
         assert task1.node.done
@@ -61,7 +60,11 @@ class TestSimpleTask:
         task1, task2 = tasks
         crew.add_dependency(task1, task2)
         assert task2.get_next_unit() is None
-        prompt = compose_simple_task_prompt_with_dependencies(task1.description, task1.get_units())
+        prompt = compose_simple_task_prompt_with_dependencies(
+            description=task1.description,
+            upstream_task_units=task1.get_units(),
+            prompt_template_with_upstreams=task1.prompt_template_with_upstreams,
+        )
         expected_unit = SimpleTaskUnit(
             name=task1.name,
             prompt=prompt,

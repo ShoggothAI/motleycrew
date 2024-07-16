@@ -1,4 +1,4 @@
-""" Module description"""
+"""Exceptions for motleycrew"""
 
 from typing import Any, Dict, Optional
 
@@ -6,12 +6,7 @@ from motleycrew.common import Defaults
 
 
 class LLMFamilyNotSupported(Exception):
-    """Description
-
-    Args:
-        llm_framework (str):
-        llm_family (str):
-    """
+    """Raised when an LLM family is not supported in motleycrew via a framework."""
 
     def __init__(self, llm_framework: str, llm_family: str):
         self.llm_framework = llm_framework
@@ -22,12 +17,9 @@ class LLMFamilyNotSupported(Exception):
 
 
 class LLMFrameworkNotSupported(Exception):
-    def __init__(self, llm_framework: str):
-        """Description
+    """Raised when an LLM framework is not supported in motleycrew."""
 
-        Args:
-            llm_framework (str):
-        """
+    def __init__(self, llm_framework: str):
         self.llm_framework = llm_framework
 
     def __str__(self) -> str:
@@ -35,11 +27,7 @@ class LLMFrameworkNotSupported(Exception):
 
 
 class AgentNotMaterialized(Exception):
-    """Description
-
-    Args:
-        agent_name (str):
-    """
+    """Raised when an attempt is made to use an agent that is not yet materialized."""
 
     def __init__(self, agent_name: str):
         self.agent_name = agent_name
@@ -49,18 +37,14 @@ class AgentNotMaterialized(Exception):
 
 
 class CannotModifyMaterializedAgent(Exception):
-    """Description
-
-    Args:
-        agent_name (str):
-    """
+    """Raised when an attempt is made to modify a materialized agent, e.g. to add tools."""
 
     def __init__(self, agent_name: str | None):
         self.agent_name = agent_name
 
     def __str__(self) -> str:
         return "Cannot modify agent{} as it is already materialized".format(
-            f" `{self.agent_name}`" if self.agent_name is not None else ""
+            f" '{self.agent_name}'" if self.agent_name is not None else ""
         )
 
 
@@ -69,13 +53,13 @@ class TaskDependencyCycleError(Exception):
 
 
 class IntegrationTestException(Exception):
-    """Integration tests exception
-
-    Args:
-        test_names (list[str]): list of names of failed integration tests
-    """
+    """One or more integration tests failed."""
 
     def __init__(self, test_names: list[str]):
+        """
+        Args:
+            test_names: List of names of failed integration tests.
+        """
         self.test_names = test_names
 
     def __str__(self):
@@ -83,32 +67,28 @@ class IntegrationTestException(Exception):
 
 
 class IpynbIntegrationTestResultNotFound(Exception):
-    """Ipynb integration test not found result file exception
-
-    Args:
-        ipynb_path (str): path to running ipynb
-        result_path (str): path to execution result file
-    """
+    """Raised when the result file of an ipynb integration test run is not found."""
 
     def __init__(self, ipynb_path: str, result_path: str):
         self.ipynb_path = ipynb_path
         self.result_path = result_path
 
     def __str__(self):
-        return "File result {} of the ipynb {} execution, not found.".format(
+        return "File {} with result of the ipynb {} execution not found.".format(
             self.result_path, self.ipynb_path
         )
 
 
 class ModuleNotInstalled(Exception):
-    """Module not installed
-
-    Args:
-        module_name (str): the name of the non-installed module
-        install_command (:obj:`str`, optional): the command to install
+    """Raised when trying to use some functionality that requires a module that is not installed.
     """
 
     def __init__(self, module_name: str, install_command: str = None):
+        """
+        Args:
+            module_name: Name of the module.
+            install_command: Command to install the module.
+        """
         self.module_name = module_name
         self.install_command = install_command or Defaults.MODULE_INSTALL_COMMANDS.get(
             module_name, None
@@ -139,13 +119,13 @@ class InvalidToolInput(Exception):
 
 
 class InvalidOutput(Exception):
-    """Raised in output handlers when an agent's output is not accepted"""
+    """Raised in output handlers when an agent's output is not accepted."""
 
     pass
 
 
 class OutputHandlerMaxIterationsExceeded(BaseException):
-    """Raised when the output handlers iteration limit is exceeded"""
+    """Raised when the output handler iterations limit is exceeded."""
 
     def __init__(
         self,
@@ -153,9 +133,17 @@ class OutputHandlerMaxIterationsExceeded(BaseException):
         last_call_kwargs: Dict[str, Any],
         last_exception: Exception,
     ):
+        """
+        Args:
+            last_call_args: Positional arguments with which the output handler was last called.
+            last_call_kwargs: Keyword arguments with which the output handler was last called.
+            last_exception: Exception that occurred during the last output handler iteration.
+        """
         self.last_call_args = last_call_args
         self.last_call_kwargs = last_call_kwargs
         self.last_exception = last_exception
 
     def __str__(self):
-        return "Maximum number of output handler iterations exceeded"
+        return "Maximum number of output handler iterations exceeded. Last exception: {}".format(
+            self.last_exception
+        )

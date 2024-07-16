@@ -1,9 +1,9 @@
-"""Thread pool module for running agents"""
+"""Thread pool module for running agents."""
 
-from typing import TYPE_CHECKING, Tuple, Any, List
 import threading
-from queue import Queue
 from enum import Enum
+from queue import Queue
+from typing import TYPE_CHECKING, Tuple, Any, List
 
 from langchain_core.runnables import Runnable
 
@@ -24,14 +24,16 @@ SENTINEL = object()  # sentinel object for closing threads
 
 
 class TaskUnitThread(threading.Thread):
+    """The thread class for running agents on task units."""
+
     def __init__(self, input_queue: Queue, output_queue: Queue, *args, **kwargs):
-        """The thread class for running task units
+        """Initialize the thread.
 
         Args:
-            input_queue (Queue): queue of task units to complete
-            output_queue (Queue): queue of completed task units
-            *args:
-            **kwargs:
+            input_queue: Queue of task units to complete.
+            output_queue: Queue of completed task units.
+            *args: threading.Thread arguments.
+            **kwargs: threading.Thread keyword arguments.
         """
         self.input_queue = input_queue
         self.output_queue = output_queue
@@ -41,9 +43,15 @@ class TaskUnitThread(threading.Thread):
 
     @property
     def state(self):
+        """State of the thread."""
         return self._state
 
     def run(self) -> None:
+        """Main loop of the thread.
+
+        Gets a task unit from the input queue, runs it, and puts the result in the output queue.
+        Exits when the sentinel object is retrieved from the input queue.
+        """
         while True:
             run_data = self.input_queue.get()
             self._state = TaskUnitThreadState.BUSY
@@ -66,11 +74,13 @@ class TaskUnitThread(threading.Thread):
 
 
 class TaskUnitThreadPool:
+    """The thread pool class for running agents on task units."""
+
     def __init__(self, num_threads: int = Defaults.DEFAULT_NUM_THREADS):
-        """The thread pool class for performing task units
+        """Initialize the thread pool.
 
         Args:
-            num_threads (int): number of threads to create
+            num_threads: Number of threads to create.
         """
         self.num_threads = num_threads
 
@@ -84,25 +94,22 @@ class TaskUnitThreadPool:
             self._threads.append(thread)
         self._task_units_in_progress = []
 
-    def add_task_unit(self, agent: Runnable, task: "Task", unit: "TaskUnit"):
-        """Adds a task unit to the queue for execution
+    def add_task_unit(self, agent: Runnable, task: "Task", unit: "TaskUnit") -> None:
+        """Adds a task unit to the queue for execution.
 
         Args:
-            agent (Runnable):
-            task (Task):
-            unit (TaskUnit):
-
-        Returns:
-
+            agent: Agent to run the task unit.
+            task: Task to which the unit belongs.
+            unit: Task unit to run.
         """
         self._task_units_in_progress.append((task, unit))
         self.input_queue.put((agent, task, unit))
 
     def get_completed_task_units(self) -> List[Tuple["Task", "TaskUnit", Any]]:
-        """Returns a list of completed task units with their results
+        """Returns a list of completed task units with their results.
 
         Returns:
-            List[Tuple[Task, TaskUnit, Any]]: list of triplets of task, task unit, and result
+            List of triplets of (task, task unit, result).
         """
         completed_tasks = []
         while not self.output_queue.empty():
@@ -116,7 +123,7 @@ class TaskUnitThreadPool:
         return completed_tasks
 
     def wait_and_close(self):
-        """Wait for all task units to complete and close the threads"""
+        """Wait for all task units to complete and close the threads."""
         for t in self._threads:
             if t.is_alive():
                 self.input_queue.put(SENTINEL)
@@ -125,10 +132,7 @@ class TaskUnitThreadPool:
         for t in self._threads:
             t.join()
 
+    @property
     def is_completed(self) -> bool:
-        """Returns whether all task units have been completed
-
-        Returns:
-            bool:
-        """
+        """Whether all task units have been completed."""
         return not bool(self._task_units_in_progress)

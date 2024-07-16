@@ -1,4 +1,3 @@
-""" Module description """
 from typing import Optional
 import tempfile
 import os
@@ -6,21 +5,21 @@ import os
 from motleycrew.common import Defaults
 from motleycrew.common import GraphStoreType
 from motleycrew.common import logger
-from motleycrew.storage import MotleyKuzuGraphStore
+from motleycrew.storage import MotleyKuzuGraphStore, MotleyGraphStore
 
 
 def init_graph_store(
     graph_store_type: str = Defaults.DEFAULT_GRAPH_STORE_TYPE,
     db_path: Optional[str] = None,
-):
-    """ Description
+) -> MotleyGraphStore:
+    """Create and initialize a graph store with the given parameters.
 
     Args:
-        graph_store_type (:obj:`str`, optional):
-        db_path (:obj:`str`, optional):
+        graph_store_type: Type of the graph store to use.
+        db_path: Path to the database for the graph store.
 
     Returns:
-
+        Initialized graph store.
     """
     if graph_store_type == GraphStoreType.KUZU:
         import kuzu

@@ -1,4 +1,4 @@
-""" Project logger configuration module
+"""Project logger configuration module
 
 Attributes:
     logger (logging.Logger): project logger
@@ -16,7 +16,7 @@ logger.propagate = False
 
 
 def configure_logging(verbose: bool = False, debug: bool = False):
-    """ Logging configuration
+    """Logging configuration
 
     Args:
         verbose (:obj:`bool`, optional): if true logging level = INFO

@@ -1,19 +1,18 @@
-""" Module description"""
+from __future__ import annotations
 
 from typing import Sequence, Optional
 
 from langchain import hub
-from langchain_core.language_models import BaseLanguageModel
-from langchain_core.runnables.history import GetSessionHistoryCallable
 from langchain.agents import AgentExecutor
 from langchain.agents import create_react_agent
+from langchain_core.language_models import BaseLanguageModel
+from langchain_core.runnables.history import GetSessionHistoryCallable
 
 from motleycrew.agents.langchain import LangchainMotleyAgent
-from motleycrew.tools import MotleyTool
-from motleycrew.common import MotleySupportedTool
 from motleycrew.common import LLMFramework
+from motleycrew.common import MotleySupportedTool
 from motleycrew.common.llms import init_llm
-
+from motleycrew.tools import MotleyTool
 
 OUTPUT_HANDLER_WITH_DEFAULT_PROMPT_MESSAGE = (
     "Langchain's default ReAct prompt tells the agent to include a final answer keyword, "
@@ -23,39 +22,39 @@ OUTPUT_HANDLER_WITH_DEFAULT_PROMPT_MESSAGE = (
 
 
 class ReActMotleyAgent(LangchainMotleyAgent):
+    """Basic ReAct agent compatible with older models without dedicated tool calling support.
+
+    It's probably better to use the more advanced
+    :class:`motleycrew.agents.langchain.tool_calling_react.ReActToolCallingAgent` with newer models.
+    """
+
     def __init__(
         self,
         tools: Sequence[MotleySupportedTool],
-        prompt_prefix: str | None = None,
         description: str | None = None,
         name: str | None = None,
-        prompt: str | None = None,
+        prompt_prefix: str | None = None,
         output_handler: MotleySupportedTool | None = None,
         chat_history: bool | GetSessionHistoryCallable = True,
+        prompt: str | None = None,
         handle_parsing_errors: bool = True,
         handle_tool_errors: bool = True,
         llm: BaseLanguageModel | None = None,
         verbose: bool = False,
     ):
-        """Basic ReAct agent compatible with older models without dedicated tool calling support.
-        It's probably better to use the more advanced `ReActToolCallingAgent` with newer models.
-
+        """
         Args:
-            tools (Sequence[MotleySupportedTool]):
-            prompt_prefix (:obj:`str`, optional):
-            description (:obj:`str`, optional):
-            name (:obj:`str`, optional):
-            prompt (:obj:`str`, optional): Prompt to use. If not provided, uses hwchase17/react.
-            chat_history (:obj:`bool`, :obj:`GetSessionHistoryCallable`):
-                Whether to use chat history or not. If `True`, uses `InMemoryChatMessageHistory`.
-                If a callable is passed, it is used to get the chat history by session_id.
-                See Langchain `RunnableWithMessageHistory` get_session_history param for more details.
-            output_handler (BaseTool, optional): Tool to use for returning agent's output.
-            handle_parsing_errors (:obj:`bool`, optional): Whether to handle parsing errors or not.
-            handle_tool_errors (:obj:`bool`, optional): Whether to handle tool errors or not.
-                If True, `handle_tool_error` and `handle_validation_error` in all tools are set to True.
-            llm (:obj:`BaseLanguageModel`, optional):
-            verbose (:obj:`bool`, optional):
+            tools: Tools to add to the agent.
+            description: Description of the agent.
+            name: Name of the agent.
+            prompt_prefix: Prefix to the agent's prompt.
+            output_handler: Output handler for the agent.
+            chat_history: Whether to use chat history or not.
+            prompt: Custom prompt to use with the agent.
+            handle_parsing_errors: Whether to handle parsing errors.
+            handle_tool_errors: Whether to handle tool errors.
+            llm: Language model to use.
+            verbose: Whether to log verbose output.
         """
         if prompt is None:
             if output_handler is not None:

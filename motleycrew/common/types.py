@@ -1,4 +1,12 @@
-""" Module description"""
+"""Various types and type protocols used in motleycrew.
+
+Attributes:
+    MotleySupportedTool: Type that represents a tool that is supported by motleycrew.
+       It includes tools from motleycrew, langchain, llama_index, and motleycrew agents.
+"""
+
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, Union, Optional, Protocol, TypeVar
 
 if TYPE_CHECKING:
@@ -26,8 +34,8 @@ AgentType = TypeVar("AgentType")
 
 
 class MotleyAgentFactory(Protocol[AgentType]):
-    """
-    Type protocol for an agent factory.
+    """Type protocol for an agent factory.
+
     It is a function that accepts tools as an argument
     and returns an agent instance of an appropriate class.
     """

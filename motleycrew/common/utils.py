@@ -1,4 +1,4 @@
-""" Module description"""
+"""Various helpers and utility functions used throughout the project."""
 import sys
 from typing import Optional, Sequence
 import hashlib
@@ -9,14 +9,8 @@ from motleycrew.common.exceptions import ModuleNotInstalled
 
 
 def to_str(value: str | BaseMessage | Sequence[str] | Sequence[BaseMessage]) -> str:
-    """ Description
+    """Converts a message to a string."""
 
-    Args:
-        value (:obj:`str`, :obj:`BaseMessage`, :obj:`Sequence[str]`, :obj:`Sequence[BaseMessage]`):
-
-    Returns:
-        str:
-    """
     if isinstance(value, str):
         return value
     elif isinstance(value, BaseMessage):
@@ -29,14 +23,8 @@ def to_str(value: str | BaseMessage | Sequence[str] | Sequence[BaseMessage]) -> 
 
 
 def is_http_url(url):
-    """ Description
+    """Check if the URL is an HTTP URL."""
 
-    Args:
-        url (str):
-
-    Returns:
-        bool:
-    """
     try:
         parsed_url = urlparse(url)
         return parsed_url.scheme in ["http", "https"]
@@ -45,15 +33,8 @@ def is_http_url(url):
 
 
 def generate_hex_hash(data: str, length: Optional[int] = None):
-    """ Description
+    """Generate a SHA256 hex digest from the given data."""
 
-    Args:
-        data (str):
-        length (:obj:`int`, optional):
-
-    Returns:
-
-    """
     hash_obj = hashlib.sha256()
     hash_obj.update(data.encode("utf-8"))
     hex_hash = hash_obj.hexdigest()
@@ -64,19 +45,17 @@ def generate_hex_hash(data: str, length: Optional[int] = None):
 
 
 def print_passthrough(x):
+    """A helper function useful for debugging LCEL chains. It just returns the input value.
+
+    You can put a breakpoint in this function to debug the chain.
+    """
+
     return x
 
 
 def ensure_module_is_installed(module_name: str, install_command: str = None) -> None:
-    """ Checking the installation of the module
+    """Ensure that the given module is installed."""
 
-    Args:
-        module_name (str):
-        install_command (:obj:`str`, optional):
-
-    Raises:
-        ModuleNotInstalled:
-    """
     module_path = sys.modules.get(module_name, None)
     if module_path is None:
         raise ModuleNotInstalled(module_name, install_command)

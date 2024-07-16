@@ -58,7 +58,7 @@ def agent():
 
 @pytest.fixture
 def run_kwargs(agent):
-    agent_executor = agent.agent.bound.bound.steps[1].bound
+    agent_executor = agent.agent.bound.bound.last.default.bound
 
     run_kwargs = {
         "name_to_tool_map": {tool.name: tool for tool in agent_executor.tools},

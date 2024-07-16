@@ -1,13 +1,19 @@
-""" Module description """
+from __future__ import annotations
 
 import inspect
-from typing import TYPE_CHECKING, Optional, Sequence, Any, Union
+from abc import ABC, abstractmethod
+from typing import (
+    TYPE_CHECKING,
+    Optional,
+    Sequence,
+    Any,
+    Union,
+)
 
 from langchain_core.prompts.chat import ChatPromptTemplate, HumanMessage, SystemMessage
-from langchain_core.runnables import Runnable
+from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import StructuredTool
 from langchain_core.tools import Tool
-from pydantic import BaseModel
 
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
 from motleycrew.agents.output_handler import MotleyOutputHandler
@@ -26,11 +32,27 @@ if TYPE_CHECKING:
 
 
 class DirectOutput(BaseException):
+    """Auxiliary exception to return the agent output directly through the output handler.
+
+    When the output handler returns an output, this exception is raised with the output.
+    It is then handled by the agent, who should gracefully return the output to the user.
+    """
+
     def __init__(self, output: Any):
         self.output = output
 
 
-class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
+class MotleyAgentParent(MotleyAgentAbstractParent, ABC):
+    """Parent class for all motleycrew agents.
+
+    This class is abstract and should be subclassed by all agents in motleycrew.
+
+    In most cases, it's better to use one of the specialized agent classes,
+    such as LangchainMotleyAgent or LlamaIndexMotleyAgent, which provide various
+    useful features, such as observability and output handling, out of the box.
+
+    If you need to create a custom agent, subclass this class and implement the `invoke` method.
+    """
 
     def __init__(
         self,
@@ -43,17 +65,28 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
         verbose: bool = False,
         agent_name: str | None = None,
     ):
-        """Description
-
+        """
         Args:
-            prompt_prefix (:obj:`str`, optional):
-            description (:obj:`str`, optional):
-            name (:obj:`str`, optional):
-            agent_factory (:obj:`MotleyAgentFactory`, optional):
-            tools (:obj:`Sequence[MotleySupportedTool]`, optional):
-            output_handler (:obj:`MotleySupportedTool`, optional):
-            verbose (:obj:`bool`, optional):
-            agent_name(:obj:`str`, optional): agent name
+            prompt_prefix: Prefix to the agent's prompt.
+                Can be used for providing additional context, such as the agent's role or backstory.
+            description: Description of the agent.
+
+                Unlike the prompt prefix, it is not included in the prompt.
+                The description is only used for describing the agent's purpose
+                when giving it as a tool to other agents.
+            name: Name of the agent.
+                The name is used for identifying the agent when it is given as a tool
+                to other agents, as well as for logging purposes.
+
+                It is not included in the agent's prompt.
+            agent_factory: Factory function to create the agent.
+                The factory function should accept a dictionary of tools and return the agent.
+                It is usually called right before the agent is invoked for the first time.
+
+                See :class:`motleycrew.common.types.MotleyAgentFactory` for more details.
+            tools: Tools to add to the agent.
+            output_handler: Output handler for the agent.
+            verbose: Whether to log verbose output.
         """
         self.name = name or description
         self.description = description  # becomes tool description
@@ -78,6 +111,15 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
     def compose_prompt(
         self, input_dict: dict, prompt: ChatPromptTemplate | str
     ) -> Union[str, ChatPromptTemplate]:
+        """Compose the agent's prompt from the prompt prefix and the provided prompt.
+
+        Args:
+            input_dict: The input dictionary to the agent.
+            prompt: The prompt to be added to the agent's prompt.
+
+        Returns:
+            The composed prompt.
+        """
         # TODO: always cast description and prompt to ChatPromptTemplate first?
         prompt_messages = []
 
@@ -120,6 +162,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
 
     @property
     def is_materialized(self):
+        """Whether the agent is materialized."""
         return self._agent is not None
 
     def _prepare_output_handler(self) -> Optional[MotleyTool]:
@@ -173,6 +216,10 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
         return MotleyTool.from_langchain_tool(prepared_output_handler)
 
     def materialize(self):
+        """Materialize the agent by creating the agent instance using the agent factory.
+        This method should be called before invoking the agent for the first time.
+        """
+
         if self.is_materialized:
             logger.info("Agent is already materialized, skipping materialization")
             return
@@ -192,12 +239,12 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
             self._agent = self.agent_factory(tools=self.tools)
 
     def prepare_for_invocation(self, input: dict) -> str:
-        """Prepares the agent for invocation by materializing it and composing the prompt.
+        """Prepare the agent for invocation by materializing it and composing the prompt.
 
         Should be called in the beginning of the agent's invoke method.
 
         Args:
-            input (dict): the input to the agent
+            input: the input to the agent
 
         Returns:
             str: the composed prompt
@@ -212,13 +259,10 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
         return prompt
 
     def add_tools(self, tools: Sequence[MotleySupportedTool]):
-        """Description
+        """Add tools to the agent.
 
         Args:
-            tools (Sequence[MotleySupportedTool]):
-
-        Returns:
-
+            tools: The tools to add to the agent.
         """
         if self.is_materialized and tools:
             raise CannotModifyMaterializedAgent(agent_name=self.name)
@@ -228,14 +272,11 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
             if motley_tool.name not in self.tools:
                 self.tools[motley_tool.name] = motley_tool
 
-    def as_tool(self, input_schema: Optional[BaseModel] = None) -> MotleyTool:
-        """Description
-
-        Args:
-            input_schema (:obj:`BaseModel`, optional):
+    def as_tool(self) -> MotleyTool:
+        """Convert the agent to a tool to be used by other agents via delegation.
 
         Returns:
-            MotleyTool:
+            The tool representation of the agent.
         """
 
         if not self.description:
@@ -252,45 +293,19 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
         # To be specialized if we expect structured input
         return MotleyTool.from_langchain_tool(
             Tool(
-                name=self.name,
+                name=self.name.replace(
+                    " ", "_"
+                ).lower(),  # OpenAI doesn't accept spaces in function names
                 description=self.description,
                 func=call_agent,
-                args_schema=input_schema,
             )
         )
 
-    # def call_as_tool(self, *args, **kwargs) -> Any:
-    #     logger.info("Entering delegation for %s", self.name)
-    #     assert self.crew, "can't accept delegated task outside of a crew"
-    #
-    #     if len(args) > 0:
-    #         input_ = args[0]
-    #     elif "tool_input" in kwargs:
-    #         # Is this a crewai notation?
-    #         input_ = kwargs["tool_input"]
-    #     else:
-    #         input_ = json.dumps(kwargs)
-    #
-    #     logger.info("Made the args: %s", input_)
-    #
-    #     # TODO: pass context of parent task to agent nicely?
-    #     # TODO: mark the current task as depending on the new task
-    #     task = SimpleTaskRecipe(
-    #         description=input_,
-    #         name=input_,
-    #         agent=self,
-    #         # TODO inject the new subtask as a dep and reschedule the parent
-    #         # TODO probably can't do this from here since we won't know if
-    #         # there are other tasks to schedule
-    #         crew=self.crew,
-    #     )
-    #
-    #     # TODO: make sure tools return task objects, which are properly used by callers
-    #     logger.info("Executing subtask '%s'", task.name)
-    #     self.crew.task_graph.set_task_running(task=task)
-    #     result = self.crew.execute(task, return_result=True)
-    #
-    #     logger.info("Finished subtask '%s' - %s", task.name, result)
-    #     self.crew.task_graph.set_task_done(task=task)
-    #
-    #     return result
+    @abstractmethod
+    def invoke(
+        self,
+        input: dict,
+        config: Optional[RunnableConfig] = None,
+        **kwargs: Any,
+    ) -> Any:
+        pass

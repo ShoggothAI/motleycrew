@@ -19,14 +19,15 @@ from motleycrew.common import logger
 
 
 class HTMLRenderer:
+    """Helper for rendering HTML code as an image."""
+
     def __init__(
         self,
         work_dir: str,
-        executable_path: str | None = None,
+        chromedriver_path: str | None = None,
         headless: bool = True,
         window_size: Optional[Tuple[int, int]] = None,
     ):
-        """Helper for rendering HTML code as an image"""
         ensure_module_is_installed(
             "selenium",
             "see documentation: https://pypi.org/project/selenium/, ChromeDriver is also required",
@@ -39,21 +40,21 @@ class HTMLRenderer:
         self.options = webdriver.ChromeOptions()
         if headless:
             self.options.add_argument("--headless")
-        self.service = Service(executable_path=executable_path)
+        self.service = Service(executable_path=chromedriver_path)
 
         self.window_size = window_size
 
     def render_image(self, html: str, file_name: str | None = None):
-        """Create image with png extension from html code
+        """Create a PNG image from HTML code.
 
         Args:
-            html (str): html code for rendering image
-            file_name (str): file name with not extension
+            html (str): HTML code for rendering image.
+            file_name (str): File name without extension.
         Returns:
-            file path to created image
+            Path to the rendered image.
         """
         logger.info("Trying to render image from HTML code")
-        html_path, image_path = self.build_save_file_paths(file_name)
+        html_path, image_path = self.build_file_paths(file_name)
         browser = webdriver.Chrome(options=self.options, service=self.service)
         try:
             if self.window_size:
@@ -80,15 +81,8 @@ class HTMLRenderer:
 
         return image_path
 
-    def build_save_file_paths(self, file_name: str | None = None) -> Tuple[str, str]:
-        """Builds paths to html and image files
-
-        Args:
-            file_name (str): file name with not extension
-
-        Returns:
-            tuple[str, str]: html file path and image file path
-        """
+    def build_file_paths(self, file_name: str | None = None) -> Tuple[str, str]:
+        """Builds paths to html and image files"""
 
         # check exists dirs:
         for _dir in (self.work_dir, self.html_dir, self.images_dir):
@@ -103,22 +97,23 @@ class HTMLRenderer:
 
 
 class HTMLRenderTool(MotleyTool):
+    """Tool for rendering HTML as image."""
 
     def __init__(
         self,
         work_dir: str,
-        executable_path: str | None = None,
+        chromedriver_path: str | None = None,
         headless: bool = True,
         window_size: Optional[Tuple[int, int]] = None,
     ):
-        """Tool for rendering HTML as image
-
+        """
         Args:
-            work_dir (str): Directory for saving images and html files
+            work_dir: Directory for saving images and HTML files.
+            chromedriver_path: Path to the ChromeDriver executable.
         """
         renderer = HTMLRenderer(
             work_dir=work_dir,
-            executable_path=executable_path,
+            chromedriver_path=chromedriver_path,
             headless=headless,
             window_size=window_size,
         )
@@ -127,21 +122,12 @@ class HTMLRenderTool(MotleyTool):
 
 
 class HTMLRenderToolInput(BaseModel):
-    """Input for the HTMLRenderTool.
-
-    Attributes:
-        html (str):
-    """
+    """Input for the HTMLRenderTool."""
 
     html: str = Field(description="HTML code for rendering")
 
 
 def create_render_tool(renderer: HTMLRenderer):
-    """Create langchain tool from HTMLRenderer.render_image method
-
-    Returns:
-        Tool:
-    """
     return Tool.from_function(
         func=renderer.render_image,
         name="HTML rendering tool",

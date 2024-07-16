@@ -1,8 +1,6 @@
 import pytest
 
-from motleycrew.crew import MotleyCrew
 from motleycrew.tasks.simple import SimpleTask, SimpleTaskUnit
-
 from tests.test_crew import CrewFixtures
 
 
@@ -10,10 +8,7 @@ class TestCrew(CrewFixtures):
 
     def test_create_simple_task(self, crew, agent):
         assert len(crew.tasks) == 0
-        simple_task = crew.create_simple_task(
-            description="task description", agent=agent
-        )
-        assert isinstance(simple_task, SimpleTask)
+        simple_task = SimpleTask(crew=crew, description="task description", agent=agent)
         assert len(crew.tasks) == 1
         node = simple_task.node
         assert crew.graph_store.get_node_by_class_and_id(type(node), node.id) == node

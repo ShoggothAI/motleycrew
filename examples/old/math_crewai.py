@@ -2,8 +2,9 @@ from dotenv import load_dotenv
 
 from motleycrew import MotleyCrew
 from motleycrew.agents.crewai import CrewAIMotleyAgent
-from motleycrew.tools import PythonREPLTool
 from motleycrew.common import configure_logging
+from motleycrew.tasks import SimpleTask
+from motleycrew.tools import PythonREPLTool
 
 
 def main():
@@ -36,7 +37,8 @@ def main():
 
     # Create tasks for your agents
     crew = MotleyCrew()
-    task = crew.create_simple_task(
+    task = SimpleTask(
+        crew=crew,
         name="solve math problem",
         description=f"""Create a nice human-readable solution to the following problem:
         {problems[1]}

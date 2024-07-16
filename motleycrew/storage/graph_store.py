@@ -1,50 +1,47 @@
-""" Module description """
 from abc import ABC, abstractmethod
 from typing import Optional, Type
 from motleycrew.storage import MotleyGraphNode, MotleyGraphNodeType
 
 
 class MotleyGraphStore(ABC):
+    """Abstract class for a graph database store."""
+
     @abstractmethod
     def check_node_exists_by_class_and_id(
         self, node_class: Type[MotleyGraphNode], node_id: int
     ) -> bool:
-        """ Check if a node of given class with given id is present in the database.
+        """Check if a node of given class with given id is present in the database.
 
         Args:
-            node_class (Type[MotleyGraphNode]):
-            node_id (int):
-
-        Returns:
-            bool:
+            node_class: Python class of the node
+            node_id: id of the node
         """
         pass
 
     @abstractmethod
     def check_node_exists(self, node: MotleyGraphNode) -> bool:
-        """ Check if the given node is present in the database.
+        """Check if the given node is present in the database.
 
         Args:
-            node (MotleyGraphNode):
+            node: node to check
 
         Returns:
-            bool:
+            whether the node is present in the database
         """
+
         pass
 
     @abstractmethod
     def check_relation_exists(
         self, from_node: MotleyGraphNode, to_node: MotleyGraphNode, label: Optional[str]
     ) -> bool:
-        """ Check if a relation exists between two nodes with given label.
+        """Check if a relation exists between two nodes with given label.
 
         Args:
-            from_node (MotleyGraphNode):
-            to_node (MotleyGraphNode):
-            label (:obj:`str`, None):
+            from_node: starting node
+            to_node: ending node
+            label: relation label. If None, check if any relation exists between the nodes.
 
-        Returns:
-            bool:
         """
         pass
 

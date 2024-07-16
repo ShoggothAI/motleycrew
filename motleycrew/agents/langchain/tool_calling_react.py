@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Sequence, List, Optional
 
 from langchain.agents import AgentExecutor
@@ -91,27 +93,12 @@ default_act_prompt_with_output_handler = default_act_prompt.partial(
 
 
 def check_variables(prompt: ChatPromptTemplate):
-    """
-    Args:
-        prompt (ChatPromptTemplate):
-
-    Returns:
-
-    """
     missing_vars = {"agent_scratchpad"}.difference(prompt.input_variables)
     if missing_vars:
         raise ValueError(f"Prompt missing required variables: {missing_vars}")
 
 
 def add_thought_to_background(x: dict):
-    """Description
-
-    Args:
-        x (dict):
-
-    Returns:
-
-    """
     out = x["background"]
     out["agent_scratchpad"] += [x["thought"]]
     return out
@@ -131,14 +118,6 @@ def cast_thought_to_human_message(thought: BaseMessage):
 def add_messages_to_action(
     actions: List[AgentActionMessageLog] | AgentFinish, messages: List[BaseMessage]
 ) -> List[AgentActionMessageLog] | AgentFinish:
-    """
-    Args:
-        actions (:obj:`List[AgentActionMessageLog]`, :obj:`AgentFinish`):
-        messages (List[BaseMessage]):
-
-    Returns:
-        List[AgentActionMessageLog] | AgentFinish:
-    """
     if not isinstance(actions, AgentFinish):
         for action in actions:
             action.message_log = messages + list(action.message_log)
@@ -151,10 +130,10 @@ def merge_consecutive_messages(messages: Sequence[BaseMessage]) -> List[BaseMess
     multiple AIMessages in a row.
 
     Args:
-        messages (Sequence[BaseMessage]): The list of messages to process.
+        messages: The list of messages to process.
 
     Returns:
-        List[BaseMessage]: The list of messages with consecutive messages of the same type merged.
+        The list of messages with consecutive messages of the same type merged.
     """
     merged_messages = []
     for message in messages:
@@ -181,13 +160,13 @@ def create_tool_calling_react_agent(
     """Create a ReAct-style agent that supports tool calling.
 
     Args:
-        llm (BaseChatModel): LLM to use as the agent.
-        tools (Sequence[BaseTool]): Tools this agent has access to.
-        think_prompt (ChatPromptTemplate, optional): The thinking step prompt to use.
+        llm: LLM to use as the agent.
+        tools: Tools this agent has access to.
+        think_prompt: The thinking step prompt to use.
             See Prompt section below for more on the expected input variables.
-        act_prompt (ChatPromptTemplate, optional): The acting step prompt to use.
+        act_prompt: The acting step prompt to use.
             See Prompt section below for more on the expected input variables.
-        output_handler (BaseTool, optional): Tool to use for returning agent's output.
+        output_handler: Tool to use for returning agent's output.
 
     Returns:
         A Runnable sequence representing an agent. It takes as input all the same input
@@ -247,12 +226,19 @@ def create_tool_calling_react_agent(
 
 
 class ReActToolCallingAgent(LangchainMotleyAgent):
+    """Universal ReAct-style agent that supports tool calling.
+
+    This agent only works with newer models that support tool calling.
+    If you are using an older model, you should use
+    :class:`motleycrew.agents.langchain.react.ReActMotleyAgent` instead.
+    """
+
     def __init__(
         self,
         tools: Sequence[MotleySupportedTool],
-        prompt_prefix: str | None = None,
         description: str | None = None,
         name: str | None = None,
+        prompt_prefix: str | None = None,
         think_prompt: ChatPromptTemplate | None = None,
         act_prompt: ChatPromptTemplate | None = None,
         chat_history: bool | GetSessionHistoryCallable = True,
@@ -262,26 +248,33 @@ class ReActToolCallingAgent(LangchainMotleyAgent):
         llm: BaseChatModel | None = None,
         verbose: bool = False,
     ):
-        """Universal ReAct-style agent that supports tool calling.
-
+        """
         Args:
-            tools (Sequence[MotleySupportedTool]):
-            description (:obj:`str`, optional):
-            name (:obj:`str`, optional):
-            think_prompt (ChatPromptTemplate, optional): The thinking step prompt to use.
+            tools: Tools to add to the agent.
+            description: Description of the agent.
+            name: Name of the agent.
+            prompt_prefix: Prefix to the agent's prompt.
+            think_prompt: The thinking step prompt to use.
                 See Prompt section below for more on the expected input variables.
-            act_prompt (ChatPromptTemplate, optional): The acting step prompt to use.
+            act_prompt: The acting step prompt to use.
                 See Prompt section below for more on the expected input variables.
-            chat_history (:obj:`bool`, :obj:`GetSessionHistoryCallable`):
-                Whether to use chat history or not. If `True`, uses `InMemoryChatMessageHistory`.
+            chat_history: Whether to use chat history or not.
+                If `True`, uses `InMemoryChatMessageHistory`.
                 If a callable is passed, it is used to get the chat history by session_id.
-                See Langchain `RunnableWithMessageHistory` get_session_history param for more details.
-            output_handler (BaseTool, optional): Tool to use for returning agent's output.
-            handle_parsing_errors (:obj:`bool`, optional): Whether to handle parsing errors or not.
-            handle_tool_errors (:obj:`bool`, optional): Whether to handle tool errors or not.
-                If True, `handle_tool_error` and `handle_validation_error` in all tools are set to True.
-            llm (:obj:`BaseLanguageModel`, optional):
-            verbose (:obj:`bool`, optional):
+                See :class:`langchain_core.runnables.history.RunnableWithMessageHistory`
+                for more details.
+            output_handler: Output handler for the agent.
+            handle_parsing_errors: Whether to handle parsing errors.
+            handle_tool_errors: Whether to handle tool errors.
+                If True, `handle_tool_error` and `handle_validation_error` in all tools
+                are set to True.
+            llm: Language model to use.
+            verbose: Whether to log verbose output.
+
+        Prompt:
+            This agent uses two prompts, one for thinking and one for acting. The prompts
+            must have `agent_scratchpad` and `chat_history` ``MessagesPlaceholder``s.
+            If a prompt is not passed in, the default one is used.
         """
         if llm is None:
             llm = init_llm(llm_framework=LLMFramework.LANGCHAIN)

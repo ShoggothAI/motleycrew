@@ -57,7 +57,7 @@ def agent():
     )
     agent.materialize()
     agent._agent._run_step = fake_run_step
-    agent._agent._run_step = agent.run_step_decorator()(agent._agent._run_step)
+    agent._agent._run_step = agent._run_step_decorator()(agent._agent._run_step)
 
     return agent
 

@@ -80,7 +80,7 @@ class LangchainOutputHandlingAgentMixin:
 
     def take_next_step_decorator(self, func: Callable):
         """
-        Decorator for AgentExecutor._take_next_step() method that catches DirectOutput exceptions.
+        Decorator for ``AgentExecutor._take_next_step()`` method that catches DirectOutput exceptions.
         """
 
         def wrapper(

@@ -1,19 +1,13 @@
-""" Module description
-
-Attributes:
-    TaskNodeType (TypeVar):
-
-"""
-
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from typing import Optional, Sequence, List, Type, TypeVar, Generic, TYPE_CHECKING
 
 from langchain_core.runnables import Runnable
+
 from motleycrew.common.exceptions import TaskDependencyCycleError
 from motleycrew.storage import MotleyGraphStore, MotleyGraphNode, MotleyKuzuGraphStore
-from motleycrew.tasks import TaskUnitType
+from motleycrew.tasks.task_unit import TaskUnitType
 from motleycrew.tools import MotleyTool
 
 if TYPE_CHECKING:
@@ -21,11 +15,11 @@ if TYPE_CHECKING:
 
 
 class TaskNode(MotleyGraphNode):
-    """Description
+    """Node representing a task in the graph.
 
     Attributes:
-        name (str):
-        done (bool):
+        name: Name of the task.
+        done: Whether the task is done.
 
     """
 
@@ -41,10 +35,13 @@ TaskNodeType = TypeVar("TaskNodeType", bound=TaskNode)
 
 
 class Task(ABC, Generic[TaskUnitType]):
-    """
+    """Base class for describing tasks.
+
+    This class is abstract and must be subclassed to implement the task logic.
+
     Attributes:
-        NODE_CLASS (TaskNodeType):
-        TASK_IS_UPSTREAM_LABEL (str):
+        NODE_CLASS: Class for representing task nodes, can be overridden.
+        TASK_IS_UPSTREAM_LABEL: Label for indicating upstream tasks, can be overridden.
     """
 
     NODE_CLASS: Type[TaskNodeType] = TaskNode
@@ -57,13 +54,16 @@ class Task(ABC, Generic[TaskUnitType]):
         crew: Optional[MotleyCrew] = None,
         allow_async_units: bool = False,
     ):
-        """Description
+        """Initialize the task.
 
         Args:
-            name (str):
-            task_unit_class (Type[TaskUnitType]):
-            crew (:obj:`MotleyCrew`, optional):
-            allow_async_units (:obj:'bool', optional)
+            name: Name of the task.
+            task_unit_class: Class for representing task units.
+            crew: Crew to which the task belongs.
+                If not provided, the task should be registered with a crew later.
+            allow_async_units: Whether the task allows asynchronous units.
+                Default is False. If True, the task may be queried for the next unit even if it
+                has other units in progress.
         """
         self.name = name
         self.done = False
@@ -79,11 +79,7 @@ class Task(ABC, Generic[TaskUnitType]):
             self.prepare_graph_store()
 
     def prepare_graph_store(self):
-        """Description
-
-        Returns:
-
-        """
+        """Prepare the graph store for storing tasks and their units."""
         if isinstance(self.graph_store, MotleyKuzuGraphStore):
             self.graph_store.ensure_node_table(self.NODE_CLASS)
             self.graph_store.ensure_node_table(self.task_unit_class)
@@ -95,6 +91,10 @@ class Task(ABC, Generic[TaskUnitType]):
 
     @property
     def graph_store(self) -> MotleyGraphStore:
+        """The graph store where the task is stored.
+
+        This is an alias for the graph store of the crew that the task belongs to.
+        """
         if self.crew is None:
             raise ValueError("Task must be registered with a crew for accessing graph store")
         return self.crew.graph_store
@@ -106,13 +106,13 @@ class Task(ABC, Generic[TaskUnitType]):
         return self.__repr__()
 
     def set_upstream(self, task: Task) -> Task:
-        """Description
+        """Set a task as an upstream task for the current task.
+
+        This means that the current task will not be queried for task units
+        until the upstream task is marked as done.
 
         Args:
-            task (Task):
-
-        Returns:
-            Task:
+            task: Upstream task.
         """
         if self.crew is None or task.crew is None:
             raise ValueError("Both tasks must be registered with a crew")
@@ -125,6 +125,11 @@ class Task(ABC, Generic[TaskUnitType]):
         return self
 
     def __rshift__(self, other: Task | Sequence[Task]) -> Task:
+        """Syntactic sugar for setting tasks order with the ``>>`` operator.
+
+        Args:
+            other: Task or sequence of tasks to set as downstream.
+        """
         if isinstance(other, Task):
             tasks = {other}
         else:
@@ -136,19 +141,25 @@ class Task(ABC, Generic[TaskUnitType]):
         return self
 
     def __rrshift__(self, other: Sequence[Task]) -> Sequence[Task]:
+        """Syntactic sugar for setting tasks order with the ``>>`` operator.
+
+        Args:
+            other: Task or sequence of tasks to set as upstream.
+        """
         for task in other:
             self.set_upstream(task)
         return other
 
     def get_units(self, status: Optional[str] = None) -> List[TaskUnitType]:
-        """
-        Description
+        """Get the units of the task that are already inserted in the graph.
+
+        This method should be used for fetching the existing task units.
 
         Args:
-            status (str | None): if provided, return only units with this status
+            status: Status of the task units to filter by.
 
         Returns:
-            :obj:`list` of :obj:`TaskUnitType`:
+            List of task units.
         """
         assert self.crew is not None, "Task must be registered with a crew for accessing task units"
 
@@ -172,10 +183,10 @@ class Task(ABC, Generic[TaskUnitType]):
         return task_units
 
     def get_upstream_tasks(self) -> List[Task]:
-        """Description
+        """Get the upstream tasks of the current task.
 
         Returns:
-            :obj:`list` of :obj:`Task`
+            List of upstream tasks.
         """
         assert (
             self.crew is not None and self.node.is_inserted
@@ -195,10 +206,10 @@ class Task(ABC, Generic[TaskUnitType]):
         return [task for task in self.crew.tasks if task.node in upstream_task_nodes]
 
     def get_downstream_tasks(self) -> List[Task]:
-        """Description
+        """Get the downstream tasks of the current task.
 
         Returns:
-            :obj:`list` of :obj:`Task`
+            List of downstream tasks.
         """
         assert (
             self.crew is not None and self.node.is_inserted
@@ -218,56 +229,69 @@ class Task(ABC, Generic[TaskUnitType]):
         return [task for task in self.crew.tasks if task.node in downstream_task_nodes]
 
     def set_done(self, value: bool = True):
-        """Description
+        """Set the done status of the task.
 
         Args:
-            value (bool):
-
-        Returns:
-
+            value: Value to set the done status to.
         """
         self.done = value
         self.node.done = value
 
-    def register_started_unit(self, unit: TaskUnitType) -> None:
-        """Description
+    def on_unit_dispatch(self, unit: TaskUnitType) -> None:
+        """Method that is called by the crew when a unit of the task is dispatched.
+
+        Should be implemented by the subclass if needed.
 
         Args:
-            unit (TaskUnitType):
-
-        Returns:
-
+            unit: Task unit that is dispatched.
         """
         pass
 
-    def register_completed_unit(self, unit: TaskUnitType) -> None:
-        """Description
+    def on_unit_completion(self, unit: TaskUnitType) -> None:
+        """Method that is called by the crew when a unit of the task is completed.
+
+        Should be implemented by the subclass if needed.
 
         Args:
-            unit (TaskUnitType):
-
-        Returns:
-
+            unit: Task unit that is completed.
         """
         pass
 
     @abstractmethod
     def get_next_unit(self) -> TaskUnitType | None:
-        """Description
+        """Get the next unit of the task to run. Must be implemented by the subclass.
+
+        This method is called in the crew's main loop repeatedly while the task is not done
+        and there are units in progress.
+
+        **Note that returning a unit does not guarantee that it will be dispatched.**
+        Because of this, any state changes are strongly discouraged in this method.
+        If you need to perform some actions when the unit is dispatched or completed,
+        you should implement the ``on_unit_dispatch`` and/or ``on_unit_completion`` methods.
+
+        If you need to find which units already exist in order to generate the next one,
+        you can use the ``get_units`` method.
 
         Returns:
-            :obj:`TaskUnitType` | None:
+            Next unit to run, or None if there are no units to run at the moment.
         """
+
         pass
 
     @abstractmethod
     def get_worker(self, tools: Optional[List[MotleyTool]]) -> Runnable:
-        """Description
+        """Get the worker that will run the task units.
+
+        This method is called by the crew when a unit of the task is dispatched.
+        The unit will be converted to a dictionary and passed to the worker's ``invoke`` method.
+
+        Typically, the worker is an agent, but it can be any object
+        that implements the Langchain Runnable interface.
 
         Args:
-            tools (:obj:`List[MotleyTool]`, None):
+            tools: Tools to be used by the worker.
 
         Returns:
-            Runnable:
+            Worker that will run the task units.
         """
         pass

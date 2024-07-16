@@ -1,48 +1,52 @@
-""" Module description
-
-Attributes:
-   PROMPT_TEMPLATE_WITH_DEPS (str):
-
-"""
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Sequence, List, Optional
 
+from langchain_core.prompts import PromptTemplate
+
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
 from motleycrew.common import logger
-from motleycrew.tasks import TaskUnit
 from motleycrew.tasks.task import Task
+from motleycrew.tasks.task_unit import TaskUnit
 from motleycrew.tools import MotleyTool
 
 if TYPE_CHECKING:
     from motleycrew.crew import MotleyCrew
 
 
-PROMPT_TEMPLATE_WITH_DEPS = """
-{description}
+PROMPT_TEMPLATE_WITH_UPSTREAM_TASKS = PromptTemplate.from_template(
+    """{description}
 
 You must use the results of these upstream tasks:
 
-{upstream_results_section}
+{upstream_results}
 """
+)
 
 
 def compose_simple_task_prompt_with_dependencies(
     description: str,
     upstream_task_units: List[TaskUnit],
+    prompt_template_with_upstreams: PromptTemplate,
     default_task_name: str = "Unnamed task",
 ) -> str:
-    """Description
+    """Compose a prompt for a simple task with upstream dependencies.
 
     Args:
-        description (str):
-        upstream_task_units (:obj:`list` of :obj:`TaskUnit`):
-        default_task_name (:obj:`str`, optional):
-
-    Returns:
-        str:
+        description: Description of the task, to be included in the prompt.
+        upstream_task_units: List of upstream task units whose results should be used.
+        prompt_template_with_upstreams: Prompt template to use for generating the prompt
+            if the task has upstream dependencies. Otherwise, just the description is used.
+            The template must have input variables 'description' and 'upstream_results'.
+        default_task_name: Name to use for task units that don't have a ``name`` attribute.
     """
+    if set(prompt_template_with_upstreams.input_variables) != {
+        "description",
+        "upstream_results",
+    }:
+        raise ValueError(
+            "Prompt template must have input variables 'description' and 'upstream_results'"
+        )
     upstream_results = []
     for unit in upstream_task_units:
         if not unit.output:
@@ -55,19 +59,19 @@ def compose_simple_task_prompt_with_dependencies(
         return description
 
     upstream_results_section = "\n\n".join(upstream_results)
-    return PROMPT_TEMPLATE_WITH_DEPS.format(
+    return prompt_template_with_upstreams.format(
         description=description,
-        upstream_results_section=upstream_results_section,
+        upstream_results=upstream_results_section,
     )
 
 
 class SimpleTaskUnit(TaskUnit):
-    """Description
+    """Task unit for a simple task.
 
     Attributes:
-        name (str):
-        prompt (str):
-
+        name: Name of the task unit.
+        prompt: Prompt for the task unit.
+        additional_params: Additional parameters for the task unit (can be used by the agent).
     """
 
     name: str
@@ -76,6 +80,15 @@ class SimpleTaskUnit(TaskUnit):
 
 
 class SimpleTask(Task):
+    """Simple task class.
+
+    A simple task consists of a description and an agent that can execute the task.
+    It produces a single task unit with a prompt based on the description
+    and the results of upstream tasks.
+
+    The task is considered done when the task unit is completed.
+    """
+
     def __init__(
         self,
         crew: MotleyCrew,
@@ -83,37 +96,39 @@ class SimpleTask(Task):
         name: str | None = None,
         agent: MotleyAgentAbstractParent | None = None,
         tools: Sequence[MotleyTool] | None = None,
-        documents: Sequence[Any] | None = None,
         additional_params: dict[str, Any] | None = None,
+        prompt_template_with_upstreams: PromptTemplate = PROMPT_TEMPLATE_WITH_UPSTREAM_TASKS,
     ):
-        """Description
+        """Initialize the simple task.
 
         Args:
-            crew (MotleyCrew):
-            description (str):
-            name (:obj:`str`, optional):
-            agent (:obj:`MotleyAgentAbstractParent`, optional):
-            tools (:obj:`Sequence[MotleyTool]`, optional):
-            documents (:obj:`Sequence[Any]`, optional):
-            additional_kwargs (:obj:`dict`, optional):
+            crew: Crew to which the task belongs.
+            description: Description of the task.
+            name: Name of the task (will be used as the name of the task unit).
+            agent: Agent to execute the task.
+            tools: Tools to use for the task.
+            additional_params: Additional parameters for the task.
+            prompt_template_with_upstreams: Prompt template to use for generating the prompt
+                if the task has upstream dependencies. Otherwise, just the description is used.
+                The template must have input variables 'description' and 'upstream_results'.
         """
+
         super().__init__(name=name or description, task_unit_class=SimpleTaskUnit, crew=crew)
         self.description = description
         self.agent = agent  # to be auto-assigned at crew creation if missing?
         self.tools = tools or []
-        # should tasks own agents or should agents own tasks?
-        self.documents = documents  # to be passed to an auto-init'd retrieval, later on
         self.additional_params = additional_params or {}
+        self.prompt_template_with_upstreams = prompt_template_with_upstreams
+
         self.output = None  # to be filled in by the agent(s) once the task is complete
 
-    def register_completed_unit(self, unit: SimpleTaskUnit) -> None:
-        """Description
+    def on_unit_completion(self, unit: SimpleTaskUnit) -> None:
+        """Handle completion of the task unit.
+
+        Sets the task as done and stores the output of the task unit.
 
         Args:
-            unit (SimpleTaskUnit):
-
-        Returns:
-
+            unit: Task unit that has completed.
         """
         assert isinstance(unit, SimpleTaskUnit)
         assert unit.done
@@ -122,10 +137,14 @@ class SimpleTask(Task):
         self.set_done()
 
     def get_next_unit(self) -> SimpleTaskUnit | None:
-        """Description
+        """Get the next task unit to run.
+
+        If all upstream tasks are done, returns a task unit with the prompt
+        based on the description and the results of the upstream tasks.
+        Otherwise, returns None (the task is not ready to run yet).
 
         Returns:
-            :obj:`SimpleTaskUnit`, None:
+            Task unit to run if the task is ready, None otherwise.
         """
         if self.done:
             logger.info("Task %s is already done", self)
@@ -136,7 +155,11 @@ class SimpleTask(Task):
             return None
 
         upstream_task_units = [unit for task in upstream_tasks for unit in task.get_units()]
-        prompt = compose_simple_task_prompt_with_dependencies(self.description, upstream_task_units)
+        prompt = compose_simple_task_prompt_with_dependencies(
+            description=self.description,
+            upstream_task_units=upstream_task_units,
+            prompt_template_with_upstreams=self.prompt_template_with_upstreams,
+        )
         return SimpleTaskUnit(
             name=self.name,
             prompt=prompt,
@@ -144,13 +167,16 @@ class SimpleTask(Task):
         )
 
     def get_worker(self, tools: Optional[List[MotleyTool]]) -> MotleyAgentAbstractParent:
-        """Description
+        """Get the worker for the task.
+
+        If the task is associated with a crew and an agent, returns the agent.
+        Otherwise, raises an exception.
 
         Args:
-            tools (:obj:`List[MotleyTool]`, :obj:`None`):
+            tools: Additional tools to add to the agent.
 
         Returns:
-            MotleyAgentAbstractParent
+            Agent to run the task unit.
         """
         if self.crew is None:
             raise ValueError("Task is not associated with a crew")

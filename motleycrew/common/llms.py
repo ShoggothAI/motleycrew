@@ -1,4 +1,5 @@
-""" Module description"""
+"""Helper functions to initialize Language Models (LLMs) from different frameworks."""
+
 from motleycrew.common import Defaults
 from motleycrew.common import LLMFamily, LLMFramework
 from motleycrew.common.exceptions import LLMFamilyNotSupported, LLMFrameworkNotSupported
@@ -10,15 +11,11 @@ def langchain_openai_llm(
     llm_temperature: float = Defaults.DEFAULT_LLM_TEMPERATURE,
     **kwargs,
 ):
-    """ Description
+    """Initialize an OpenAI LLM client for use with Langchain.
 
     Args:
-        llm_name (:obj:`str`, optional):
-        llm_temperature (:obj:`float`, optional):
-        **kwargs:
-
-    Returns:
-
+        llm_name: Name of the LLM in OpenAI API.
+        llm_temperature: Temperature for the LLM.
     """
     from langchain_openai import ChatOpenAI
 
@@ -30,16 +27,13 @@ def llama_index_openai_llm(
     llm_temperature: float = Defaults.DEFAULT_LLM_TEMPERATURE,
     **kwargs,
 ):
-    """ Description
+    """Initialize an OpenAI LLM client for use with LlamaIndex.
 
     Args:
-        llm_name (:obj:`str`, optional):
-        llm_temperature (:obj:`float`, optional):
-        **kwargs:
-
-    Returns:
-
+        llm_name: Name of the LLM in OpenAI API.
+        llm_temperature: Temperature for the LLM.
     """
+
     ensure_module_is_installed("llama_index")
     from llama_index.llms.openai import OpenAI
 
@@ -51,6 +45,13 @@ def langchain_anthropic_llm(
     llm_temperature: float = Defaults.DEFAULT_LLM_TEMPERATURE,
     **kwargs,
 ):
+    """Initialize an Anthropic LLM client for use with Langchain.
+
+    Args:
+        llm_name: Name of the LLM in Anthropic API.
+        llm_temperature: Temperature for the LLM.
+    """
+
     from langchain_anthropic import ChatAnthropic
 
     return ChatAnthropic(model=llm_name, temperature=llm_temperature, **kwargs)
@@ -61,6 +62,12 @@ def llama_index_anthropic_llm(
     llm_temperature: float = Defaults.DEFAULT_LLM_TEMPERATURE,
     **kwargs,
 ):
+    """Initialize an Anthropic LLM client for use with LlamaIndex.
+
+    Args:
+        llm_name: Name of the LLM in Anthropic API.
+        llm_temperature: Temperature for the LLM.
+    """
     ensure_module_is_installed("llama_index")
     from llama_index.llms.anthropic import Anthropic
 
@@ -82,20 +89,13 @@ def init_llm(
     llm_temperature: float = Defaults.DEFAULT_LLM_TEMPERATURE,
     **kwargs,
 ):
-    """ Description
+    """Initialize an LLM client for use with the specified framework and family.
 
     Args:
-        llm_framework (str):
-        llm_family (:obj:`str`, optional):
-        llm_name (:obj:`str`, optional):
-        llm_temperature (:obj:`float`, optional):
-        **kwargs:
-
-    Raises:
-        LLMFamilyNotSupported
-
-    Returns:
-
+        llm_framework: Framework of the LLM client.
+        llm_family: Family of the LLM.
+        llm_name: Name of the LLM.
+        llm_temperature: Temperature for the LLM.
     """
 
     func = Defaults.LLM_MAP.get((llm_framework, llm_family), None)

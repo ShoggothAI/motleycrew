@@ -1,4 +1,4 @@
-""" Module description """
+from __future__ import annotations
 
 import uuid
 from typing import Any, Optional, Sequence
@@ -24,6 +24,7 @@ from motleycrew.common.utils import ensure_module_is_installed
 
 
 class LlamaIndexMotleyAgent(MotleyAgentParent):
+    """MotleyCrew wrapper for LlamaIndex agents."""
 
     def __init__(
         self,
@@ -35,15 +36,34 @@ class LlamaIndexMotleyAgent(MotleyAgentParent):
         output_handler: MotleySupportedTool | None = None,
         verbose: bool = False,
     ):
-        """Description
-
+        """
         Args:
-            prompt_prefix (:obj:`str`, optional):
-            description (:obj:`str`, optional):
-            name (:obj:`str`, optional):
-            agent_factory (:obj:`MotleyAgentFactory`, optional):
-            tools (:obj:`Sequence[MotleySupportedTool]`, optional):
-            verbose (:obj:`bool`, optional):
+            prompt_prefix: Prefix to the agent's prompt.
+                Can be used for providing additional context, such as the agent's role or backstory.
+
+            description: Description of the agent.
+
+                Unlike the prompt prefix, it is not included in the prompt.
+                The description is only used for describing the agent's purpose
+                when giving it as a tool to other agents.
+
+            name: Name of the agent.
+                The name is used for identifying the agent when it is given as a tool
+                to other agents, as well as for logging purposes.
+
+                It is not included in the agent's prompt.
+
+            agent_factory: Factory function to create the agent.
+                The factory function should accept a dictionary of tools and return
+                an AgentRunner instance.
+
+                See :class:`motleycrew.common.types.MotleyAgentFactory` for more details.
+
+            tools: Tools to add to the agent.
+
+            output_handler: Output handler for the agent.
+
+            verbose: Whether to log verbose output.
         """
         super().__init__(
             description=description,
@@ -55,8 +75,11 @@ class LlamaIndexMotleyAgent(MotleyAgentParent):
             verbose=verbose,
         )
 
-    def run_step_decorator(self):
-        """Decorator for inclusion in the call chain of the agent, the output handler tool"""
+    def _run_step_decorator(self):
+        """Decorator for the ``AgentRunner._run_step`` method that catches DirectOutput exceptions.
+
+        It also blocks plain output and forces the use of the output handler tool if it is present.
+        """
         ensure_module_is_installed("llama_index")
 
         def decorator(func):
@@ -106,7 +129,7 @@ class LlamaIndexMotleyAgent(MotleyAgentParent):
 
     def materialize(self):
         super(LlamaIndexMotleyAgent, self).materialize()
-        self._agent._run_step = self.run_step_decorator()(self._agent._run_step)
+        self._agent._run_step = self._run_step_decorator()(self._agent._run_step)
 
     def invoke(
         self,
@@ -114,16 +137,6 @@ class LlamaIndexMotleyAgent(MotleyAgentParent):
         config: Optional[RunnableConfig] = None,
         **kwargs: Any,
     ) -> Any:
-        """Description
-
-        Args:
-            input (dict):
-            config (:obj:`RunnableConfig`, optional):
-            **kwargs:
-
-        Returns:
-            Any:
-        """
         prompt = self.prepare_for_invocation(input=input)
 
         output = self.agent.chat(prompt)
@@ -141,17 +154,27 @@ class LlamaIndexMotleyAgent(MotleyAgentParent):
         tools: Sequence[MotleySupportedTool] | None = None,
         verbose: bool = False,
     ) -> "LlamaIndexMotleyAgent":
-        """Description
+        """Create a LlamaIndexMotleyAgent from a :class:`llama_index.core.agent.AgentRunner`
+        instance.
+
+        Using this method, you can wrap an existing AgentRunner
+        without providing a factory function.
 
         Args:
-            agent (AgentRunner):
-            description (:obj:`str`, optional):
-            prompt_prefix (:obj:`str`, optional):
-            tools (:obj:`Sequence[MotleySupportedTool]`, optional):
-            verbose (:obj:`bool`, optional):
+            agent: AgentRunner instance to wrap.
 
-        Returns:
-            LlamaIndexMotleyAgent:
+            prompt_prefix: Prefix to the agent's prompt.
+                Can be used for providing additional context, such as the agent's role or backstory.
+
+            description: Description of the agent.
+
+                Unlike the prompt prefix, it is not included in the prompt.
+                The description is only used for describing the agent's purpose
+                when giving it as a tool to other agents.
+
+            tools: Tools to add to the agent.
+
+            verbose: Whether to log verbose output.
         """
         ensure_module_is_installed("llama_index")
         wrapped_agent = LlamaIndexMotleyAgent(

@@ -15,14 +15,9 @@ from motleycrew.tools import MotleyTool
 
 
 class AiderTool(MotleyTool):
+    """Tool for code generation using Aider."""
 
     def __init__(self, model: str = None, **kwargs):
-        """Tool for code generation using Aider.
-
-        Args:
-            model (str): model name
-            **kwargs:
-        """
         ensure_module_is_installed("aider")
 
         model = model or Defaults.DEFAULT_LLM_NAME
@@ -34,21 +29,12 @@ class AiderTool(MotleyTool):
 
 
 class AiderToolInput(BaseModel):
-    """Input for the Aider tool.
-
-    Attributes:
-        with_message (str):
-    """
+    """Input for the Aider tool."""
 
     with_message: str = Field(description="instructions for code generation")
 
 
 def create_aider_tool(coder: Coder):
-    """Create langchain tool from Aider Coder.run() method
-
-    Returns:
-        Tool:
-    """
     return Tool.from_function(
         func=coder.run,
         name="aider tool",

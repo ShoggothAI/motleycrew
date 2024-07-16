@@ -1,7 +1,7 @@
 import asyncio
-from typing import Collection, Generator, Sequence, Optional, Any, List, Tuple
 import threading
 import time
+from typing import Collection, Generator, Optional, Any
 
 from motleycrew.agents.parent import MotleyAgentParent
 from motleycrew.common import logger, AsyncBackend, Defaults
@@ -26,14 +26,14 @@ class MotleyCrew:
         """Initialize the crew.
 
         Args:
-            graph_store (:obj:`MotleyGraphStore`, optional): The graph store to use.
+            graph_store: The graph store to use.
                 If not provided, a new one will be created with default settings.
 
-            async_backend (:obj:`AsyncBackend`, optional): The type of async backend to use.
-                Defaults to `AsyncBackend.NONE`, which means the crew will run synchronously.
-                The other options are `AsyncBackend.ASYNCIO` and `AsyncBackend.THREADING`.
+            async_backend: The type of async backend to use.
+                Defaults to :obj:`AsyncBackend.NONE`, which means the crew will run synchronously.
+                The other options are :obj:`AsyncBackend.ASYNCIO` and :obj:`AsyncBackend.THREADING`.
 
-            num_threads (:obj:`int`, optional):
+            num_threads:
                 The number of threads to use when running in threaded mode.
         """
         if graph_store is None:
@@ -72,8 +72,8 @@ class MotleyCrew:
         """Add a dependency between two tasks in the graph store.
 
         Args:
-            upstream (Task): The upstream task.
-            downstream (Task): The downstream task.
+            upstream: The upstream task.
+            downstream: The downstream task.
         """
         self.graph_store.create_relation(
             upstream.node, downstream.node, label=Task.TASK_IS_UPSTREAM_LABEL
@@ -85,7 +85,7 @@ class MotleyCrew:
         """Insert tasks into the crew's graph store.
 
         Args:
-            tasks (Collection[Task]): The tasks to register.
+            tasks: The tasks to register.
         """
         for task in tasks:
             if task not in self.tasks:
@@ -106,10 +106,10 @@ class MotleyCrew:
     ) -> Generator[MotleyAgentParent, Task, TaskUnit]:
         """Retrieve and prepare the next unit for dispatch.
         Args:
-            running_sync_tasks (set): Collection of currently running forced synchronous tasks
+            running_sync_tasks: Collection of currently running forced synchronous tasks.
 
         Yields:
-            tuple: agent, task, unit to be dispatched
+            Agent, task, unit to be dispatched.
         """
         available_tasks = self.get_available_tasks()
         logger.info("Available tasks: %s", available_tasks)
@@ -138,7 +138,7 @@ class MotleyCrew:
             logger.info("Assigned unit %s to agent %s, dispatching", next_unit, agent)
             next_unit.set_running()
             self.add_task_unit_to_graph(task=task, unit=next_unit)
-            task.register_started_unit(next_unit)
+            task.on_unit_dispatch(next_unit)
 
             yield agent, task, next_unit
 
@@ -153,11 +153,11 @@ class MotleyCrew:
         """Handle task unit completion.
 
         Args:
-            task (Task): Task object
-            unit (TaskUnit): Task unit object
-            result (Any): Result of the task unit
-            running_sync_tasks (set): Collection of currently running forced synchronous tasks
-            done_units (list): List of completed task units
+            task: Task object.
+            unit: Task unit object.
+            result: Result of the task unit.
+            running_sync_tasks: Collection of currently running forced synchronous tasks.
+            done_units: List of completed task units.
 
         """
         if task in running_sync_tasks:
@@ -166,14 +166,14 @@ class MotleyCrew:
         unit.output = result
         logger.info("Task unit %s completed, marking as done", unit)
         unit.set_done()
-        task.register_completed_unit(unit)
+        task.on_unit_completion(unit)
         done_units.append(unit)
 
     def _run_sync(self) -> list[TaskUnit]:
         """Run the crew synchronously.
 
         Returns:
-            :obj:`list` of :obj:`TaskUnit`: List of completed task units
+            List of completed task units.
         """
         done_units = []
         while True:
@@ -203,7 +203,7 @@ class MotleyCrew:
         """Run the crew in threads.
 
         Returns:
-            :obj:`list` of :obj:`TaskUnit`: List of completed task units
+            List of completed task units.
         """
 
         done_units = []
@@ -225,7 +225,7 @@ class MotleyCrew:
                 ):
                     thread_pool.add_task_unit(agent, next_task, next_unit)
 
-                if thread_pool.is_completed():
+                if thread_pool.is_completed:
                     logger.info("Nothing left to do, exiting")
                     return done_units
 
@@ -241,7 +241,7 @@ class MotleyCrew:
         """Run the crew asynchronously.
 
         Returns:
-            :obj:`list` of :obj:`TaskUnit`: List of completed task units
+            List of completed task units.
         """
 
         done_units = []
@@ -261,12 +261,8 @@ class MotleyCrew:
                         done_units=done_units,
                     )
 
-            for agent, next_task, next_unit in self._prepare_next_unit_for_dispatch(
-                running_tasks
-            ):
-                async_task = asyncio.create_task(
-                    MotleyCrew._async_invoke_agent(agent, next_unit)
-                )
+            for agent, next_task, next_unit in self._prepare_next_unit_for_dispatch(running_tasks):
+                async_task = asyncio.create_task(MotleyCrew._async_invoke_agent(agent, next_unit))
                 async_units[async_task] = (next_task, next_unit)
 
             if not async_units:
@@ -276,10 +272,11 @@ class MotleyCrew:
             await asyncio.sleep(Defaults.DEFAULT_EVENT_LOOP_SLEEP)
 
     def get_available_tasks(self) -> list[Task]:
-        """Get tasks that are available for dispatching units at the moment.
+        """Get tasks that are able to dispatch units at the moment.
+        These are tasks that have no upstream dependencies that are not done.
 
         Returns:
-            :obj:`list` of :obj:`Task`: List of tasks that are available
+            List of tasks that are available.
         """
         query = (
             "MATCH (downstream:{}) "
@@ -292,17 +289,15 @@ class MotleyCrew:
             Task.NODE_CLASS.get_label(),
             Task.TASK_IS_UPSTREAM_LABEL,
         )
-        available_task_nodes = self.graph_store.run_cypher_query(
-            query, container=Task.NODE_CLASS
-        )
+        available_task_nodes = self.graph_store.run_cypher_query(query, container=Task.NODE_CLASS)
         return [task for task in self.tasks if task.node in available_task_nodes]
 
     def add_task_unit_to_graph(self, task: Task, unit: TaskUnitType):
         """Add a task unit to the graph and connect it to its task.
 
         Args:
-            task (Task): The task to which the unit belongs.
-            unit (TaskUnitType): The unit to add.
+            task: The task to which the unit belongs.
+            unit: The unit to add.
         """
         assert isinstance(unit, task.task_unit_class)
         assert not unit.done
@@ -314,6 +309,11 @@ class MotleyCrew:
         )
 
     def get_extra_tools(self, task: Task) -> list[MotleyTool]:
+        """Get tools that should be added to the agent for a given task.
+
+        Args:
+            task: The task for which to get extra tools.
+        """
         # TODO: Smart tool selection goes here
         tools = []
         tools += self.tools or []

@@ -1,24 +1,17 @@
-""" Module description
-
-Attributes:
-    _default_prompt:
-"""
-from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain.prompts import PromptTemplate
 from langchain_core.prompts.base import BasePromptTemplate
-from langchain_core.tools import Tool
+from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.runnables import (
     RunnablePassthrough,
     RunnableLambda,
     chain,
 )
+from langchain_core.tools import Tool
 
-from motleycrew.tools import MotleyTool, LLMTool
-from motleycrew.storage import MotleyGraphStore
+from motleycrew.applications.research_agent.question import Question
 from motleycrew.common.utils import print_passthrough
-
-from motleycrew.applications.research_agent.question import Question, QuestionAnsweringTaskUnit
-
+from motleycrew.storage import MotleyGraphStore
+from motleycrew.tools import MotleyTool, LLMTool
 
 _default_prompt = PromptTemplate.from_template(
     """
@@ -37,19 +30,14 @@ _default_prompt = PromptTemplate.from_template(
 
 
 class AnswerSubQuestionTool(MotleyTool):
+    """Tool to answer a question based on the notes and sub-questions."""
+
     def __init__(
         self,
         graph: MotleyGraphStore,
         answer_length: int,
         prompt: str | BasePromptTemplate = None,
     ):
-        """ Description
-
-        Args:
-            graph (MotleyGraphStore):
-            answer_length (int):
-            prompt (:obj:`str`, :obj:`BasePromptTemplate`, optional):
-        """
         langchain_tool = create_answer_question_langchain_tool(
             graph=graph,
             answer_length=answer_length,
@@ -60,27 +48,12 @@ class AnswerSubQuestionTool(MotleyTool):
 
 
 class QuestionAnswererInput(BaseModel, arbitrary_types_allowed=True):
-    """Data on the question to answer.
-
-    Attributes:
-        question (Question):
-    """
-
     question: Question = Field(
         description="Question node to process.",
     )
 
 
 def get_subquestions(graph: MotleyGraphStore, question: Question) -> list[Question]:
-    """ Description
-
-    Args:
-        graph (MotleyGraphStore):
-        question (Question):
-
-    Returns:
-        list[Question]:
-    """
     query = (
         "MATCH (n1:{})-[]->(n2:{}) "
         "WHERE n1.id = $question_id and n2.context IS NOT NULL "
@@ -98,16 +71,6 @@ def create_answer_question_langchain_tool(
     answer_length: int,
     prompt: str | BasePromptTemplate = None,
 ) -> Tool:
-    """ Creates a LangChainTool for the AnswerSubQuestionTool.
-
-    Args:
-        graph (MotleyGraphStore):
-        answer_length (int):
-        prompt (:obj:`str`, :obj:`BasePromptTemplate`, optional):
-
-    Returns:
-
-    """
     if prompt is None:
         prompt = _default_prompt
 

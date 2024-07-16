@@ -1,35 +1,22 @@
-""" Module description
-
-Attributes:
-    IS_SUBQUESTION_PREDICATE (str):
-    default_prompt (PromptTemplate):
-
-"""
-
 from typing import Optional
-from pathlib import Path
-import time
 
 from langchain_core.language_models import BaseLanguageModel
+from langchain_core.prompts import PromptTemplate
+from langchain_core.prompts.base import BasePromptTemplate
+from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.runnables import (
     RunnablePassthrough,
     RunnableLambda,
 )
 from langchain_core.tools import Tool
-from langchain_core.prompts.base import BasePromptTemplate
-from langchain_core.prompts import PromptTemplate
 
-from langchain_core.pydantic_v1 import BaseModel, Field
-
-from motleycrew.tools import MotleyTool
+from motleycrew.applications.research_agent.question import Question
 from motleycrew.common import LLMFramework
+from motleycrew.common import logger
 from motleycrew.common.llms import init_llm
 from motleycrew.common.utils import print_passthrough
 from motleycrew.storage import MotleyGraphStore
-from motleycrew.common import logger
-
-
-from motleycrew.applications.research_agent.question import Question, QuestionGenerationTaskUnit
+from motleycrew.tools import MotleyTool
 
 IS_SUBQUESTION_PREDICATE = "is_subquestion"
 
@@ -48,9 +35,6 @@ Return the questions each on a new line and ending with a single question mark.
 Don't return anything else except these questions.
 """
 )
-
-# " The new questions should have no semantic overlap with questions in the following list:\n"
-# " {previous_questions}\n"
 
 
 class QuestionGeneratorTool(MotleyTool):
@@ -72,15 +56,6 @@ class QuestionGeneratorTool(MotleyTool):
         llm: Optional[BaseLanguageModel] = None,
         prompt: str | BasePromptTemplate = None,
     ):
-        """Description
-
-        Args:
-            query_tool (MotleyTool):
-            graph (MotleyGraphStore):
-            max_questions (:obj:`int`, optional):
-            llm (:obj:`BaseLanguageModel`, optional:
-            prompt (:obj:`str`, :obj:`BasePromptTemplate`, optional):
-        """
         langchain_tool = create_question_generator_langchain_tool(
             query_tool=query_tool,
             graph=graph,
@@ -93,11 +68,7 @@ class QuestionGeneratorTool(MotleyTool):
 
 
 class QuestionGeneratorToolInput(BaseModel, arbitrary_types_allowed=True):
-    """Input for the Question Generator Tool.
-
-    Attributes:
-        question (Question):
-    """
+    """Input for the Question Generator Tool."""
 
     question: Question = Field(description="The input question for which to generate subquestions.")
 
@@ -109,18 +80,6 @@ def create_question_generator_langchain_tool(
     llm: Optional[BaseLanguageModel] = None,
     prompt: str | BasePromptTemplate = None,
 ):
-    """Description
-
-    Args:
-        query_tool (MotleyTool):
-        graph (MotleyGraphStore):
-        max_questions (:obj:`int`, optional):
-        llm (:obj:`BaseLanguageModel`, optional:
-        prompt (:obj:`str`, :obj:`BasePromptTemplate`, optional):
-
-    Returns:
-
-    """
     if llm is None:
         llm = init_llm(llm_framework=LLMFramework.LANGCHAIN)
 
@@ -167,36 +126,3 @@ def create_question_generator_langchain_tool(
     and insert them into the knowledge graph.""",
         args_schema=QuestionGeneratorToolInput,
     )
-
-
-if __name__ == "__main__":
-    import kuzu
-    from llama_index.graph_stores.kuzu import KuzuGraphStore
-
-    here = Path(__file__).parent
-    db_path = str(here / "test2")
-
-    db = kuzu.Database(db_path)
-    graph_store = KuzuGraphStore(db)
-
-    query_tool = MotleyTool.from_langchain_tool(
-        Tool.from_function(
-            func=lambda question: [
-                "Germany has consisted of many different states over the years",
-                "The capital of France has moved in 1815, from Lyons to Paris",
-                "France actually has two capitals, one in the north and one in the south",
-            ],
-            name="Query Tool",
-            description="Query the library for relevant information.",
-            args_schema=QuestionGeneratorToolInput,
-        )
-    )
-
-    tool = QuestionGeneratorTool(
-        query_tool=query_tool,
-        graph=graph_store,
-        max_questions=3,
-    )
-
-    tool.invoke({"question": "What is the capital of France?"})
-    print("Done!")

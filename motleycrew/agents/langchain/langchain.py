@@ -1,4 +1,4 @@
-""" Module description """
+from __future__ import annotations
 
 from typing import Any, Optional, Sequence
 
@@ -15,31 +15,54 @@ from motleycrew.tracking import add_default_callbacks_to_langchain_config
 
 
 class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin):
+    """MotleyCrew wrapper for Langchain agents."""
+
     def __init__(
         self,
-        prompt_prefix: str | None = None,
         description: str | None = None,
         name: str | None = None,
+        prompt_prefix: str | None = None,
         agent_factory: MotleyAgentFactory[AgentExecutor] | None = None,
         tools: Sequence[MotleySupportedTool] | None = None,
         output_handler: MotleySupportedTool | None = None,
-        verbose: bool = False,
         chat_history: bool | GetSessionHistoryCallable = True,
+        verbose: bool = False,
     ):
-        """Description
-
+        """
         Args:
-            prompt_prefix (:obj:`str`, optional):
-            description (:obj:`str`, optional):
-            name (:obj:`str`, optional):
-            agent_factory (:obj:`MotleyAgentFactory`, optional):
-            tools (:obj:`Sequence[MotleySupportedTool]`, optional):
-            output_handler (:obj:`MotleySupportedTool`, optional):
-            verbose (bool):
-            chat_history (:obj:`bool`, :obj:`GetSessionHistoryCallable`):
-            Whether to use chat history or not. If `True`, uses `InMemoryChatMessageHistory`.
-            If a callable is passed, it is used to get the chat history by session_id.
-            See Langchain `RunnableWithMessageHistory` get_session_history param for more details.
+            description: Description of the agent.
+
+                Unlike the prompt prefix, it is not included in the prompt.
+                The description is only used for describing the agent's purpose
+                when giving it as a tool to other agents.
+
+            name: Name of the agent.
+                The name is used for identifying the agent when it is given as a tool
+                to other agents, as well as for logging purposes.
+
+                It is not included in the agent's prompt.
+
+            prompt_prefix: Prefix to the agent's prompt.
+                Can be used for providing additional context, such as the agent's role or backstory.
+
+            agent_factory: Factory function to create the agent.
+                The factory function should accept a dictionary of tools and return
+                an AgentExecutor instance.
+
+                See :class:`motleycrew.common.types.MotleyAgentFactory` for more details.
+
+            tools: Tools to add to the agent.
+
+            output_handler: Output handler for the agent.
+
+            chat_history: Whether to use chat history or not.
+                If `True`, uses `InMemoryChatMessageHistory`.
+                If a callable is passed, it is used to get the chat history by session_id.
+
+                See :class:`langchain_core.runnables.history.RunnableWithMessageHistory`
+                for more details.
+
+            verbose: Whether to log verbose output.
         """
         super().__init__(
             prompt_prefix=prompt_prefix,
@@ -115,16 +138,6 @@ class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin)
         config: Optional[RunnableConfig] = None,
         **kwargs: Any,
     ) -> Any:
-        """Description
-
-        Args:
-            input (dict):
-            config (:obj:`RunnableConfig`, optional):
-            **kwargs:
-
-        Returns:
-
-        """
         prompt = self.prepare_for_invocation(input=input)
 
         config = add_default_callbacks_to_langchain_config(config)
@@ -141,22 +154,31 @@ class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin)
     @staticmethod
     def from_agent(
         agent: AgentExecutor,
-        goal: str,
         description: str | None = None,
+        prompt_prefix: str | None = None,
         tools: Sequence[MotleySupportedTool] | None = None,
         verbose: bool = False,
     ) -> "LangchainMotleyAgent":
-        """Description
+        """Create a LangchainMotleyAgent from a :class:`langchain.agents.AgentExecutor` instance.
+
+        Using this method, you can wrap an existing AgentExecutor
+        without providing a factory function.
 
         Args:
-            agent (AgentExecutor):
-            goal (str):
-            description (:obj:`str`, optional)
-            tools(:obj:`Sequence[MotleySupportedTool]`, optional):
-            verbose (bool):
+            agent: AgentExecutor instance to wrap.
 
-        Returns:
-            LangchainMotleyAgent
+            prompt_prefix: Prefix to the agent's prompt.
+                Can be used for providing additional context, such as the agent's role or backstory.
+
+            description: Description of the agent.
+
+                Unlike the prompt prefix, it is not included in the prompt.
+                The description is only used for describing the agent's purpose
+                when giving it as a tool to other agents.
+
+            tools: Tools to add to the agent.
+
+            verbose: Whether to log verbose output.
         """
         # TODO: do we really need to unite the tools implicitly like this?
         # TODO: confused users might pass tools both ways at the same time
@@ -166,7 +188,7 @@ class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin)
             tools = list(tools or []) + list(agent.tools or [])
 
         wrapped_agent = LangchainMotleyAgent(
-            prompt_prefix=goal, description=description, tools=tools, verbose=verbose
+            prompt_prefix=prompt_prefix, description=description, tools=tools, verbose=verbose
         )
         wrapped_agent._agent = agent
         return wrapped_agent

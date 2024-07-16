@@ -1,37 +1,21 @@
-""" Module description
-
-Attributes:
-    prompt_template (str):
-    dall_e_template (str):
-"""
+import mimetypes
+import os
 from typing import Optional
 
-import os
 import requests
-import mimetypes
-
 from langchain.agents import Tool
-from langchain_core.pydantic_v1 import BaseModel, Field
+from langchain.prompts import PromptTemplate
 from langchain_community.utilities.dalle_image_generator import DallEAPIWrapper
+from langchain_core.pydantic_v1 import BaseModel, Field
 
-from motleycrew.tools.tool import MotleyTool
 import motleycrew.common.utils as motley_utils
 from motleycrew.common import LLMFramework
-from motleycrew.common.llms import init_llm
 from motleycrew.common import logger
-from langchain.prompts import PromptTemplate
+from motleycrew.common.llms import init_llm
+from motleycrew.tools.tool import MotleyTool
 
 
 def download_image(url: str, file_path: str) -> Optional[str]:
-    """ Description
-
-    Args:
-        url (str):
-        file_path (str):
-
-    Returns:
-        :obj:`str`, None:
-    """
     response = requests.get(url, stream=True)
     if response.status_code == requests.codes.ok:
         content_type = response.headers.get("content-type")
@@ -51,29 +35,48 @@ def download_image(url: str, file_path: str) -> Optional[str]:
         logger.error("Failed to download image. Status code: %s", response.status_code)
 
 
+DEFAULT_REFINE_PROMPT = """Generate a detailed DALL-E prompt to generate an image 
+based on the following description: 
+```{text}```
+Your output MUST NOT exceed 3500 characters"""
+
+DEFAULT_DALL_E_PROMPT = """{text}
+Note: Do not include any text in the images.
+"""
+
+
 class DallEImageGeneratorTool(MotleyTool):
+    """A tool for generating images using the OpenAI DALL-E API.
+
+    See the OpenAI API reference for more information:
+    https://platform.openai.com/docs/guides/images/usage
+    """
+
     def __init__(
         self,
         images_directory: Optional[str] = None,
         refine_prompt_with_llm: bool = True,
+        dall_e_prompt_template: str | PromptTemplate = DEFAULT_DALL_E_PROMPT,
+        refine_prompt_template: str | PromptTemplate = DEFAULT_REFINE_PROMPT,
         model: str = "dall-e-3",
         quality: str = "standard",
         size: str = "1024x1024",
         style: Optional[str] = None,
     ):
-        """ Description
-
+        """
         Args:
-            images_directory (:obj:`str`, optional):
-            refine_prompt_with_llm (:obj:`bool`, optional):
-            model (:obj:`str`, optional):
-            quality (:obj:`str`, optional):
-            size (:obj:`str`, optional):
-            style (:obj:`str`, optional):
+            images_directory: Directory to save the generated images.
+            refine_prompt_with_llm: Whether to refine the prompt using a language model.
+            model: DALL-E model to use.
+            quality: Image quality. Can be "standard" or "hd".
+            size: Image size.
+            style: Style to use for the model.
         """
         langchain_tool = create_dalle_image_generator_langchain_tool(
             images_directory=images_directory,
             refine_prompt_with_llm=refine_prompt_with_llm,
+            dall_e_prompt_template=dall_e_prompt_template,
+            refine_prompt_template=refine_prompt_template,
             model=model,
             quality=quality,
             size=size,
@@ -83,55 +86,27 @@ class DallEImageGeneratorTool(MotleyTool):
 
 
 class DallEToolInput(BaseModel):
-    """Input for the Dall-E tool.
-
-    Attributes:
-        description (str):
-    """
+    """Input for the Dall-E tool."""
 
     description: str = Field(description="image description")
-
-
-prompt_template = """Generate a detailed DALL-E prompt to generate an image 
-based on the following description: 
-```{text}```
-Your output MUST NOT exceed 3500 characters"""
-
-dall_e_template = """{text}
-Note: Do not include any text in the images.
-"""
 
 
 def run_dalle_and_save_images(
     description: str,
     images_directory: Optional[str] = None,
     refine_prompt_with_llm: bool = True,
+    dall_e_prompt_template: str | PromptTemplate = DEFAULT_DALL_E_PROMPT,
+    refine_prompt_template: str | PromptTemplate = DEFAULT_REFINE_PROMPT,
     model: str = "dall-e-3",
     quality: str = "standard",
     size: str = "1024x1024",
     style: Optional[str] = None,
     file_name_length: int = 8,
 ) -> Optional[list[str]]:
-    """ Description
-
-    Args:
-        description (str):
-        images_directory (:obj:`str`, optional):
-        refine_prompt_with_llm(:obj:`bool`, optional):
-        model (:obj:`str`, optional):
-        quality (:obj:`str`, optional):
-        size (:obj:`str`, optional):
-        style (:obj:`str`, optional):
-        file_name_length (:obj:`int`, optional):
-
-    Returns:
-        :obj:`list` of :obj:`str`:
-    """
-
-    dall_e_prompt = PromptTemplate.from_template(dall_e_template)
+    dall_e_prompt = PromptTemplate.from_template(dall_e_prompt_template)
 
     if refine_prompt_with_llm:
-        prompt = PromptTemplate.from_template(template=prompt_template)
+        prompt = PromptTemplate.from_template(refine_prompt_template)
         llm = init_llm(llm_framework=LLMFramework.LANGCHAIN)
         dall_e_prompt = prompt | llm | (lambda x: {"text": x.content}) | dall_e_prompt
 
@@ -172,29 +147,20 @@ def run_dalle_and_save_images(
 def create_dalle_image_generator_langchain_tool(
     images_directory: Optional[str] = None,
     refine_prompt_with_llm: bool = True,
+    dall_e_prompt_template: str | PromptTemplate = DEFAULT_DALL_E_PROMPT,
+    refine_prompt_template: str | PromptTemplate = DEFAULT_REFINE_PROMPT,
     model: str = "dall-e-3",
     quality: str = "standard",
     size: str = "1024x1024",
     style: Optional[str] = None,
 ):
-    """ Description
-
-    Args:
-        images_directory (:obj:`str`, optional):
-        refine_prompt_with_llm (:obj:`bool`, optional):
-        model (:obj:`str`, optional):
-        quality (:obj:`str`, optional):
-        size (:obj:`str`, optional):
-        style (:obj:`str`, optional):
-
-    Returns:
-        Tool:
-    """
     def run_dalle_and_save_images_partial(description: str):
         return run_dalle_and_save_images(
             description=description,
             images_directory=images_directory,
             refine_prompt_with_llm=refine_prompt_with_llm,
+            dall_e_prompt_template=dall_e_prompt_template,
+            refine_prompt_template=refine_prompt_template,
             model=model,
             quality=quality,
             size=size,
@@ -208,9 +174,3 @@ def create_dalle_image_generator_langchain_tool(
         "Input should be an image description.",
         args_schema=DallEToolInput,
     )
-
-
-if __name__ == "__main__":
-    tool = DallEImageGeneratorTool()
-    out = tool.invoke("A beautiful castle on top of a hill at sunset")
-    logger.info(out)

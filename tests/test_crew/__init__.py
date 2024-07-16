@@ -1,6 +1,7 @@
 import pytest
 
 from motleycrew.crew import MotleyCrew
+from motleycrew.tasks import SimpleTask
 
 
 class AgentMock:
@@ -39,6 +40,6 @@ class CrewFixtures:
         tasks = []
         for i in range(num_tasks):
             description = "task{} description".format(self.num_task)
-            tasks.append(crew.create_simple_task(description=description, agent=agent))
+            tasks.append(SimpleTask(description=description, agent=agent, crew=crew))
             CrewFixtures.num_task += 1
         return tasks

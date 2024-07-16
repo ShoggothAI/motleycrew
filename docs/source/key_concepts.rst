@@ -11,7 +11,7 @@ For a basic introduction, you can check out the `quickstart <quickstart.html>`_.
 Crew and knowledge graph
 ------------------------
 
-The crew is a central concept in motleycrew. It is the orchestrator that knows what tasks sould be done in which order,
+The crew (:class:`motleycrew.crew.crew.MotleyCrew`) is a central concept in motleycrew. It is the orchestrator that knows what tasks sould be done in which order,
 and manages the execution of those tasks.
 
 The crew has an underlying knowledge graph, in which it stores all information relevant to the execution of the tasks.
@@ -79,8 +79,8 @@ that you can override to customize the task's behavior.
 
 #. ``get_next_unit()`` should return the next task unit to be processed. If there are no units to do at the moment, it should return `None`.
 #. ``get_worker()`` should return the worker (typically an agent) that will process the task's units.
-#. `optional` ``register_started_unit(unit)`` is called by the crew when a task unit is dispatched.
-#. `optional` ``register_completed_unit(unit)`` is called by the crew when a task unit is completed.
+#. `optional` ``on_unit_dispatch(unit)`` is called by the crew when a task unit is dispatched.
+#. `optional` ``on_unit_completion(unit)`` is called by the crew when a task unit is completed.
 
 
 Task hierarchy
@@ -106,15 +106,15 @@ The crew queries the tasks for task units and dispatches them in a loop. The cre
 tasks are completed or available tasks stop providing task units.
 
 A task is considered completed when it has ``done`` attribute set to ``True``. For example, in the case of `SimpleTask`,
-this happens when its only task unit is completed and the crew calls the task's ``register_completed_unit`` method.
+this happens when its only task unit is completed and the crew calls the task's ``on_unit_completion`` method.
 In case of a custom task, this behavior is up to the task's implementation.
 
 Available tasks are defined as tasks that have not been completed and have no incomplete
 upstream tasks. On each iteration, available tasks are queried for task units one by one,
 and the crew will dispatch the task unit to the worker that the task provides.
 
-When a task unit is dispatched, the crew adds it to the knowledge graph and calls the task's ``register_started_unit``
-method. When the worker finishes processing the task unit, the crew calls the task's ``register_completed_unit`` method.
+When a task unit is dispatched, the crew adds it to the knowledge graph and calls the task's ``on_unit_dispatch``
+method. When the worker finishes processing the task unit, the crew calls the task's ``on_unit_completion`` method.
 
 .. image:: images/crew_diagram.png
     :alt: Crew main loop

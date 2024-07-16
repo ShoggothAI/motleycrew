@@ -1,9 +1,7 @@
-""" Module description """
-
 from typing import Any, Optional, List
 
-from langchain_core.runnables import RunnableConfig
 from langchain.tools.render import render_text_description
+from langchain_core.runnables import RunnableConfig
 
 from motleycrew.common.utils import ensure_module_is_installed
 

@@ -1,35 +1,26 @@
-""" Module description
-
-Attributes:
-    _default_prompt (PromptTemplate):
-"""
-from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain.prompts import PromptTemplate
 from langchain_core.prompts.base import BasePromptTemplate
-from langchain_core.tools import StructuredTool
+from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.runnables import (
     RunnablePassthrough,
     RunnableLambda,
     chain,
 )
-
-from motleycrew.tools import MotleyTool
-from motleycrew.tools import LLMTool
-from motleycrew.common.utils import print_passthrough
+from langchain_core.tools import StructuredTool
 
 from motleycrew.applications.research_agent.question import Question
+from motleycrew.common.utils import print_passthrough
+from motleycrew.tools import LLMTool
+from motleycrew.tools import MotleyTool
 
 
 class QuestionPrioritizerTool(MotleyTool):
+    """Tool to prioritize subquestions based on the original question."""
+
     def __init__(
         self,
         prompt: str | BasePromptTemplate = None,
     ):
-        """ Description
-
-        Args:
-            prompt (:obj:`str`, :obj:`BasePromptTemplate`, optional):
-        """
         langchain_tool = create_question_prioritizer_langchain_tool(prompt=prompt)
 
         super().__init__(langchain_tool)
@@ -50,13 +41,8 @@ _default_prompt = PromptTemplate(
 
 
 class QuestionPrioritizerInput(BaseModel, arbitrary_types_allowed=True):
-    """ Description
+    """Input for the QuestionPrioritizerTool."""
 
-    Attributes:
-        original_question (Question):
-        unanswered_questions (list[Question]):
-
-    """
     original_question: Question = Field(description="The original question.")
     unanswered_questions: list[Question] = Field(
         description="Questions to pick the most pertinent to the original question from.",
@@ -66,14 +52,6 @@ class QuestionPrioritizerInput(BaseModel, arbitrary_types_allowed=True):
 def create_question_prioritizer_langchain_tool(
     prompt: str | BasePromptTemplate = None,
 ) -> StructuredTool:
-    """ Creates a LangChainTool for the AnswerSubQuestionTool.
-
-    Args:
-        prompt (:obj:`str`, :obj:`BasePromptTemplate`, optional):
-
-    Returns:
-        StructuredTool
-    """
     if prompt is None:
         prompt = _default_prompt
 
@@ -128,17 +106,3 @@ def create_question_prioritizer_langchain_tool(
     )
 
     return langchain_tool
-
-
-if __name__ == "__main__":
-    q = Question(question="What color is the sky?")
-    unanswered = [
-        Question(question="What time of day is it?"),
-        Question(question="Who was H.P.Lovecraft?"),
-    ]
-
-    out = QuestionPrioritizerTool().invoke(
-        {"unanswered_questions": unanswered, "original_question": q}
-    )
-    print(out)
-    print("yay!")

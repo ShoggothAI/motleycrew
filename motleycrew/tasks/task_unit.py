@@ -1,9 +1,3 @@
-""" Module description
-
-Attributes:
-    TaskUnitType (TypeVar):
-
-"""
 from __future__ import annotations
 
 from abc import ABC
@@ -14,13 +8,17 @@ from motleycrew.storage import MotleyGraphNode
 
 
 class TaskUnit(MotleyGraphNode, ABC):
-    """ Description
+    """Base class for describing task units.
+    A task unit should contain all the input data for the worker (usually an agent).
+    When a task unit is dispatched by the crew, it is converted to a dictionary
+    and passed to the worker's ``invoke()`` method.
 
     Attributes:
-        status (:obj:`str`, optional):
-        output (:obj:`Any`, optional):
+        status: Status of the task unit.
+        output: Output of the task unit.
 
     """
+
     status: str = TaskUnitStatus.PENDING
     output: Optional[Any] = None
 
@@ -35,23 +33,29 @@ class TaskUnit(MotleyGraphNode, ABC):
 
     @property
     def pending(self):
+        """Whether the task unit is pending."""
         return self.status == TaskUnitStatus.PENDING
 
     @property
     def running(self):
+        """Whether the task unit is running."""
         return self.status == TaskUnitStatus.RUNNING
 
     @property
     def done(self):
+        """Whether the task unit is done."""
         return self.status == TaskUnitStatus.DONE
 
     def set_pending(self):
+        """Set the task unit status to pending."""
         self.status = TaskUnitStatus.PENDING
 
     def set_running(self):
+        """Set the task unit status to running."""
         self.status = TaskUnitStatus.RUNNING
 
     def set_done(self):
+        """Set the task unit status to done."""
         self.status = TaskUnitStatus.DONE
 
     def as_dict(self):

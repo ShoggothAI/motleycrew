@@ -1,18 +1,19 @@
-""" Module description"""
 from typing import Optional, Type
 
-from langchain_core.tools import StructuredTool
+from langchain_core.language_models import BaseLanguageModel
 from langchain_core.prompts import PromptTemplate
 from langchain_core.prompts.base import BasePromptTemplate
-from langchain_core.language_models import BaseLanguageModel
 from langchain_core.pydantic_v1 import BaseModel, Field, create_model
+from langchain_core.tools import StructuredTool
 
-from motleycrew.tools import MotleyTool
 from motleycrew.common import LLMFramework
 from motleycrew.common.llms import init_llm
+from motleycrew.tools import MotleyTool
 
 
 class LLMTool(MotleyTool):
+    """A tool that uses a language model to generate output based on a prompt."""
+
     def __init__(
         self,
         name: str,
@@ -21,14 +22,16 @@ class LLMTool(MotleyTool):
         llm: Optional[BaseLanguageModel] = None,
         input_schema: Optional[Type[BaseModel]] = None,
     ):
-        """ Description
-
+        """
         Args:
-            name (str):
-            description (str):
-            prompt (:obj:`str`, :obj:`BasePromptTemplate`):
-            llm (:obj:`BaseLanguageModel`, optional):
-            input_schema (:obj:`Type[BaseModel]`, optional):
+            name: Name of the tool.
+            description: Description of the tool.
+            prompt: Prompt to use for the tool. Can be a string or a PromptTemplate object.
+            llm: Language model to use for the tool.
+            input_schema: Input schema for the tool.
+                The input variables should match the variables in the prompt.
+                If not provided, a schema will be generated based on the input variables
+                in the prompt, if any, with string fields.
         """
         langchain_tool = create_llm_langchain_tool(
             name=name,
@@ -47,18 +50,6 @@ def create_llm_langchain_tool(
     llm: Optional[BaseLanguageModel] = None,
     input_schema: Optional[Type[BaseModel]] = None,
 ):
-    """ Description
-
-    Args:
-        name (str):
-        description (str):
-        prompt (:obj:`str`, :obj:`BasePromptTemplate`):
-        llm (:obj:`BaseLanguageModel`, optional):
-        input_schema (:obj:`Type[BaseModel]`, optional):
-
-    Returns:
-
-    """
     if llm is None:
         llm = init_llm(llm_framework=LLMFramework.LANGCHAIN)
 

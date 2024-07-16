@@ -27,7 +27,7 @@ class TestInvokeThreadPool(CrewFixtures):
         assert all([t.is_alive() for t in thread_pool._threads])
         assert thread_pool.input_queue.empty()
         assert thread_pool.output_queue.empty()
-        assert thread_pool.is_completed()
+        assert thread_pool.is_completed
 
     @pytest.mark.parametrize("tasks", [4], indirect=True)
     def test_put(self, thread_pool, agent, tasks):
@@ -35,7 +35,7 @@ class TestInvokeThreadPool(CrewFixtures):
             unit = task.get_next_unit()
             thread_pool.add_task_unit(agent, task, unit)
 
-        assert not thread_pool.is_completed()
+        assert not thread_pool.is_completed
         assert len(thread_pool._task_units_in_progress) == 4
 
     @pytest.mark.parametrize("tasks", [4], indirect=True)
@@ -49,7 +49,7 @@ class TestInvokeThreadPool(CrewFixtures):
 
         assert len(completed_tasks) == 4
         assert len(thread_pool._task_units_in_progress) == 0
-        assert thread_pool.is_completed()
+        assert thread_pool.is_completed
         assert all([t.state == TaskUnitThreadState.EXITED for t in thread_pool._threads])
 
     @pytest.mark.parametrize("tasks", [1], indirect=True)
@@ -61,7 +61,7 @@ class TestInvokeThreadPool(CrewFixtures):
         with pytest.raises(AttributeError):
             thread_pool.get_completed_task_units()
 
-        assert not thread_pool.is_completed()
+        assert not thread_pool.is_completed
 
     def test_close(self, thread_pool):
         thread_pool.wait_and_close()

@@ -1,4 +1,4 @@
-""" Module description """
+from __future__ import annotations
 
 from typing import Sequence
 
@@ -19,6 +19,8 @@ from motleycrew.common.utils import ensure_module_is_installed
 
 
 class ReActLlamaIndexMotleyAgent(LlamaIndexMotleyAgent):
+    """Wrapper for LlamaIndex implementation of ReAct agent."""
+
     def __init__(
         self,
         prompt_prefix: str | None = None,
@@ -30,15 +32,33 @@ class ReActLlamaIndexMotleyAgent(LlamaIndexMotleyAgent):
         verbose: bool = False,
         max_iterations: int = 10,
     ):
-        """Description
-
+        """
         Args:
-            prompt_prefix (:obj:`str`, optional):
-            description (:obj:`str`, optional):
-            name (:obj:`str`, optional):
-            tools (:obj:`Sequence[MotleySupportedTool]`, optional):
-            llm (:obj:`LLM`, optional):
-            verbose (:obj:`bool`, optional):
+            prompt_prefix: Prefix to the agent's prompt.
+                Can be used for providing additional context, such as the agent's role or backstory.
+
+            description: Description of the agent.
+
+                Unlike the prompt prefix, it is not included in the prompt.
+                The description is only used for describing the agent's purpose
+                when giving it as a tool to other agents.
+
+            name: Name of the agent.
+                The name is used for identifying the agent when it is given as a tool
+                to other agents, as well as for logging purposes.
+
+                It is not included in the agent's prompt.
+
+            tools: Tools to add to the agent.
+
+            llm: LLM instance to use.
+
+            output_handler: Output handler for the agent.
+
+            verbose: Whether to log verbose output.
+
+            max_iterations: Maximum number of iterations for the agent.
+                Passed on to the ``max_iterations`` parameter of the ReActAgent.
         """
         ensure_module_is_installed("llama_index")
         if llm is None:

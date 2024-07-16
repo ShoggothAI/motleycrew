@@ -16,7 +16,6 @@ Welcome to motleycrew's documentation!
    :caption: Contents:
 
 
-
 Indices and tables
 ==================
 

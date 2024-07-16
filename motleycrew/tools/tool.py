@@ -1,7 +1,5 @@
-""" Module description """
-
-from typing import Union, Optional, Dict, Any
 from typing import Callable
+from typing import Union, Optional, Dict, Any
 
 from langchain.tools import BaseTool
 from langchain_core.runnables import Runnable, RunnableConfig
@@ -19,13 +17,16 @@ from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
 
 
 class MotleyTool(Runnable):
+    """Base tool class compatible with MotleyAgents.
+
+    It is a wrapper for Langchain BaseTool, containing all necessary adapters and converters.
+    """
 
     def __init__(self, tool: BaseTool):
-        """Base tool class compatible with MotleyAgents.
-        It is a wrapper for LangChain's BaseTool, containing all necessary adapters and converters.
+        """Initialize the MotleyTool.
 
         Args:
-            tool (BaseTool):
+            tool: Langchain BaseTool to wrap.
         """
         self.tool = tool
 
@@ -37,15 +38,17 @@ class MotleyTool(Runnable):
 
     @property
     def name(self):
-        # TODO: do we really want to make a thin wrapper in this fashion?
+        """Name of the tool."""
         return self.tool.name
 
     @property
     def description(self):
+        """Description of the tool."""
         return self.tool.description
 
     @property
     def args_schema(self):
+        """Schema of the tool arguments."""
         return self.tool.args_schema
 
     def invoke(
@@ -61,39 +64,43 @@ class MotleyTool(Runnable):
 
     @staticmethod
     def from_langchain_tool(langchain_tool: BaseTool) -> "MotleyTool":
-        """Description
+        """Create a MotleyTool from a Langchain tool.
 
         Args:
-            langchain_tool (BaseTool):
+            langchain_tool: Langchain tool to convert.
 
         Returns:
-            MotleyTool:
+            MotleyTool instance.
         """
+
         return MotleyTool(tool=langchain_tool)
 
     @staticmethod
     def from_llama_index_tool(llama_index_tool: LlamaIndex__BaseTool) -> "MotleyTool":
-        """Description
+        """Create a MotleyTool from a LlamaIndex tool.
 
         Args:
-            llama_index_tool (LlamaIndex__BaseTool):
+            llama_index_tool: LlamaIndex tool to convert.
 
         Returns:
-            MotleyTool:
+            MotleyTool instance.
         """
+
         ensure_module_is_installed("llama_index")
         langchain_tool = llama_index_tool.to_langchain_tool()
         return MotleyTool.from_langchain_tool(langchain_tool=langchain_tool)
 
     @staticmethod
     def from_supported_tool(tool: MotleySupportedTool) -> "MotleyTool":
-        """Description
+        """Create a MotleyTool from any supported tool type.
 
         Args:
-            tool (:obj:`MotleyTool`, :obj:`BaseTool`, :obj:`LlamaIndex__BaseTool`, :obj:`MotleyAgentAbstractParent`):
+            tool: Tool of any supported type.
+                Currently, we support tools from Langchain, LlamaIndex,
+                as well as motleycrew agents.
 
         Returns:
-
+            MotleyTool instance.
         """
         if isinstance(tool, MotleyTool):
             return tool
@@ -109,18 +116,18 @@ class MotleyTool(Runnable):
             )
 
     def to_langchain_tool(self) -> BaseTool:
-        """Description
+        """Convert the MotleyTool to a Langchain tool.
 
         Returns:
-            BaseTool:
+            Langchain tool.
         """
         return self.tool
 
     def to_llama_index_tool(self) -> LlamaIndex__BaseTool:
-        """Description
+        """Convert the MotleyTool to a LlamaIndex tool.
 
         Returns:
-            LlamaIndex__BaseTool:
+            LlamaIndex tool.
         """
         ensure_module_is_installed("llama_index")
         llama_index_tool = LlamaIndex__FunctionTool.from_defaults(
@@ -132,10 +139,14 @@ class MotleyTool(Runnable):
         return llama_index_tool
 
     def to_autogen_tool(self) -> Callable:
-        """Description
+        """Convert the MotleyTool to an AutoGen tool.
+
+        An AutoGen tool is basically a function. AutoGen infers the tool input schema
+        from the function signature. For this reason, because we can't generate the signature
+        dynamically, we can only convert tools with a single input field.
 
         Returns:
-            Callable:
+            AutoGen tool function.
         """
         fields = list(self.tool.args_schema.__fields__.values())
         if len(fields) != 1:

@@ -1,16 +1,16 @@
 """ Module description """
 
 import inspect
-from typing import TYPE_CHECKING, Optional, Sequence, Any, Callable, Dict, Union, Tuple
+from typing import TYPE_CHECKING, Optional, Sequence, Any, Union
 
 from langchain_core.prompts.chat import ChatPromptTemplate, HumanMessage, SystemMessage
 from langchain_core.runnables import Runnable
 from langchain_core.tools import StructuredTool
 from langchain_core.tools import Tool
-from motleycrew.agents.output_handler import MotleyOutputHandler
 from pydantic import BaseModel
 
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
+from motleycrew.agents.output_handler import MotleyOutputHandler
 from motleycrew.common import MotleyAgentFactory, MotleySupportedTool
 from motleycrew.common import logger, Defaults
 from motleycrew.common.exceptions import (
@@ -41,7 +41,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
         tools: Sequence[MotleySupportedTool] | None = None,
         output_handler: MotleySupportedTool | None = None,
         verbose: bool = False,
-        agent_name: str | None = None
+        agent_name: str | None = None,
     ):
         """Description
 
@@ -65,7 +65,6 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
         self.crew: MotleyCrew | None = None
 
         self._agent = None
-        self._agent_name = agent_name
 
         if tools:
             self.add_tools(tools)
@@ -225,7 +224,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent, Runnable):
             raise CannotModifyMaterializedAgent(agent_name=self.name)
 
         for t in tools:
-            motley_tool = MotleyTool.from_supported_tool(t, self._agent_name)
+            motley_tool = MotleyTool.from_supported_tool(t)
             if motley_tool.name not in self.tools:
                 self.tools[motley_tool.name] = motley_tool
 

@@ -13,7 +13,7 @@ class LangchainOutputHandlingAgentMixin:
     """A mixin for Langchain-based agents that support output handlers."""
 
     output_handler: Optional[MotleyTool] = None
-    _agent_finish_blocker_tool: Optional[MotleyTool] = None
+    _agent_finish_blocker_tool: Optional[BaseTool] = None
 
     def _create_agent_finish_blocker_tool(self) -> BaseTool:
         """Create a tool that will force the agent to retry if it attempts to return the output

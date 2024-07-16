@@ -10,7 +10,7 @@ from langchain_core.runnables.history import RunnableWithMessageHistory, GetSess
 from motleycrew.agents.mixins import LangchainOutputHandlingAgentMixin
 from motleycrew.agents.parent import MotleyAgentParent
 from motleycrew.common import MotleyAgentFactory
-from motleycrew.common import MotleySupportedTool, logger, Defaults
+from motleycrew.common import MotleySupportedTool, logger
 from motleycrew.tracking import add_default_callbacks_to_langchain_config
 
 
@@ -49,7 +49,6 @@ class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin)
             tools=tools,
             output_handler=output_handler,
             verbose=verbose,
-            agent_name=Defaults.LANGCHAIN_AGENT_NAME
         )
 
         self._agent_finish_blocker_tool = self._create_agent_finish_blocker_tool()

@@ -1,14 +1,12 @@
-from typing import Union, Sequence, List
-
 from dotenv import load_dotenv
 
-from langchain.schema import AIMessage, HumanMessage, SystemMessage, BaseMessage
+from dotenv import load_dotenv
+from langchain.schema import HumanMessage, SystemMessage
 from langchain_core.prompts.chat import ChatPromptTemplate
-from motleycrew.agents.langchain.react import ReActMotleyAgent
 
-from motleycrew.tools.llm_tool import LLMTool
 from motleycrew import MotleyCrew, Task
-
+from motleycrew.agents.langchain.legacy_react import LegacyReActMotleyAgent
+from motleycrew.tools.llm_tool import LLMTool
 from .blog_post_input import text
 
 load_dotenv()
@@ -103,7 +101,7 @@ seo_expert = LLMTool(
 )
 
 
-writer = ReActMotleyAgent(
+writer = LegacyReActMotleyAgent(
     prompt="You are a professional freelance copywriter with 10 years of experience.",
     tools=[editor, illustrator, seo_expert],
 )

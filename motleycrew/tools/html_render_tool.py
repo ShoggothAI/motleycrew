@@ -130,7 +130,7 @@ class HTMLRenderToolInput(BaseModel):
 def create_render_tool(renderer: HTMLRenderer):
     return Tool.from_function(
         func=renderer.render_image,
-        name="HTML rendering tool",
+        name="html_render_tool",
         description="A tool for rendering HTML code as an image",
         args_schema=HTMLRenderToolInput,
     )

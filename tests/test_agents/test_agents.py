@@ -1,9 +1,10 @@
 import os
-import pytest
 
+import pytest
 from langchain_core.prompts.chat import ChatPromptTemplate
+
 from motleycrew.agents.crewai.crewai_agent import CrewAIMotleyAgent
-from motleycrew.agents.langchain.tool_calling_react import ReActToolCallingAgent
+from motleycrew.agents.langchain.tool_calling_react import ReActToolCallingMotleyAgent
 from motleycrew.agents.llama_index.llama_index_react import ReActLlamaIndexMotleyAgent
 from motleycrew.common.exceptions import AgentNotMaterialized, CannotModifyMaterializedAgent
 from motleycrew.tools.python_repl import create_repl_tool
@@ -34,7 +35,7 @@ class TestAgents:
 
     @pytest.fixture(scope="class")
     def langchain_agent(self):
-        agent = ReActToolCallingAgent(
+        agent = ReActToolCallingMotleyAgent(
             name="AI writer agent",
             prompt_prefix="Generate AI-generated content",
             description="AI-generated content",

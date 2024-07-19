@@ -1,7 +1,7 @@
 import pytest
 from langchain_community.tools import DuckDuckGoSearchRun
 
-from motleycrew.agents.langchain.tool_calling_react import ReActToolCallingAgent
+from motleycrew.agents.langchain.tool_calling_react import ReActToolCallingMotleyAgent
 from motleycrew.crew import MotleyCrew
 from motleycrew.storage.graph_store_utils import init_graph_store
 from motleycrew.tasks.simple import (
@@ -24,7 +24,7 @@ def crew(graph_store):
 
 @pytest.fixture
 def agent():
-    agent = ReActToolCallingAgent(
+    agent = ReActToolCallingMotleyAgent(
         name="AI writer agent",
         tools=[DuckDuckGoSearchRun()],
         verbose=True,

@@ -1,7 +1,6 @@
-from motleycrew.agents.langchain import ReActToolCallingAgent
-from sql_tools import SQLExpression
+from motleycrew.agents.langchain import ReActToolCallingMotleyAgent
 from schema_delta import delta_generator
-
+from sql_tools import SQLExpression
 
 schema_critic_prompt = """ You are an experienced data engineer and you have been tasked with reviewing whether a 
 SQL query correctly checks whether expenses conform to policy. You are given a schema, a query against it, and the 
@@ -15,7 +14,7 @@ Query:
 {query}
 """
 
-schema_critic = ReActToolCallingAgent(
+schema_critic = ReActToolCallingMotleyAgent(
     description=schema_critic_prompt,
     input_schema="auto",  # Input schema should be auto-parsed from the prompt, with string types
     tools=[ExceptionTool],
@@ -93,7 +92,7 @@ Schema:
 {schema}
 """
 
-schema_designer = ReActToolCallingAgent(
+schema_designer = ReActToolCallingMotleyAgent(
     description=schema_designer_prompt,
     input_schema=SchemaDesignerInput,
     output_handler=VerifyPolicyRepresentation(),

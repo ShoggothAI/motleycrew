@@ -1,5 +1,5 @@
-from motleycrew.common import LLMFamily
-from motleycrew.common import GraphStoreType
+from motleycrew.common.enums import GraphStoreType
+from motleycrew.common.enums import LLMFamily
 
 
 class Defaults:

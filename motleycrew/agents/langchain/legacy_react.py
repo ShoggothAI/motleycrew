@@ -21,7 +21,7 @@ OUTPUT_HANDLER_WITH_DEFAULT_PROMPT_MESSAGE = (
 )
 
 
-class ReActMotleyAgent(LangchainMotleyAgent):
+class LegacyReActMotleyAgent(LangchainMotleyAgent):
     """Basic ReAct agent compatible with older models without dedicated tool calling support.
 
     It's probably better to use the more advanced

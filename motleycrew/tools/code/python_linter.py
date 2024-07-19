@@ -52,7 +52,7 @@ def create_python_linter_tool() -> StructuredTool:
 
     return StructuredTool.from_function(
         func=lint,
-        name="python linter tool",
+        name="python_linter",
         description="Tool for validating Python code",
         args_schema=PythonLinterInput,
     )

@@ -1,236 +1,99 @@
 from __future__ import annotations
 
-from typing import Sequence, List, Optional
+from typing import Sequence, Optional
 
 from langchain.agents import AgentExecutor
 from langchain.agents.format_scratchpad.tools import format_to_tool_messages
 from langchain.agents.output_parsers.tools import ToolsAgentOutputParser
-from langchain.tools.render import render_text_description
-from langchain_core.agents import AgentFinish, AgentActionMessageLog
 from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import BaseMessage, HumanMessage, ToolMessage
-from langchain_core.messages.base import merge_content
-from langchain_core.prompts import MessagesPlaceholder
 from langchain_core.prompts.chat import ChatPromptTemplate
-from langchain_core.runnables import Runnable, RunnablePassthrough, RunnableLambda
+from langchain_core.runnables import Runnable, RunnablePassthrough
 from langchain_core.runnables.history import GetSessionHistoryCallable
 from langchain_core.tools import BaseTool
 
+try:
+    from langchain_anthropic import ChatAnthropic
+except ImportError:
+    ChatAnthropic = None
+
 from motleycrew.agents.langchain import LangchainMotleyAgent
+from motleycrew.agents.langchain.tool_calling_react_prompts import (
+    ToolCallingReActPromptsForOpenAI,
+    ToolCallingReActPromptsForAnthropic,
+)
 from motleycrew.common import LLMFramework
 from motleycrew.common import MotleySupportedTool
 from motleycrew.common.llms import init_llm
-from motleycrew.common.utils import print_passthrough
 from motleycrew.tools import MotleyTool
-
-default_think_prompt = ChatPromptTemplate.from_messages(
-    [
-        (
-            "system",
-            """
-Answer the following questions as best you can; think carefully, one step at a time, 
-and outline the next step towards answering the question.
-
-You will later have access to the following tools, but you can't use them yet:
-{tools}
-
-Your reply must begin with "Thought:" and then describe what the next step should be, 
-given the information so far - either to use one of the tools from the above list 
-(and details on how to use it), or give the final answer like described below.
-Do NOT return a tool call, just a single thought about what it should be.
-If the information so far is not sufficient to answer the question precisely and completely
-(rather than sloppily and approximately), don't hesitate to
-request to use tools again, until sufficient information is gathered. Don't stop this until
-you are certain that you have enough information to answer the question.
-
-If you have sufficient information to answer the question, your reply must look like
-```
-Thought: I now know the final answer
-Final Answer: [the final answer to the original input question]
-```
-but without the backticks.
-
-Begin!
-
-""",
-        ),
-        MessagesPlaceholder(variable_name="chat_history", optional=True),
-        ("user", "{input}"),
-        MessagesPlaceholder(variable_name="agent_scratchpad"),
-        MessagesPlaceholder(variable_name="additional_notes", optional=True),
-    ]
-)
-
-
-default_act_prompt = ChatPromptTemplate.from_messages(
-    [
-        (
-            "system",
-            """
-Your objective is to contribute to answering the below question, by using the tools at your disposal.
-
-You have access to the following tools:
-{tools}
-
-Your response MUST be only a tool call to one of these unless the last input
-message contains the words "Final Answer"; {output_instruction}
-{output_handler}
-
-""",
-        ),
-        MessagesPlaceholder(variable_name="chat_history", optional=True),
-        ("user", "{input}"),
-        MessagesPlaceholder(variable_name="agent_scratchpad"),
-        MessagesPlaceholder(variable_name="additional_notes", optional=True),
-    ]
-)
-default_act_prompt_without_output_handler = default_act_prompt.partial(
-    output_instruction="if it does, just repeat it."
-)
-default_act_prompt_with_output_handler = default_act_prompt.partial(
-    output_instruction="if it does, you must use the output handler:"
-)
 
 
 def check_variables(prompt: ChatPromptTemplate):
-    missing_vars = {"agent_scratchpad"}.difference(prompt.input_variables)
+    missing_vars = (
+        {"agent_scratchpad", "additional_notes"}
+        .difference(prompt.input_variables)
+        .difference(prompt.optional_variables)
+    )
     if missing_vars:
         raise ValueError(f"Prompt missing required variables: {missing_vars}")
 
 
-def add_thought_to_background(x: dict):
-    out = x["background"]
-    out["agent_scratchpad"] += [x["thought"]]
-    return out
+def render_text_description(tools: list[BaseTool]) -> str:
+    tool_strings = []
+    for tool in tools:
+        tool_strings.append(f"{tool.name} - {tool.description}")
+    return "\n".join(tool_strings)
 
 
-def cast_thought_to_human_message(thought: BaseMessage):
-    content = thought.content
-    if content:
-        # HACK: this cast to a HumanMessage is needed for Anthropic models to work
-        # because they will treat an AIMessage in input as their output prefill.
-        # Also, we remove tool_use messages from the content in case a model calls a tool.
-        if isinstance(content, list):
-            content = [chunk for chunk in content if chunk.get("type") != "tool_use"]
-    return HumanMessage(content=content)
+def get_relevant_default_prompt(
+    llm: BaseChatModel, output_handler: Optional[MotleySupportedTool]
+) -> ChatPromptTemplate:
+    if ChatAnthropic is not None and isinstance(llm, ChatAnthropic):
+        prompts = ToolCallingReActPromptsForAnthropic()
+    else:
+        # Anthropic prompts are more specific, so we use the OpenAI prompts as the default
+        prompts = ToolCallingReActPromptsForOpenAI()
 
-
-def add_messages_to_action(
-    actions: List[AgentActionMessageLog] | AgentFinish, messages: List[BaseMessage]
-) -> List[AgentActionMessageLog] | AgentFinish:
-    if not isinstance(actions, AgentFinish):
-        for action in actions:
-            action.message_log = messages + list(action.message_log)
-    return actions
-
-
-def merge_consecutive_messages(messages: Sequence[BaseMessage]) -> List[BaseMessage]:
-    """Tries to merge consecutive messages of the same type in the provided list.
-    This mainly serves as a workaround for Anthropic models that don't accept
-    multiple AIMessages in a row.
-
-    Args:
-        messages: The list of messages to process.
-
-    Returns:
-        The list of messages with consecutive messages of the same type merged.
-    """
-    merged_messages = []
-    for message in messages:
-        if (
-            not merged_messages
-            or type(merged_messages[-1]) != type(message)
-            or isinstance(message, ToolMessage)
-        ):
-            merged_messages.append(message)
-        else:
-            merged_messages[-1].content = merge_content(
-                merged_messages[-1].content, message.content
-            )
-    return merged_messages
+    if output_handler:
+        return prompts.prompt_template_with_output_handler
+    return prompts.prompt_template_without_output_handler
 
 
 def create_tool_calling_react_agent(
     llm: BaseChatModel,
     tools: Sequence[BaseTool],
-    think_prompt: ChatPromptTemplate | None = None,
-    act_prompt: ChatPromptTemplate | None = None,
+    prompt: ChatPromptTemplate,
     output_handler: BaseTool | None = None,
 ) -> Runnable:
-    """Create a ReAct-style agent that supports tool calling.
-
-    Args:
-        llm: LLM to use as the agent.
-        tools: Tools this agent has access to.
-        think_prompt: The thinking step prompt to use.
-            See Prompt section below for more on the expected input variables.
-        act_prompt: The acting step prompt to use.
-            See Prompt section below for more on the expected input variables.
-        output_handler: Tool to use for returning agent's output.
-
-    Returns:
-        A Runnable sequence representing an agent. It takes as input all the same input
-        variables as the prompt passed in does. It returns as output either an
-        AgentAction or AgentFinish.
-
-    Prompt:
-        This agent uses two prompts, one for thinking and one for acting. The prompts
-        must have `agent_scratchpad` and `chat_history` ``MessagesPlaceholder``s.
-        If a prompt is not passed in, the default one is used.
-
-    """
-    if think_prompt is None:
-        think_prompt = default_think_prompt
-
-    if act_prompt is None:
-        if output_handler:
-            act_prompt = default_act_prompt_with_output_handler
-        else:
-            act_prompt = default_act_prompt_without_output_handler
-
-    think_prompt = think_prompt.partial(tools=render_text_description(list(tools)))
-    act_prompt = act_prompt.partial(
+    prompt = prompt.partial(
         tools=render_text_description(list(tools)),
         output_handler=render_text_description([output_handler]) if output_handler else "",
     )
-
-    check_variables(think_prompt)
-    check_variables(act_prompt)
+    check_variables(prompt)
 
     tools_for_llm = list(tools)
     if output_handler:
         tools_for_llm.append(output_handler)
-    llm_with_tools = llm.bind_tools(tools=tools_for_llm)
 
-    think_chain = think_prompt | llm_with_tools | RunnableLambda(cast_thought_to_human_message)
-    act_chain = (
-        RunnableLambda(add_thought_to_background)
-        | act_prompt
-        | llm_with_tools
-        | ToolsAgentOutputParser()
-    )
+    llm_with_tools = llm.bind_tools(tools=tools_for_llm)
 
     agent = (
         RunnablePassthrough.assign(
-            agent_scratchpad=lambda x: merge_consecutive_messages(
-                format_to_tool_messages(x["intermediate_steps"])
-            ),
+            agent_scratchpad=lambda x: format_to_tool_messages(x["intermediate_steps"]),
             additional_notes=lambda x: x.get("additional_notes") or [],
         )
-        | {"thought": think_chain, "background": RunnablePassthrough()}
-        | RunnableLambda(print_passthrough)
-        | {"action": act_chain, "thought": RunnableLambda(lambda x: x["thought"])}
-        | RunnableLambda(lambda x: add_messages_to_action(x["action"], [x["thought"]]))
+        | prompt
+        | llm_with_tools
+        | ToolsAgentOutputParser()
     )
     return agent
 
 
-class ReActToolCallingAgent(LangchainMotleyAgent):
+class ReActToolCallingMotleyAgent(LangchainMotleyAgent):
     """Universal ReAct-style agent that supports tool calling.
 
     This agent only works with newer models that support tool calling.
     If you are using an older model, you should use
-    :class:`motleycrew.agents.langchain.react.ReActMotleyAgent` instead.
+    :class:`motleycrew.agents.langchain.LegacyReActMotleyAgent` instead.
     """
 
     def __init__(
@@ -239,8 +102,7 @@ class ReActToolCallingAgent(LangchainMotleyAgent):
         description: str | None = None,
         name: str | None = None,
         prompt_prefix: str | None = None,
-        think_prompt: ChatPromptTemplate | None = None,
-        act_prompt: ChatPromptTemplate | None = None,
+        prompt: ChatPromptTemplate | None = None,
         chat_history: bool | GetSessionHistoryCallable = True,
         output_handler: MotleySupportedTool | None = None,
         handle_parsing_errors: bool = True,
@@ -254,9 +116,7 @@ class ReActToolCallingAgent(LangchainMotleyAgent):
             description: Description of the agent.
             name: Name of the agent.
             prompt_prefix: Prefix to the agent's prompt.
-            think_prompt: The thinking step prompt to use.
-                See Prompt section below for more on the expected input variables.
-            act_prompt: The acting step prompt to use.
+            prompt: The prompt to use.
                 See Prompt section below for more on the expected input variables.
             chat_history: Whether to use chat history or not.
                 If `True`, uses `InMemoryChatMessageHistory`.
@@ -272,15 +132,21 @@ class ReActToolCallingAgent(LangchainMotleyAgent):
             verbose: Whether to log verbose output.
 
         Prompt:
-            This agent uses two prompts, one for thinking and one for acting. The prompts
-            must have `agent_scratchpad` and `chat_history` ``MessagesPlaceholder``s.
+            The prompt must have `agent_scratchpad`, `chat_history`, and `additional_notes`
+            ``MessagesPlaceholder``s.
             If a prompt is not passed in, the default one is used.
+
+            The default prompt slightly varies depending on the language model used.
+            See :mod:`motleycrew.agents.langchain.tool_calling_react_prompts` for more details.
         """
         if llm is None:
             llm = init_llm(llm_framework=LLMFramework.LANGCHAIN)
 
         if not tools:
             raise ValueError("You must provide at least one tool to the ReActToolCallingAgent")
+
+        if prompt is None:
+            prompt = get_relevant_default_prompt(llm=llm, output_handler=output_handler)
 
         def agent_factory(
             tools: dict[str, MotleyTool], output_handler: Optional[MotleyTool] = None
@@ -294,8 +160,7 @@ class ReActToolCallingAgent(LangchainMotleyAgent):
             agent = create_tool_calling_react_agent(
                 llm=llm,
                 tools=tools_for_langchain,
-                think_prompt=think_prompt,
-                act_prompt=act_prompt,
+                prompt=prompt,
                 output_handler=output_handler_for_langchain,
             )
 

@@ -18,10 +18,15 @@ from motleycrew.tools.tool import MotleyTool
 def download_image(url: str, file_path: str) -> Optional[str]:
     response = requests.get(url, stream=True)
     if response.status_code == requests.codes.ok:
-        content_type = response.headers.get("content-type")
-        extension = mimetypes.guess_extension(content_type)
+        try:
+            content_type = response.headers.get("content-type")
+            extension = mimetypes.guess_extension(content_type)
+        except Exception as e:
+            logger.error("Failed to guess content type: %s", e)
+            extension = None
+
         if not extension:
-            extension = ".png"  # default to .png if content-type is not recognized
+            extension = ".png"
 
         file_path_with_extension = file_path + extension
         logger.info("Downloading image %s to %s", url, file_path_with_extension)
@@ -35,8 +40,8 @@ def download_image(url: str, file_path: str) -> Optional[str]:
         logger.error("Failed to download image. Status code: %s", response.status_code)
 
 
-DEFAULT_REFINE_PROMPT = """Generate a detailed DALL-E prompt to generate an image 
-based on the following description: 
+DEFAULT_REFINE_PROMPT = """Generate a detailed DALL-E prompt to generate an image
+based on the following description:
 ```{text}```
 Your output MUST NOT exceed 3500 characters"""
 

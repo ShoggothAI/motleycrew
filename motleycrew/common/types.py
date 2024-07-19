@@ -36,8 +36,12 @@ AgentType = TypeVar("AgentType")
 class MotleyAgentFactory(Protocol[AgentType]):
     """Type protocol for an agent factory.
 
-    It is a function that accepts tools as an argument
-    and returns an agent instance of an appropriate class.
+    It is a function that accepts tools as an argument and returns an agent instance
+    of an appropriate class.
+
+    Agent factory is typically needed because the agent may need the list of available tools
+    or other context at the time of its creation (e.g. to compose the prompt),
+    and it may not be available at the time of the agent wrapper initialization.
     """
 
     def __call__(

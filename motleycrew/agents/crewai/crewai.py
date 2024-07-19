@@ -56,6 +56,11 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
                 The factory function should accept a dictionary of tools and return
                 a CrewAIAgentWithConfig instance.
 
+                See :class:`motleycrew.common.types.MotleyAgentFactory` for more details.
+
+                Alternatively, you can use the :meth:`from_agent` method
+                to wrap an existing CrewAIAgentWithConfig.
+
             tools: Tools to add to the agent.
 
             output_handler: Output handler for the agent.

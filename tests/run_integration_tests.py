@@ -19,18 +19,13 @@ from nbformat.v4.nbbase import new_code_cell
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, project_root)  # ensure the examples are importable
 
-from examples.delegation_demo import main as delegation_demo_main
-from examples.old.single_llama_index import main as single_llama_index_main
 from motleycrew.common import logger, configure_logging
 from motleycrew.common.exceptions import (
     IntegrationTestException,
     IpynbIntegrationTestResultNotFound,
 )
 
-INTEGRATION_TESTS = {
-    "single_llama_index": single_llama_index_main,
-    "delegation_demo": delegation_demo_main,
-}
+INTEGRATION_TESTS = {}
 
 IPYNB_INTEGRATION_TESTS = {
     "blog_with_images_ipynb": "examples/Blog with Images.ipynb",

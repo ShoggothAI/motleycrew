@@ -1,18 +1,16 @@
-from pathlib import Path
+import logging
 import os
 import sys
+from pathlib import Path
 
 from dotenv import load_dotenv
-import logging
-
-
 from langchain_community.tools import ShellTool
-from motleycrew.agents.crewai import CrewAIMotleyAgent
+from motleycache import logger
+
+from motleycrew.agents.langchain.tool_calling_react import ReActToolCallingMotleyAgent
 from motleycrew.common import configure_logging
 from motleycrew.tasks import SimpleTask
-from motleycache import logger
 from motleycrew.tools.code.aider_tool import AiderTool
-
 
 logger.setLevel(logging.INFO)
 WORKING_DIR = Path(os.path.realpath("."))
@@ -34,22 +32,15 @@ except ImportError:
 def main():
     crew = MotleyCrew()
 
-    git_repo_path = (
-        r"../../motleycrew-code-generation-example"  # cloned repository path
-    )
+    git_repo_path = r"../../motleycrew-code-generation-example"  # cloned repository path
     tests_file = os.path.join(git_repo_path, "test_math_functions.py")
     target_files = [tests_file]
 
-    aider_tool = AiderTool(
-        fnames=target_files, git_dname=git_repo_path, auto_commits=False
-    )
+    aider_tool = AiderTool(fnames=target_files, git_dname=git_repo_path, auto_commits=False)
     shell_tool = ShellTool()
 
-    developer = CrewAIMotleyAgent(
-        role="Software Engineer",
-        goal="Writing unit tests",
-        backstory="You are a lead software engineer working in a big tech company.",
-        delegation=False,
+    developer = ReActToolCallingMotleyAgent(
+        prompt_prefix="You are a lead software engineer working in a big tech company.",
         verbose=True,
         tools=[aider_tool, shell_tool],
     )

@@ -19,18 +19,13 @@ from nbformat.v4.nbbase import new_code_cell
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, project_root)  # ensure the examples are importable
 
-from examples.delegation_demo import main as delegation_demo_main
-from examples.old.single_llama_index import main as single_llama_index_main
 from motleycrew.common import logger, configure_logging
 from motleycrew.common.exceptions import (
     IntegrationTestException,
     IpynbIntegrationTestResultNotFound,
 )
 
-INTEGRATION_TESTS = {
-    "single_llama_index": single_llama_index_main,
-    "delegation_demo": delegation_demo_main,
-}
+INTEGRATION_TESTS = {}
 
 IPYNB_INTEGRATION_TESTS = {
     "blog_with_images_ipynb": "examples/Blog with Images.ipynb",
@@ -72,10 +67,11 @@ def get_args_parser():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
-        "--test-name",
+        "--test-names",
         type=str,
         choices=ALL_INTEGRATION_TESTS.keys(),
-        help="Name of the test to run (leave empty to run all tests)",
+        nargs="+",
+        help="Names of the tests to run (leave empty to run all tests)",
         default=None,
     )
     parser.add_argument("--cache-dir", type=str, help="Cache directory", default=DEFAULT_CACHE_DIR)
@@ -204,7 +200,7 @@ def run_integration_tests(
     cache_dir: str,
     golden_dir: str,
     update_golden: bool = False,
-    test_name: Optional[str] = None,
+    test_names: Optional[list[str]] = None,
     minimal_only: bool = False,
 ):
     failed_tests = {}
@@ -223,7 +219,7 @@ def run_integration_tests(
         integration_tests[integration_test_key] = test_value
 
     for current_test_name, test_fn in integration_tests.items():
-        if test_name is not None and test_name != current_test_name:
+        if test_names and current_test_name not in test_names:
             continue
 
         logger.info("Running test: %s", current_test_name)
@@ -292,7 +288,7 @@ def main():
         cache_dir=args.cache_dir,
         golden_dir=args.golden_dir,
         update_golden=args.update_golden,
-        test_name=args.test_name,
+        test_names=args.test_names,
         minimal_only=args.minimal_only,
     )
 

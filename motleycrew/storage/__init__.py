@@ -1,3 +1,5 @@
+"""Graph storage."""
+
 from .graph_node import MotleyGraphNode
 from .graph_node import MotleyGraphNodeType
 

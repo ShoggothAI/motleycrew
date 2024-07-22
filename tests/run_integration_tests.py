@@ -12,7 +12,7 @@ from typing import Optional
 
 import nbformat
 from dotenv import load_dotenv
-from motleycache import enable_cache, set_cache_location, set_strong_cache, set_cache_blacklist
+from motleycache import set_cache_location, set_strong_cache
 from nbconvert.preprocessors import ExecutePreprocessor
 from nbformat.v4.nbbase import new_code_cell
 
@@ -146,10 +146,13 @@ def run_ipynb(ipynb_path: str, strong_cache: bool = False, cache_sub_dir: str = 
             new_code_cell(
                 "from motleycache.caching import enable_cache, disable_cache, set_cache_location"
             ),
-            new_code_cell("from motleycache import set_strong_cache"),
+            new_code_cell("from motleycache import set_strong_cache, set_cache_blacklist"),
             new_code_cell("enable_cache()"),
             new_code_cell("set_strong_cache({})".format(str_strong_cache)),
             new_code_cell("set_cache_location(r'{}')".format(cache_sub_dir)),
+            new_code_cell(
+                "set_cache_blacklist(['*openaipublic.blob.core.windows.net/encodings*'])"
+            ),
         ]
         for cell in reversed(cells):
             nb.cells.insert(0, cell)
@@ -282,8 +285,6 @@ def main():
     parser = get_args_parser()
     args = parser.parse_args()
 
-    enable_cache()
-    set_cache_blacklist(["*openaipublic.blob.core.windows.net/encodings*"])
     run_integration_tests(
         cache_dir=args.cache_dir,
         golden_dir=args.golden_dir,

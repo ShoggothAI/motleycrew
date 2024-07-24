@@ -7,6 +7,7 @@ Usage
 
    quickstart
    key_concepts
+   agents
    knowledge_graph
    another_llm
    caching_observability

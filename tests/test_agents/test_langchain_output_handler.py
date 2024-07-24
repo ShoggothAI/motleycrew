@@ -2,7 +2,7 @@ import pytest
 from langchain_core.agents import AgentFinish, AgentAction
 
 from motleycrew.agents import MotleyOutputHandler
-from motleycrew.agents.langchain.tool_calling_react import ReActToolCallingAgent
+from motleycrew.agents.langchain.tool_calling_react import ReActToolCallingMotleyAgent
 from motleycrew.agents.parent import DirectOutput
 from motleycrew.common.exceptions import InvalidOutput, OutputHandlerMaxIterationsExceeded
 from tests.test_agents import MockTool
@@ -37,7 +37,7 @@ def fake_agent_take_next_step(
 
 @pytest.fixture
 def agent():
-    agent = ReActToolCallingAgent(
+    agent = ReActToolCallingMotleyAgent(
         tools=[MockTool()],
         verbose=True,
         chat_history=True,

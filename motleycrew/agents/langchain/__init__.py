@@ -1,4 +1,10 @@
 from .langchain import LangchainMotleyAgent
 
-from .react import ReActMotleyAgent
-from .tool_calling_react import ReActToolCallingAgent
+from .legacy_react import LegacyReActMotleyAgent
+from .tool_calling_react import ReActToolCallingMotleyAgent
+
+__all__ = [
+    "LangchainMotleyAgent",
+    "LegacyReActMotleyAgent",
+    "ReActToolCallingMotleyAgent",
+]

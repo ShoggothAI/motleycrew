@@ -59,6 +59,9 @@ class LlamaIndexMotleyAgent(MotleyAgentParent):
 
                 See :class:`motleycrew.common.types.MotleyAgentFactory` for more details.
 
+                Alternatively, you can use the :meth:`from_agent` method
+                to wrap an existing AgentRunner.
+
             tools: Tools to add to the agent.
 
             output_handler: Output handler for the agent.

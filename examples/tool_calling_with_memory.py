@@ -2,12 +2,9 @@ from dotenv import load_dotenv
 from langchain_community.tools import DuckDuckGoSearchRun
 
 from motleycrew import MotleyCrew
-from motleycrew.agents.langchain.tool_calling_react import ReActToolCallingAgent
+from motleycrew.agents.langchain.tool_calling_react import ReActToolCallingMotleyAgent
 from motleycrew.common import configure_logging
 from motleycrew.tasks import SimpleTask
-
-from motleycrew.common.llms import init_llm
-from motleycrew.common import LLMFramework, LLMFamily
 
 
 def main():
@@ -15,7 +12,7 @@ def main():
 
     tools = [search_tool]
 
-    researcher = ReActToolCallingAgent(
+    researcher = ReActToolCallingMotleyAgent(
         tools=tools,
         verbose=True,
         chat_history=True,

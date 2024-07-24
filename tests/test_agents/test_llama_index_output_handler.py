@@ -1,7 +1,7 @@
 import uuid
 from collections import deque
-import pytest
 
+import pytest
 from langchain_core.tools import StructuredTool
 
 try:
@@ -40,7 +40,7 @@ def fake_run_step(*args, **kwargs):
     output_handler = kwargs.get("output_handler")
     output_handler_input = kwargs.get("output_handler_input")
     if output_handler:
-        output_handler_result = output_handler._run(output_handler_input)
+        output_handler_result = output_handler._run(output_handler_input, config=None)
         task_step_output.output = AgentChatResponse(response=output_handler_result)
 
     return task_step_output

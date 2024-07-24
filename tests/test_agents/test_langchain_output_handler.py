@@ -27,7 +27,7 @@ def fake_agent_take_next_step(
 ):
 
     output_handler = name_to_tool_map.get("output_handler")
-    result = output_handler._run(inputs)
+    result = output_handler._run(inputs, config=None)
 
     if isinstance(result, DirectOutput):
         raise result

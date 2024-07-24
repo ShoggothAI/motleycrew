@@ -1,12 +1,12 @@
-from pathlib import Path
 import os
 import sys
+from pathlib import Path
 
 from dotenv import load_dotenv
 from langchain_community.tools import DuckDuckGoSearchRun
 
 from motleycrew.agents.crewai import CrewAIMotleyAgent
-from motleycrew.agents.langchain.react import ReActMotleyAgent
+from motleycrew.agents.langchain.legacy_react import LegacyReActMotleyAgent
 from motleycrew.common import configure_logging
 from motleycrew.tasks import SimpleTask
 
@@ -38,7 +38,7 @@ def main():
     )
 
     # You can give agents as tools to other agents
-    writer = ReActMotleyAgent(
+    writer = LegacyReActMotleyAgent(
         name="AI writer agent",
         description="You are an experienced writer with a passion for technology.",
         tools=[researcher],

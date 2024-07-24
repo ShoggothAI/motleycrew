@@ -39,7 +39,7 @@ def create_pgsql_linter_tool() -> Tool:
 
     return Tool.from_function(
         func=parse_func,
-        name="PostgreSQL linter tool",
+        name="postgresql_linter",
         description="Tool for validating PostgreSQL code",
         args_schema=PostgreSQLLinterInput,
     )

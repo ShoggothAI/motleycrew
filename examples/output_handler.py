@@ -1,13 +1,15 @@
 from dotenv import load_dotenv
 from langchain_community.tools import DuckDuckGoSearchRun
+from motleycache import enable_cache
 
 from motleycrew import MotleyCrew
-from motleycrew.agents.langchain.tool_calling_react import ReActToolCallingAgent
 from motleycrew.agents import MotleyOutputHandler
+from motleycrew.agents.langchain.tool_calling_react import (
+    ReActToolCallingMotleyAgent,
+)
 from motleycrew.common import configure_logging
-from motleycrew.tasks import SimpleTask
-
 from motleycrew.common.exceptions import InvalidOutput
+from motleycrew.tasks import SimpleTask
 
 
 def main():
@@ -27,7 +29,7 @@ def main():
 
             return {"checked_output": output}
 
-    researcher = ReActToolCallingAgent(
+    researcher = ReActToolCallingMotleyAgent(
         tools=tools,
         verbose=True,
         chat_history=True,
@@ -48,8 +50,6 @@ def main():
 
 
 if __name__ == "__main__":
-    from motleycache import enable_cache
-
     enable_cache()
     configure_logging(verbose=True)
 

@@ -1,3 +1,4 @@
+import functools
 from typing import Callable, Union, Optional, Dict, Any
 
 from langchain.tools import BaseTool
@@ -157,7 +158,7 @@ class MotleyTool(Runnable):
         """
         ensure_module_is_installed("llama_index")
         llama_index_tool = LlamaIndex__FunctionTool.from_defaults(
-            fn=self.tool._run,
+            fn=functools.partial(self.tool._run, config=RunnableConfig()),
             name=self.tool.name,
             description=self.tool.description,
             fn_schema=self.tool.args_schema,

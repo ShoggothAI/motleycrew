@@ -19,7 +19,7 @@ from motleycrew.common.utils import ensure_module_is_installed
 
 
 class ReActLlamaIndexMotleyAgent(LlamaIndexMotleyAgent):
-    """Wrapper for LlamaIndex implementation of ReAct agent."""
+    """Wrapper for the LlamaIndex implementation of ReAct agent."""
 
     def __init__(
         self,

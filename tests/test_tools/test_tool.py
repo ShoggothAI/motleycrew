@@ -2,6 +2,12 @@ import pytest
 
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain.tools import BaseTool
+
+try:
+    from crewai_tools import Tool as CrewAiTool
+except ImportError:
+    CrewAiTool = None
+
 from motleycrew.tools import MotleyTool
 
 
@@ -43,6 +49,18 @@ def llama_index_tool(mock_tool_args_schema):
         name="mock_tool",
         description="mock_description",
         fn_schema=mock_tool_args_schema,
+    )
+
+
+@pytest.fixture
+def crewai_tool(mock_tool_args_schema):
+    if CrewAiTool is None:
+        return None
+    return CrewAiTool(
+        name="mock_tool",
+        description="mock_description",
+        func=mock_tool_function,
+        args_schema=mock_tool_args_schema
     )
 
 
@@ -88,3 +106,21 @@ class TestMotleyTool:
 
         converted_autogen_tool = motley_tool.to_autogen_tool()
         assert converted_autogen_tool(mock_input.get("mock_input")) == motley_tool.invoke(mock_input)
+
+
+    def test_crewai_tool_conversion(self, crewai_tool, mock_input):
+        if crewai_tool is None:
+            return
+
+        motley_tool = MotleyTool.from_supported_tool(crewai_tool)
+        assert isinstance(motley_tool.tool, BaseTool)
+
+        converted_crewai_tool = motley_tool.to_crewai_tool()
+        assert isinstance(converted_crewai_tool, CrewAiTool)
+        assert motley_tool.name == converted_crewai_tool.name
+        assert crewai_tool.name == converted_crewai_tool.name
+        assert (
+                crewai_tool.description == converted_crewai_tool.description
+        )
+        assert crewai_tool.args_schema == converted_crewai_tool.args_schema
+        assert crewai_tool.run(**mock_input) == converted_crewai_tool.run(**mock_input)

@@ -3,8 +3,8 @@ from typing import Any, Optional, Callable, Union, Dict, List, Tuple
 from langchain_core.agents import AgentFinish, AgentAction
 from langchain_core.callbacks import CallbackManagerForChainRun
 from langchain_core.messages import AIMessage
+from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import BaseTool, Tool
-
 from motleycrew.agents.parent import DirectOutput
 from motleycrew.tools import MotleyTool
 
@@ -109,9 +109,9 @@ class LangchainOutputHandlingAgentMixin:
     def _run_tool_direct_decorator(self, func: Callable):
         """Decorator of the tool's _run method, for intercepting a DirectOutput exception"""
 
-        def wrapper(*args, **kwargs):
+        def wrapper(*args, config: RunnableConfig, **kwargs):
             try:
-                result = func(*args, **kwargs)
+                result = func(*args, **kwargs, config=config)
             except DirectOutput as direct_exc:
                 return direct_exc
             return result

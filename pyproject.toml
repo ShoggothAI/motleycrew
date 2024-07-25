@@ -8,7 +8,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = ">=3.10,<=3.13"
 langchain = "^0.2"
-crewai = { version = "^0.36", optional = true }
+crewai = { version = "^0.41", optional = true }
 setuptools = "^67.6.2"
 duckduckgo-search = "5.3.0b4"
 llama-index = { version = "^0.10.27", optional = true }

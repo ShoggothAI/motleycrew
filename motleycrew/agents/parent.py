@@ -14,7 +14,6 @@ from langchain_core.prompts.chat import ChatPromptTemplate, HumanMessage, System
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import StructuredTool
 from langchain_core.tools import Tool
-
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
 from motleycrew.agents.output_handler import MotleyOutputHandler
 from motleycrew.common import MotleyAgentFactory, MotleySupportedTool
@@ -63,6 +62,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent, ABC):
         tools: Sequence[MotleySupportedTool] | None = None,
         output_handler: MotleySupportedTool | None = None,
         verbose: bool = False,
+        agent_name: str | None = None,
     ):
         """
         Args:
@@ -193,7 +193,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent, ABC):
 
             try:
                 iteration += 1
-                output = self.output_handler._run(*args, **kwargs)
+                output = self.output_handler._run(*args, **kwargs, config=RunnableConfig())
             except exceptions_to_handle as exc:
                 if iteration <= max_iterations:
                     return f"{exc.__class__.__name__}: {str(exc)}"

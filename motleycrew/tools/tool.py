@@ -1,5 +1,5 @@
-from typing import Callable
-from typing import Union, Optional, Dict, Any
+import functools
+from typing import Callable, Union, Optional, Dict, Any
 
 from langchain.tools import BaseTool
 from langchain_core.runnables import Runnable, RunnableConfig
@@ -10,6 +10,13 @@ try:
 except ImportError:
     LlamaIndex__BaseTool = None
     LlamaIndex__FunctionTool = None
+
+try:
+    from crewai_tools import BaseTool as CrewAI__BaseTool
+    from crewai_tools import Tool as Crewai__Tool
+except ImportError:
+    CrewAI__BaseTool = None
+    Crewai__Tool = None
 
 from motleycrew.common.utils import ensure_module_is_installed
 from motleycrew.common.types import MotleySupportedTool
@@ -91,6 +98,25 @@ class MotleyTool(Runnable):
         return MotleyTool.from_langchain_tool(langchain_tool=langchain_tool)
 
     @staticmethod
+    def from_crewai_tool(crewai_tool: CrewAI__BaseTool) -> "MotleyTool":
+        """Create a MotleyTool from a CrewAI tool.
+
+        Args:
+            crewai_tool: CrewAI tool to convert.
+
+        Returns:
+            MotleyTool instance.
+        """
+        ensure_module_is_installed("crewai_tools")
+        langchain_tool = crewai_tool.to_langchain()
+
+        # change tool name punctuation
+        for old_symbol, new_symbol in [(" ", "_"), ("'", "")]:
+            langchain_tool.name = langchain_tool.name.replace(old_symbol, new_symbol)
+
+        return MotleyTool.from_langchain_tool(langchain_tool=langchain_tool)
+
+    @staticmethod
     def from_supported_tool(tool: MotleySupportedTool) -> "MotleyTool":
         """Create a MotleyTool from any supported tool type.
 
@@ -98,7 +124,6 @@ class MotleyTool(Runnable):
             tool: Tool of any supported type.
                 Currently, we support tools from Langchain, LlamaIndex,
                 as well as motleycrew agents.
-
         Returns:
             MotleyTool instance.
         """
@@ -110,6 +135,8 @@ class MotleyTool(Runnable):
             return MotleyTool.from_llama_index_tool(tool)
         elif isinstance(tool, MotleyAgentAbstractParent):
             return tool.as_tool()
+        elif CrewAI__BaseTool is not None and isinstance(tool, CrewAI__BaseTool):
+            return MotleyTool.from_crewai_tool(tool)
         else:
             raise Exception(
                 f"Tool type `{type(tool)}` is not supported, please convert to MotleyTool first"
@@ -131,7 +158,7 @@ class MotleyTool(Runnable):
         """
         ensure_module_is_installed("llama_index")
         llama_index_tool = LlamaIndex__FunctionTool.from_defaults(
-            fn=self.tool._run,
+            fn=functools.partial(self.tool._run, config=RunnableConfig()),
             name=self.tool.name,
             description=self.tool.description,
             fn_schema=self.tool.args_schema,
@@ -159,3 +186,18 @@ class MotleyTool(Runnable):
             return self.invoke({field_name: input})
 
         return autogen_tool_fn
+
+    def to_crewai_tool(self) -> CrewAI__BaseTool:
+        """Description
+
+        Returns:
+            Crewai__BaseTool:
+        """
+        ensure_module_is_installed("crewai_tools")
+        crewai_tool = Crewai__Tool(
+            name=self.tool.name,
+            description=self.tool.description,
+            func=self.tool._run,
+            args_schema=self.tool.args_schema,
+        )
+        return crewai_tool

@@ -6,6 +6,7 @@ from langchain.agents import AgentExecutor
 from langchain_core.chat_history import InMemoryChatMessageHistory
 from langchain_core.runnables import RunnableConfig
 from langchain_core.runnables.history import RunnableWithMessageHistory, GetSessionHistoryCallable
+from langchain_core.prompts.chat import ChatPromptTemplate
 
 from motleycrew.agents.mixins import LangchainOutputHandlingAgentMixin
 from motleycrew.agents.parent import MotleyAgentParent
@@ -21,7 +22,7 @@ class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin)
         self,
         description: str | None = None,
         name: str | None = None,
-        prompt_prefix: str | None = None,
+        prompt_prefix: str | ChatPromptTemplate | None = None,
         agent_factory: MotleyAgentFactory[AgentExecutor] | None = None,
         tools: Sequence[MotleySupportedTool] | None = None,
         output_handler: MotleySupportedTool | None = None,

@@ -55,7 +55,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent, ABC):
 
     def __init__(
         self,
-        prompt_prefix: str | None = None,
+        prompt_prefix: str | ChatPromptTemplate | None = None,
         description: str | None = None,
         name: str | None = None,
         agent_factory: MotleyAgentFactory | None = None,

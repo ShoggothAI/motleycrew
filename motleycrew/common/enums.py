@@ -5,20 +5,28 @@ class LLMFamily:
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
 
+    ALL = {OPENAI, ANTHROPIC}
+
 
 class LLMFramework:
     LANGCHAIN = "langchain"
     LLAMA_INDEX = "llama_index"
 
+    ALL = {LANGCHAIN, LLAMA_INDEX}
+
 
 class GraphStoreType:
     KUZU = "kuzu"
+
+    ALL = {KUZU}
 
 
 class TaskUnitStatus:
     PENDING = "pending"
     RUNNING = "running"
     DONE = "done"
+
+    ALL = {PENDING, RUNNING, DONE}
 
 
 class LunaryRunType:
@@ -28,12 +36,16 @@ class LunaryRunType:
     CHAIN = "chain"
     EMBED = "embed"
 
+    ALL = {LLM, AGENT, TOOL, CHAIN, EMBED}
+
 
 class LunaryEventName:
     START = "start"
     END = "end"
     UPDATE = "update"
     ERROR = "error"
+
+    ALL = {START, END, UPDATE, ERROR}
 
 
 class AsyncBackend:
@@ -48,3 +60,5 @@ class AsyncBackend:
     ASYNCIO = "asyncio"
     THREADING = "threading"
     NONE = "none"
+
+    ALL = {ASYNCIO, THREADING, NONE}

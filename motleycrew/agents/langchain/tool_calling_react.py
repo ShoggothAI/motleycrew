@@ -101,7 +101,7 @@ class ReActToolCallingMotleyAgent(LangchainMotleyAgent):
         tools: Sequence[MotleySupportedTool],
         description: str | None = None,
         name: str | None = None,
-        prompt_prefix: str | None = None,
+        prompt_prefix: str | ChatPromptTemplate | None = None,
         prompt: ChatPromptTemplate | None = None,
         chat_history: bool | GetSessionHistoryCallable = True,
         output_handler: MotleySupportedTool | None = None,

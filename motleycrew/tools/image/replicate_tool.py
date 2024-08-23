@@ -88,7 +88,8 @@ def create_replicate_image_generator_langchain_tool(
 
 
 if __name__ == "__main__":
-    tool = ReplicateImageGeneratorTool("flux-pro", "C:\\Users\\Egor\\Downloads", aspect_ratio="3:2")
+    image_dir = os.path.join(os.path.expanduser("~"), "images")
+    tool = ReplicateImageGeneratorTool("flux-pro", image_dir, aspect_ratio="3:2")
     output = tool.invoke(
         "A beautiful sunset over the mountains, with a dragon flying into the sunset, photorealistic style."
     )

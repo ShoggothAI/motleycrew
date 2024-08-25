@@ -5,6 +5,7 @@ from motleycrew.common.enums import LLMFamily
 class Defaults:
     """Default values for various settings."""
 
+    DEFAULT_REACT_AGENT_MAX_ITERATIONS = 15
     DEFAULT_LLM_FAMILY = LLMFamily.OPENAI
     DEFAULT_LLM_NAME = "gpt-4o"
     DEFAULT_LLM_TEMPERATURE = 0.0

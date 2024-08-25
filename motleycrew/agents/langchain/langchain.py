@@ -27,6 +27,7 @@ class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin)
         tools: Sequence[MotleySupportedTool] | None = None,
         output_handler: MotleySupportedTool | None = None,
         chat_history: bool | GetSessionHistoryCallable = True,
+        input_as_messages: bool = False,
         verbose: bool = False,
     ):
         """
@@ -66,6 +67,8 @@ class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin)
                 See :class:`langchain_core.runnables.history.RunnableWithMessageHistory`
                 for more details.
 
+            input_as_messages: Whether the agent expects a list of messages as input instead of a single string.
+
             verbose: Whether to log verbose output.
         """
         super().__init__(
@@ -85,6 +88,8 @@ class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin)
             self.get_session_history_callable = lambda _: chat_history
         else:
             self.get_session_history_callable = chat_history
+
+        self.input_as_messages = input_as_messages
 
     def materialize(self):
         """Materialize the agent and wrap it in RunnableWithMessageHistory if needed."""
@@ -142,7 +147,7 @@ class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin)
         config: Optional[RunnableConfig] = None,
         **kwargs: Any,
     ) -> Any:
-        prompt = self.prepare_for_invocation(input=input)
+        prompt = self.prepare_for_invocation(input=input, prompt_as_messages=self.input_as_messages)
 
         config = add_default_callbacks_to_langchain_config(config)
         if self.get_session_history_callable:

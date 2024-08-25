@@ -1,15 +1,17 @@
 from __future__ import annotations
 
-from typing import Sequence, Optional
+from typing import Sequence, Optional, Callable
 
 from langchain.agents import AgentExecutor
 from langchain.agents.format_scratchpad.tools import format_to_tool_messages
 from langchain.agents.output_parsers.tools import ToolsAgentOutputParser
 from langchain_core.language_models import BaseChatModel
 from langchain_core.prompts.chat import ChatPromptTemplate
-from langchain_core.runnables import Runnable, RunnablePassthrough
+from langchain_core.runnables import Runnable, RunnablePassthrough, RunnableLambda
 from langchain_core.runnables.history import GetSessionHistoryCallable
 from langchain_core.tools import BaseTool
+
+from motleycrew.common.utils import print_passthrough
 
 try:
     from langchain_anthropic import ChatAnthropic
@@ -21,7 +23,7 @@ from motleycrew.agents.langchain.tool_calling_react_prompts import (
     ToolCallingReActPromptsForOpenAI,
     ToolCallingReActPromptsForAnthropic,
 )
-from motleycrew.common import LLMFramework
+from motleycrew.common import LLMFramework, Defaults
 from motleycrew.common import MotleySupportedTool
 from motleycrew.common.llms import init_llm
 from motleycrew.tools import MotleyTool
@@ -63,6 +65,7 @@ def create_tool_calling_react_agent(
     tools: Sequence[BaseTool],
     prompt: ChatPromptTemplate,
     output_handler: BaseTool | None = None,
+    intermediate_steps_processor: Callable | None = None,
 ) -> Runnable:
     prompt = prompt.partial(
         tools=render_text_description(list(tools)),
@@ -76,12 +79,18 @@ def create_tool_calling_react_agent(
 
     llm_with_tools = llm.bind_tools(tools=tools_for_llm)
 
+    if not intermediate_steps_processor:
+        intermediate_steps_processor = lambda x: x
+
     agent = (
         RunnablePassthrough.assign(
-            agent_scratchpad=lambda x: format_to_tool_messages(x["intermediate_steps"]),
+            agent_scratchpad=lambda x: format_to_tool_messages(
+                intermediate_steps_processor(x["intermediate_steps"])
+            ),
             additional_notes=lambda x: x.get("additional_notes") or [],
         )
         | prompt
+        | RunnableLambda(print_passthrough)
         | llm_with_tools
         | ToolsAgentOutputParser()
     )
@@ -108,6 +117,8 @@ class ReActToolCallingMotleyAgent(LangchainMotleyAgent):
         handle_parsing_errors: bool = True,
         handle_tool_errors: bool = True,
         llm: BaseChatModel | None = None,
+        max_iterations: int | None = Defaults.DEFAULT_REACT_AGENT_MAX_ITERATIONS,
+        intermediate_steps_processor: Callable | None = None,
         verbose: bool = False,
     ):
         """
@@ -128,6 +139,9 @@ class ReActToolCallingMotleyAgent(LangchainMotleyAgent):
             handle_tool_errors: Whether to handle tool errors.
                 If True, `handle_tool_error` and `handle_validation_error` in all tools
                 are set to True.
+            max_iterations: The maximum number of agent iterations.
+            intermediate_steps_processor: Function that modifies the intermediate steps array
+                in some way before each agent iteration.
             llm: Language model to use.
             verbose: Whether to log verbose output.
 
@@ -162,6 +176,7 @@ class ReActToolCallingMotleyAgent(LangchainMotleyAgent):
                 tools=tools_for_langchain,
                 prompt=prompt,
                 output_handler=output_handler_for_langchain,
+                intermediate_steps_processor=intermediate_steps_processor,
             )
 
             if output_handler_for_langchain:
@@ -177,6 +192,7 @@ class ReActToolCallingMotleyAgent(LangchainMotleyAgent):
                 tools=tools_for_langchain,
                 handle_parsing_errors=handle_parsing_errors,
                 verbose=verbose,
+                max_iterations=max_iterations,
             )
             return agent_executor
 
@@ -188,5 +204,6 @@ class ReActToolCallingMotleyAgent(LangchainMotleyAgent):
             tools=tools,
             output_handler=output_handler,
             chat_history=chat_history,
+            input_as_messages=True,
             verbose=verbose,
         )

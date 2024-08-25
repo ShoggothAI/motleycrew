@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "motleycrew"
-version = "0.1.11"
+version = "0.1.12"
 description = "A lightweight agent interaction framework."
 authors = ["MotleyCrew <github@motleycrew.ai>"]
 readme = "README.md"

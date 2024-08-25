@@ -25,7 +25,7 @@ class ToolCallingReActPrompts:
                 MessagesPlaceholder(variable_name="chat_history", optional=True),
                 ("system", self.main_instruction),
                 MessagesPlaceholder(variable_name="example_messages", optional=True),
-                ("user", "{input}"),
+                MessagesPlaceholder(variable_name="input"),
                 MessagesPlaceholder(variable_name="agent_scratchpad"),
                 MessagesPlaceholder(variable_name="additional_notes", optional=True),
             ]
@@ -64,14 +64,14 @@ Don't stop this until you are certain that you have enough information to answer
 Begin!
 """
 
-    output_instruction_with_output_handler = """
+    output_instruction_without_output_handler = """
 If you have sufficient information to answer the question, your reply must look like
 ```
 Final Answer: [the final answer to the original input question]
 ```
 but without the backticks."""
 
-    output_instruction_without_output_handler = """
+    output_instruction_with_output_handler = """
 If you have sufficient information to answer the question, you must call the output handler tool.
 
 NEVER return the final answer directly, but always do it by CALLING this tool:

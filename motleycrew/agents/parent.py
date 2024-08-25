@@ -10,6 +10,7 @@ from typing import (
     Union,
 )
 
+from langchain_core.messages import BaseMessage
 from langchain_core.prompts.chat import ChatPromptTemplate, HumanMessage, SystemMessage
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import StructuredTool
@@ -108,13 +109,14 @@ class MotleyAgentParent(MotleyAgentAbstractParent, ABC):
         return self.__repr__()
 
     def compose_prompt(
-        self, input_dict: dict, prompt: ChatPromptTemplate | str
-    ) -> Union[str, ChatPromptTemplate]:
+        self, input_dict: dict, prompt: ChatPromptTemplate | str, as_messages: bool = False
+    ) -> Union[str, list[BaseMessage]]:
         """Compose the agent's prompt from the prompt prefix and the provided prompt.
 
         Args:
             input_dict: The input dictionary to the agent.
             prompt: The prompt to be added to the agent's prompt.
+            as_messages: Whether the prompt should be returned as a Langchain messages list instead of a single string.
 
         Returns:
             The composed prompt.
@@ -144,6 +146,9 @@ class MotleyAgentParent(MotleyAgentAbstractParent, ABC):
 
             else:
                 raise ValueError("Prompt must be a string or a ChatPromptTemplate")
+
+        if as_messages:
+            return prompt_messages
 
         # TODO: pass the unformatted messages list to agents that can handle it
         prompt = "\n\n".join([m.content for m in prompt_messages]) + "\n"
@@ -237,13 +242,15 @@ class MotleyAgentParent(MotleyAgentAbstractParent, ABC):
         else:
             self._agent = self.agent_factory(tools=self.tools)
 
-    def prepare_for_invocation(self, input: dict) -> str:
+    def prepare_for_invocation(self, input: dict, prompt_as_messages: bool = False) -> str:
         """Prepare the agent for invocation by materializing it and composing the prompt.
 
         Should be called in the beginning of the agent's invoke method.
 
         Args:
             input: the input to the agent
+            prompt_as_messages: Whether the prompt should be returned as a Langchain messages list
+                instead of a single string.
 
         Returns:
             str: the composed prompt
@@ -254,7 +261,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent, ABC):
             self.output_handler.agent = self
             self.output_handler.agent_input = input
 
-        prompt = self.compose_prompt(input, input.get("prompt"))
+        prompt = self.compose_prompt(input, input.get("prompt"), as_messages=prompt_as_messages)
         return prompt
 
     def add_tools(self, tools: Sequence[MotleySupportedTool]):

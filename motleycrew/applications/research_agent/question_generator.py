@@ -80,21 +80,17 @@ def create_question_generator_langchain_tool(
     llm: Optional[BaseLanguageModel] = None,
     prompt: str | BasePromptTemplate = None,
 ):
-    if llm is None:
-        llm = init_llm(llm_framework=LLMFramework.LANGCHAIN)
-
+    llm = llm or init_llm(llm_framework=LLMFramework.LANGCHAIN)
     llm.bind(json_mode=True)
 
-    if prompt is None:
-        prompt = default_prompt
-    elif isinstance(prompt, str):
+    prompt = prompt or default_prompt
+    if isinstance(prompt, str):
         prompt = PromptTemplate.from_template(prompt)
 
     assert isinstance(prompt, BasePromptTemplate), "Prompt must be a string or a BasePromptTemplate"
 
     def insert_questions(input_dict) -> None:
-        questions_raw = input_dict["subquestions"].content
-        questions = [q.strip() for q in questions_raw.split("\n") if len(q.strip()) > 1]
+        questions = [q.strip() for q in input_dict["subquestions"].content.split("\n") if q.strip()]
         for q in questions:
             logger.info("Inserting question: %s", q)
             subquestion = graph.insert_node(Question(question=q))

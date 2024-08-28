@@ -54,7 +54,7 @@ jobs:
       run: poetry install --no-interaction --all-extras --with dev
 
     - name: Install extra dependencies
-      run: pip install -r requirements-extra.txt
+      run: poetry run pip install -r requirements-extra.txt
 
     - name: Run tests
       run: poetry run pytest

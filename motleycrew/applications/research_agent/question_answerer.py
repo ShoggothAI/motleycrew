@@ -60,10 +60,9 @@ def get_subquestions(graph: MotleyGraphStore, question: Question) -> list[Questi
         "RETURN n2"
     ).format(Question.get_label(), Question.get_label())
 
-    query_result = graph.run_cypher_query(
+    return graph.run_cypher_query(
         query, parameters={"question_id": question.id}, container=Question
     )
-    return query_result
 
 
 def create_answer_question_langchain_tool(
@@ -71,8 +70,7 @@ def create_answer_question_langchain_tool(
     answer_length: int,
     prompt: str | BasePromptTemplate = None,
 ) -> Tool:
-    if prompt is None:
-        prompt = _default_prompt
+    prompt = prompt or _default_prompt
 
     subquestion_answerer = LLMTool(
         prompt=prompt.partial(answer_length=str(answer_length)),
@@ -94,10 +92,10 @@ def create_answer_question_langchain_tool(
         question = input_dict["question"]
         subquestions = get_subquestions(graph=graph, question=question)
 
-        notes = "\n".join(question.context)
-        notes += "\n\n"
-        for question in subquestions:
-            notes += f"Q: {question.question}\nA: {question.answer}\n\n"
+        notes = "\n".join(question.context or [])
+        if notes:
+            notes += "\n\n"
+        notes += "\n\n".join(f"Q: {q.question}\nA: {q.answer}" for q in subquestions)
         return notes
 
     @chain

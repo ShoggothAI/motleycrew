@@ -52,8 +52,7 @@ class QuestionPrioritizerInput(BaseModel, arbitrary_types_allowed=True):
 def create_question_prioritizer_langchain_tool(
     prompt: str | BasePromptTemplate = None,
 ) -> StructuredTool:
-    if prompt is None:
-        prompt = _default_prompt
+    prompt = prompt or _default_prompt
 
     question_prioritizer = LLMTool(
         prompt=prompt,
@@ -70,7 +69,7 @@ def create_question_prioritizer_langchain_tool(
     def format_unanswered_questions(input_dict: dict):
         unanswered_questions: list[Question] = input_dict["unanswered_questions"]
         return "\n".join(
-            "{}. {}".format(i + 1, question.question)
+            f"{i + 1}. {question.question}"
             for i, question in enumerate(unanswered_questions)
         )
 

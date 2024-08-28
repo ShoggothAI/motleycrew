@@ -1,12 +1,12 @@
 [tool.poetry]
 name = "motleycrew"
-version = "0.1.12"
+version = "0.1.13"
 description = "A lightweight agent interaction framework."
 authors = ["MotleyCrew <github@motleycrew.ai>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.10,<=3.13"
+python = "^3.10"
 langchain = "^0.2"
 crewai = { version = "^0.41", optional = true }
 setuptools = "^67.6.2"

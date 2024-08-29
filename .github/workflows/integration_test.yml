@@ -53,6 +53,9 @@ jobs:
     - name: Install dependencies
       run: poetry install --no-interaction --all-extras
 
+    - name: Install extra dependencies
+      run: poetry run pip install -r requirements-extra.txt
+
     - name: Run integration tests
       env:
         OPENAI_API_KEY: fake_key_1337

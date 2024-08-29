@@ -1,11 +1,10 @@
 import pytest
-
 from langchain_openai import ChatOpenAI
 from llama_index.llms.openai import OpenAI
 
-from motleycrew.common.llms import init_llm
 from motleycrew.common import LLMFamily, LLMFramework
 from motleycrew.common.exceptions import LLMFamilyNotSupported
+from motleycrew.common.llms import init_llm
 
 
 @pytest.mark.parametrize(

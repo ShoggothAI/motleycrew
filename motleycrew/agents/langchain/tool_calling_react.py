@@ -119,6 +119,7 @@ class ReActToolCallingMotleyAgent(LangchainMotleyAgent):
         llm: BaseChatModel | None = None,
         max_iterations: int | None = Defaults.DEFAULT_REACT_AGENT_MAX_ITERATIONS,
         intermediate_steps_processor: Callable | None = None,
+        runnable_config: RunnableConfig | None = None,
         verbose: bool = False,
     ):
         """
@@ -139,10 +140,12 @@ class ReActToolCallingMotleyAgent(LangchainMotleyAgent):
             handle_tool_errors: Whether to handle tool errors.
                 If True, `handle_tool_error` and `handle_validation_error` in all tools
                 are set to True.
+            llm: Language model to use.
             max_iterations: The maximum number of agent iterations.
             intermediate_steps_processor: Function that modifies the intermediate steps array
                 in some way before each agent iteration.
-            llm: Language model to use.
+            runnable_config: Default Langchain config to use when invoking the agent.
+                It can be used to add callbacks, metadata, etc.
             verbose: Whether to log verbose output.
 
         Prompt:
@@ -205,5 +208,6 @@ class ReActToolCallingMotleyAgent(LangchainMotleyAgent):
             output_handler=output_handler,
             chat_history=chat_history,
             input_as_messages=True,
+            runnable_config=runnable_config,
             verbose=verbose,
         )

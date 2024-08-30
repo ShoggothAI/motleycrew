@@ -9,4 +9,5 @@ Examples
    examples/research_agent
    examples/validating_agent_output
    examples/advanced_output_handling
+   examples/streaming_agent_output
    autogen

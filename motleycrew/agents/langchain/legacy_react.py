@@ -40,6 +40,7 @@ class LegacyReActMotleyAgent(LangchainMotleyAgent):
         handle_parsing_errors: bool = True,
         handle_tool_errors: bool = True,
         llm: BaseLanguageModel | None = None,
+        runnable_config: RunnableConfig | None = None,
         verbose: bool = False,
     ):
         """
@@ -54,6 +55,8 @@ class LegacyReActMotleyAgent(LangchainMotleyAgent):
             handle_parsing_errors: Whether to handle parsing errors.
             handle_tool_errors: Whether to handle tool errors.
             llm: Language model to use.
+            runnable_config: Default Langchain config to use when invoking the agent.
+                It can be used to add callbacks, metadata, etc.
             verbose: Whether to log verbose output.
         """
         if prompt is None:
@@ -96,5 +99,6 @@ class LegacyReActMotleyAgent(LangchainMotleyAgent):
             tools=tools,
             output_handler=output_handler,
             chat_history=chat_history,
+            runnable_config=runnable_config,
             verbose=verbose,
         )

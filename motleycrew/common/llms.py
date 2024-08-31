@@ -74,11 +74,49 @@ def llama_index_anthropic_llm(
     return Anthropic(model=llm_name, temperature=llm_temperature, **kwargs)
 
 
+def langchain_replicate_llm(
+    llm_name: str = Defaults.DEFAULT_LLM_NAME,
+    llm_temperature: float = Defaults.DEFAULT_LLM_TEMPERATURE,
+    **kwargs,
+):
+    """Initialize a Replicate LLM client for use with Langchain.
+
+    Args:
+        llm_name: Name of the LLM in Replicate API.
+        llm_temperature: Temperature for the LLM.
+    """
+    from langchain_community.llms import Replicate
+
+    model_kwargs = kwargs.pop("model_kwargs", {})
+    model_kwargs["temperature"] = llm_temperature
+
+    return Replicate(model=llm_name, model_kwargs=model_kwargs, **kwargs)
+
+
+def llama_index_replicate_llm(
+    llm_name: str = Defaults.DEFAULT_LLM_NAME,
+    llm_temperature: float = Defaults.DEFAULT_LLM_TEMPERATURE,
+    **kwargs,
+):
+    """Initialize a Replicate LLM client for use with LlamaIndex.
+
+    Args:
+        llm_name: Name of the LLM in Replicate API.
+        llm_temperature: Temperature for the LLM.
+    """
+    ensure_module_is_installed("llama_index")
+    from llama_index.llms.replicate import Replicate
+
+    return Replicate(model=llm_name, temperature=llm_temperature, **kwargs)
+
+
 Defaults.LLM_MAP = {
     (LLMFramework.LANGCHAIN, LLMFamily.OPENAI): langchain_openai_llm,
     (LLMFramework.LLAMA_INDEX, LLMFamily.OPENAI): llama_index_openai_llm,
     (LLMFramework.LANGCHAIN, LLMFamily.ANTHROPIC): langchain_anthropic_llm,
     (LLMFramework.LLAMA_INDEX, LLMFamily.ANTHROPIC): llama_index_anthropic_llm,
+    (LLMFramework.LANGCHAIN, LLMFamily.REPLICATE): langchain_replicate_llm,
+    (LLMFramework.LLAMA_INDEX, LLMFamily.REPLICATE): llama_index_replicate_llm,
 }
 
 

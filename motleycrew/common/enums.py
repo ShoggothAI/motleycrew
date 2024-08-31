@@ -4,8 +4,9 @@
 class LLMFamily:
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
+    REPLICATE = "replicate"
 
-    ALL = {OPENAI, ANTHROPIC}
+    ALL = {OPENAI, ANTHROPIC, REPLICATE}
 
 
 class LLMFramework:

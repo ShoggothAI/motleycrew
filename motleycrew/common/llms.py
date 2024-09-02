@@ -110,6 +110,105 @@ def llama_index_replicate_llm(
     return Replicate(model=llm_name, temperature=llm_temperature, **kwargs)
 
 
+def langchain_together_llm(
+    llm_name: str = Defaults.DEFAULT_LLM_NAME,
+    llm_temperature: float = Defaults.DEFAULT_LLM_TEMPERATURE,
+    **kwargs,
+):
+    """Initialize a Together LLM client for use with Langchain.
+
+    Args:
+        llm_name: Name of the LLM in Together API.
+        llm_temperature: Temperature for the LLM.
+    """
+    from langchain_together import ChatTogether
+
+    return ChatTogether(model=llm_name, temperature=llm_temperature, **kwargs)
+
+
+def llama_index_together_llm(
+    llm_name: str = Defaults.DEFAULT_LLM_NAME,
+    llm_temperature: float = Defaults.DEFAULT_LLM_TEMPERATURE,
+    **kwargs,
+):
+    """Initialize a Together LLM client for use with LlamaIndex.
+
+    Args:
+        llm_name: Name of the LLM in Together API.
+        llm_temperature: Temperature for the LLM.
+    """
+    ensure_module_is_installed("llama_index")
+    from llama_index.llms.together import TogetherLLM
+
+    return TogetherLLM(model=llm_name, temperature=llm_temperature, **kwargs)
+
+
+def langchain_groq_llm(
+    llm_name: str = Defaults.DEFAULT_LLM_NAME,
+    llm_temperature: float = Defaults.DEFAULT_LLM_TEMPERATURE,
+    **kwargs,
+):
+    """Initialize a Groq LLM client for use with Langchain.
+
+    Args:
+        llm_name: Name of the LLM in Groq API.
+        llm_temperature: Temperature for the LLM.
+    """
+    from langchain_groq import ChatGroq
+
+    return ChatGroq(model=llm_name, temperature=llm_temperature, **kwargs)
+
+
+def llama_index_groq_llm(
+    llm_name: str = Defaults.DEFAULT_LLM_NAME,
+    llm_temperature: float = Defaults.DEFAULT_LLM_TEMPERATURE,
+    **kwargs,
+):
+    """Initialize a Groq LLM client for use with LlamaIndex.
+
+    Args:
+        llm_name: Name of the LLM in Groq API.
+        llm_temperature: Temperature for the LLM.
+    """
+    ensure_module_is_installed("llama_index")
+    from llama_index.llms.groq import Groq
+
+    return Groq(model=llm_name, temperature=llm_temperature, **kwargs)
+
+
+def langchain_ollama_llm(
+    llm_name: str = Defaults.DEFAULT_LLM_NAME,
+    llm_temperature: float = Defaults.DEFAULT_LLM_TEMPERATURE,
+    **kwargs,
+):
+    """Initialize an Ollama LLM client for use with Langchain.
+
+    Args:
+        llm_name: Name of the LLM in Ollama API.
+        llm_temperature: Temperature for the LLM.
+    """
+    from langchain_ollama.llms import OllamaLLM
+
+    return OllamaLLM(model=llm_name, temperature=llm_temperature, **kwargs)
+
+
+def llama_index_ollama_llm(
+    llm_name: str = Defaults.DEFAULT_LLM_NAME,
+    llm_temperature: float = Defaults.DEFAULT_LLM_TEMPERATURE,
+    **kwargs,
+):
+    """Initialize an Ollama LLM client for use with LlamaIndex.
+
+    Args:
+        llm_name: Name of the LLM in Ollama API.
+        llm_temperature: Temperature for the LLM.
+    """
+    ensure_module_is_installed("llama_index")
+    from llama_index.llms.ollama import Ollama
+
+    return Ollama(model=llm_name, temperature=llm_temperature, **kwargs)
+
+
 Defaults.LLM_MAP = {
     (LLMFramework.LANGCHAIN, LLMFamily.OPENAI): langchain_openai_llm,
     (LLMFramework.LLAMA_INDEX, LLMFamily.OPENAI): llama_index_openai_llm,
@@ -117,6 +216,12 @@ Defaults.LLM_MAP = {
     (LLMFramework.LLAMA_INDEX, LLMFamily.ANTHROPIC): llama_index_anthropic_llm,
     (LLMFramework.LANGCHAIN, LLMFamily.REPLICATE): langchain_replicate_llm,
     (LLMFramework.LLAMA_INDEX, LLMFamily.REPLICATE): llama_index_replicate_llm,
+    (LLMFramework.LANGCHAIN, LLMFamily.TOGETHER): langchain_together_llm,
+    (LLMFramework.LLAMA_INDEX, LLMFamily.TOGETHER): llama_index_together_llm,
+    (LLMFramework.LANGCHAIN, LLMFamily.GROQ): langchain_groq_llm,
+    (LLMFramework.LLAMA_INDEX, LLMFamily.GROQ): llama_index_groq_llm,
+    (LLMFramework.LANGCHAIN, LLMFamily.OLLAMA): langchain_ollama_llm,
+    (LLMFramework.LLAMA_INDEX, LLMFamily.OLLAMA): llama_index_ollama_llm,
 }
 
 

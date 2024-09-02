@@ -187,7 +187,7 @@ def langchain_ollama_llm(
         llm_name: Name of the LLM in Ollama API.
         llm_temperature: Temperature for the LLM.
     """
-    from langchain_ollama.llms import ChatOllama
+    from langchain_ollama.chat_models import ChatOllama
 
     return ChatOllama(model=llm_name, temperature=llm_temperature, **kwargs)
 

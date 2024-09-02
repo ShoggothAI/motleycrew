@@ -1,4 +1,5 @@
 import functools
+import inspect
 from typing import Callable, Union, Optional, Dict, Any
 
 from langchain.tools import BaseTool
@@ -157,11 +158,22 @@ class MotleyTool(Runnable):
             LlamaIndex tool.
         """
         ensure_module_is_installed("llama_index")
+
+        if inspect.signature(self.tool._run).parameters.get("config", None) is not None:
+            fn = functools.partial(self.tool._run, config=RunnableConfig())
+        else:
+            fn = self.tool._run
+
+        fn_schema = self.tool.args_schema
+        fn_schema.model_json_schema = (
+            fn_schema.schema
+        )  # attempt to make it compatible with Langchain's old Pydantic v1
+
         llama_index_tool = LlamaIndex__FunctionTool.from_defaults(
-            fn=functools.partial(self.tool._run, config=RunnableConfig()),
+            fn=fn,
             name=self.tool.name,
             description=self.tool.description,
-            fn_schema=self.tool.args_schema,
+            fn_schema=fn_schema,
         )
         return llama_index_tool
 

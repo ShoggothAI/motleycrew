@@ -5,8 +5,11 @@ class LLMFamily:
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
     REPLICATE = "replicate"
+    TOGETHER = "together"
+    GROQ = "groq"
+    OLLAMA = "ollama"
 
-    ALL = {OPENAI, ANTHROPIC, REPLICATE}
+    ALL = {OPENAI, ANTHROPIC, REPLICATE, TOGETHER, GROQ, OLLAMA}
 
 
 class LLMFramework:

@@ -9,5 +9,5 @@ Usage
    key_concepts
    agents
    knowledge_graph
-   another_llm
+   choosing_llms
    caching_observability

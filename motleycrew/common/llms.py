@@ -1,8 +1,8 @@
 """Helper functions to initialize Language Models (LLMs) from different frameworks."""
 
 from motleycrew.common import Defaults
-from motleycrew.common import LLMFamily, LLMFramework
-from motleycrew.common.exceptions import LLMFamilyNotSupported, LLMFrameworkNotSupported
+from motleycrew.common import LLMProvider, LLMFramework
+from motleycrew.common.exceptions import LLMProviderNotSupported
 from motleycrew.common.utils import ensure_module_is_installed
 
 
@@ -209,25 +209,25 @@ def llama_index_ollama_llm(
     return Ollama(model=llm_name, temperature=llm_temperature, **kwargs)
 
 
-Defaults.LLM_MAP = {
-    (LLMFramework.LANGCHAIN, LLMFamily.OPENAI): langchain_openai_llm,
-    (LLMFramework.LLAMA_INDEX, LLMFamily.OPENAI): llama_index_openai_llm,
-    (LLMFramework.LANGCHAIN, LLMFamily.ANTHROPIC): langchain_anthropic_llm,
-    (LLMFramework.LLAMA_INDEX, LLMFamily.ANTHROPIC): llama_index_anthropic_llm,
-    (LLMFramework.LANGCHAIN, LLMFamily.REPLICATE): langchain_replicate_llm,
-    (LLMFramework.LLAMA_INDEX, LLMFamily.REPLICATE): llama_index_replicate_llm,
-    (LLMFramework.LANGCHAIN, LLMFamily.TOGETHER): langchain_together_llm,
-    (LLMFramework.LLAMA_INDEX, LLMFamily.TOGETHER): llama_index_together_llm,
-    (LLMFramework.LANGCHAIN, LLMFamily.GROQ): langchain_groq_llm,
-    (LLMFramework.LLAMA_INDEX, LLMFamily.GROQ): llama_index_groq_llm,
-    (LLMFramework.LANGCHAIN, LLMFamily.OLLAMA): langchain_ollama_llm,
-    (LLMFramework.LLAMA_INDEX, LLMFamily.OLLAMA): llama_index_ollama_llm,
+LLM_MAP = {
+    (LLMFramework.LANGCHAIN, LLMProvider.OPENAI): langchain_openai_llm,
+    (LLMFramework.LLAMA_INDEX, LLMProvider.OPENAI): llama_index_openai_llm,
+    (LLMFramework.LANGCHAIN, LLMProvider.ANTHROPIC): langchain_anthropic_llm,
+    (LLMFramework.LLAMA_INDEX, LLMProvider.ANTHROPIC): llama_index_anthropic_llm,
+    (LLMFramework.LANGCHAIN, LLMProvider.REPLICATE): langchain_replicate_llm,
+    (LLMFramework.LLAMA_INDEX, LLMProvider.REPLICATE): llama_index_replicate_llm,
+    (LLMFramework.LANGCHAIN, LLMProvider.TOGETHER): langchain_together_llm,
+    (LLMFramework.LLAMA_INDEX, LLMProvider.TOGETHER): llama_index_together_llm,
+    (LLMFramework.LANGCHAIN, LLMProvider.GROQ): langchain_groq_llm,
+    (LLMFramework.LLAMA_INDEX, LLMProvider.GROQ): llama_index_groq_llm,
+    (LLMFramework.LANGCHAIN, LLMProvider.OLLAMA): langchain_ollama_llm,
+    (LLMFramework.LLAMA_INDEX, LLMProvider.OLLAMA): llama_index_ollama_llm,
 }
 
 
 def init_llm(
     llm_framework: str,
-    llm_family: str = Defaults.DEFAULT_LLM_FAMILY,
+    llm_provider: str = Defaults.DEFAULT_LLM_PROVIDER,
     llm_name: str = Defaults.DEFAULT_LLM_NAME,
     llm_temperature: float = Defaults.DEFAULT_LLM_TEMPERATURE,
     **kwargs,
@@ -236,13 +236,13 @@ def init_llm(
 
     Args:
         llm_framework: Framework of the LLM client.
-        llm_family: Family of the LLM.
+        llm_provider: Provider of the LLM.
         llm_name: Name of the LLM.
         llm_temperature: Temperature for the LLM.
     """
 
-    func = Defaults.LLM_MAP.get((llm_framework, llm_family), None)
+    func = LLM_MAP.get((llm_framework, llm_provider), None)
     if func is not None:
         return func(llm_name=llm_name, llm_temperature=llm_temperature, **kwargs)
 
-    raise LLMFamilyNotSupported(llm_framework=llm_framework, llm_family=llm_family)
+    raise LLMProviderNotSupported(llm_framework=llm_framework, llm_provider=llm_provider)

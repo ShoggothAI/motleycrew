@@ -5,15 +5,15 @@ from typing import Any, Dict, Optional
 from motleycrew.common import Defaults
 
 
-class LLMFamilyNotSupported(Exception):
-    """Raised when an LLM family is not supported in motleycrew via a framework."""
+class LLMProviderNotSupported(Exception):
+    """Raised when an LLM provider is not supported in motleycrew via a framework."""
 
-    def __init__(self, llm_framework: str, llm_family: str):
+    def __init__(self, llm_framework: str, llm_provider: str):
         self.llm_framework = llm_framework
-        self.llm_family = llm_family
+        self.llm_provider = llm_provider
 
     def __str__(self) -> str:
-        return f"LLM family `{self.llm_family}` is not supported via the framework `{self.llm_framework}`"
+        return f"LLM provider `{self.llm_provider}` is not supported via the framework `{self.llm_framework}`"
 
 
 class LLMFrameworkNotSupported(Exception):

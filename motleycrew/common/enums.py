@@ -1,11 +1,15 @@
 """Various enums used in the project."""
 
 
-class LLMFamily:
+class LLMProvider:
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
+    REPLICATE = "replicate"
+    TOGETHER = "together"
+    GROQ = "groq"
+    OLLAMA = "ollama"
 
-    ALL = {OPENAI, ANTHROPIC}
+    ALL = {OPENAI, ANTHROPIC, REPLICATE, TOGETHER, GROQ, OLLAMA}
 
 
 class LLMFramework:

@@ -14,7 +14,7 @@ class PythonREPLTool(MotleyTool):
 
     def __init__(self):
         langchain_tool = create_repl_tool()
-        super().__init__(langchain_tool)
+        super().__init__(tool=langchain_tool)
 
 
 class REPLToolInput(BaseModel):

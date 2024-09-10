@@ -28,7 +28,7 @@ class SimpleRetrieverTool(MotleyTool):
         tool = make_retriever_langchain_tool(
             data_dir, persist_dir, return_strings_only=return_strings_only
         )
-        super().__init__(tool)
+        super().__init__(tool=tool)
 
 
 class RetrieverToolInput(BaseModel, arbitrary_types_allowed=True):

@@ -40,7 +40,7 @@ class LLMTool(MotleyTool):
             llm=llm,
             input_schema=input_schema,
         )
-        super().__init__(langchain_tool)
+        super().__init__(tool=langchain_tool)
 
 
 def create_llm_langchain_tool(

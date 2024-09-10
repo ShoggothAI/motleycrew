@@ -17,10 +17,10 @@ except ImportError:
 
 from langchain_core.runnables import RunnableConfig
 
-from motleycrew.agents.parent import MotleyAgentParent, DirectOutput
-from motleycrew.common import MotleySupportedTool
-from motleycrew.common import MotleyAgentFactory
+from motleycrew.agents.parent import MotleyAgentParent
+from motleycrew.common import MotleySupportedTool, MotleyAgentFactory, AuxPrompts
 from motleycrew.common.utils import ensure_module_is_installed
+from motleycrew.tools import DirectOutput
 
 
 class LlamaIndexMotleyAgent(MotleyAgentParent):
@@ -33,7 +33,7 @@ class LlamaIndexMotleyAgent(MotleyAgentParent):
         name: str | None = None,
         agent_factory: MotleyAgentFactory[AgentRunner] | None = None,
         tools: Sequence[MotleySupportedTool] | None = None,
-        output_handler: MotleySupportedTool | None = None,
+        force_output_handler: bool = False,
         verbose: bool = False,
     ):
         """
@@ -64,6 +64,9 @@ class LlamaIndexMotleyAgent(MotleyAgentParent):
 
             tools: Tools to add to the agent.
 
+            force_output_handler: Whether to force the agent to return through an output handler.
+                If True, at least one tool must have return_direct set to True.
+
             output_handler: Output handler for the agent.
 
             verbose: Whether to log verbose output.
@@ -74,16 +77,34 @@ class LlamaIndexMotleyAgent(MotleyAgentParent):
             name=name,
             agent_factory=agent_factory,
             tools=tools,
-            output_handler=output_handler,
+            force_output_handler=force_output_handler,
             verbose=verbose,
         )
+
+        self.direct_output = None
+
+    def _propagate_error_step(self, task_id: str, message: str):
+        error_step = TaskStep(
+            task_id=task_id,
+            step_id=str(uuid.uuid4()),
+            input=message,
+        )
+
+        step_queue = self._agent.state.get_step_queue(task_id)
+        step_queue.clear()
+        step_queue.extend([error_step])
 
     def _run_step_decorator(self):
         """Decorator for the ``AgentRunner._run_step`` method that catches DirectOutput exceptions.
 
-        It also blocks plain output and forces the use of the output handler tool if it is present.
+        It also blocks plain output and forces the use of the output handler tool if necessary.
+
+        Note that as of now, LlamaIndex agents only allow one tool call per step,
+        so we don't need to worry about ambiguous output handler calls.
         """
         ensure_module_is_installed("llama_index")
+
+        output_handlers = self.get_output_handlers()
 
         def decorator(func):
             def wrapper(
@@ -105,24 +126,17 @@ class LlamaIndexMotleyAgent(MotleyAgentParent):
                     )
                     return cur_step_output
 
-                if self.output_handler is None:
+                if not output_handlers:
                     return cur_step_output
 
-                if cur_step_output.is_last:
+                if cur_step_output.is_last and self.force_output_handler:
                     cur_step_output.is_last = False
-                    task_id = cur_step_output.task_step.task_id
-                    output_task_step = TaskStep(
-                        task_id=task_id,
-                        step_id=str(uuid.uuid4()),
-                        input="You must call the `{}` tool to return the output.".format(
-                            self.output_handler.name
+                    self._propagate_error_step(
+                        task_id=cur_step_output.task_step.task_id,
+                        message=AuxPrompts.get_direct_output_error_message(
+                            output_handlers=output_handlers
                         ),
                     )
-
-                    cur_step_output.next_steps.append(output_task_step)
-
-                    step_queue = self._agent.state.get_step_queue(task_id)
-                    step_queue.extend(cur_step_output.next_steps)
 
                 return cur_step_output
 
@@ -144,7 +158,7 @@ class LlamaIndexMotleyAgent(MotleyAgentParent):
 
         output = self.agent.chat(prompt)
 
-        if self.output_handler:
+        if self.direct_output is not None:
             return self.direct_output.output
 
         return output.response

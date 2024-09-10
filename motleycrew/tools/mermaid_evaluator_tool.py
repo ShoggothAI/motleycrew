@@ -26,7 +26,7 @@ class MermaidEvaluatorTool(MotleyTool):
                 mermaid_code=(str, Field(description="The Mermaid code to evaluate.")),
             ),
         )
-        super().__init__(langchain_tool)
+        super().__init__(tool=langchain_tool)
 
 
 def eval_mermaid(mermaid_code: str, format: Optional[str] = "svg") -> io.BytesIO:
@@ -81,7 +81,7 @@ if __name__ == "__main__":
         C --> E[End]
         D --> E
         E[End] --> F[End]
-        
+
         [[
     """
 

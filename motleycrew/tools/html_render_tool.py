@@ -118,7 +118,7 @@ class HTMLRenderTool(MotleyTool):
             window_size=window_size,
         )
         langchain_tool = create_render_tool(renderer)
-        super(HTMLRenderTool, self).__init__(langchain_tool)
+        super().__init__(tool=langchain_tool)
 
 
 class HTMLRenderToolInput(BaseModel):

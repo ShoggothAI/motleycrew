@@ -58,7 +58,7 @@ class AutoGenChatTool(MotleyTool):
             result_extractor=result_extractor,
             input_schema=input_schema,
         )
-        super().__init__(langchain_tool)
+        super().__init__(tool=langchain_tool)
 
 
 def create_autogen_chat_tool(

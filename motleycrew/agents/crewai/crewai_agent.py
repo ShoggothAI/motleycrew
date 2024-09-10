@@ -26,8 +26,8 @@ class CrewAIMotleyAgent(CrewAIMotleyAgentParent):
         description: str | None = None,
         delegation: bool = False,
         tools: Sequence[MotleySupportedTool] | None = None,
+        force_output_handler: bool = False,
         llm: Optional[Any] = None,
-        output_handler: MotleySupportedTool | None = None,
         verbose: bool = False,
     ):
         """
@@ -55,7 +55,8 @@ class CrewAIMotleyAgent(CrewAIMotleyAgentParent):
 
             llm: LLM instance to use.
 
-            output_handler: Output handler for the agent.
+            force_output_handler: Whether to force the use of an output handler.
+                NOTE: This is currently not supported for CrewAI agents.
 
             verbose: Whether to log verbose output.
         """
@@ -91,6 +92,6 @@ class CrewAIMotleyAgent(CrewAIMotleyAgentParent):
             name=role,
             agent_factory=agent_factory,
             tools=tools,
-            output_handler=output_handler,
+            force_output_handler=force_output_handler,
             verbose=verbose,
         )

@@ -47,5 +47,4 @@ class MotleyAgentFactory(Protocol[AgentType]):
     def __call__(
         self,
         tools: dict[str, MotleyTool],
-        output_handler: Optional[MotleyTool] = None,
     ) -> AgentType: ...

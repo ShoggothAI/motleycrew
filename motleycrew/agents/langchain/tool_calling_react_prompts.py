@@ -59,7 +59,7 @@ You may include multiple tool calls in a single reply, if necessary.
 If the information so far is not sufficient to answer the question precisely and completely (rather than sloppily and approximately), don't hesitate to use tools again, until sufficient information is gathered.
 Don't stop this until you are certain that you have enough information to answer the question.
 {output_instruction}
-{output_handler}
+{output_handlers}
 
 Begin!
 """
@@ -72,9 +72,9 @@ Final Answer: [the final answer to the original input question]
 but without the backticks."""
 
     output_instruction_with_output_handler = """
-If you have sufficient information to answer the question, you must call the output handler tool.
+If you have sufficient information to answer the question, you must call the relevant tool.
 
-NEVER return the final answer directly, but always do it by CALLING this tool:
+NEVER return the final answer directly, but always do it by CALLING the relevant tool:
 """
 
     example_messages = [
@@ -108,8 +108,8 @@ Your reply MUST begin with "Thought:" and describe what the next step should be.
 The reply must contain the tool call or calls that you described in the thought.
 TOOL CALLS WITHOUT A THOUGHT WILL NOT BE ACCEPTED!
 
-If you have sufficient information to answer the question, call the output handler tool:
-{output_handler}
+If you have sufficient information to answer the question, call the relevant tool:
+{output_handlers}
 
 Write your reply, starting with "Thought:":
 """
@@ -147,15 +147,15 @@ You may include multiple tool calls in a single reply, if necessary.
 If the information so far is not sufficient to answer the question precisely and completely (rather than sloppily and approximately), don't hesitate to use tools again, until sufficient information is gathered.
 Don't stop this until you are certain that you have enough information to answer the question.
 {output_instruction}
-{output_handler}
+{output_handlers}
 
 Begin!
 """
 
     output_instruction_with_output_handler = """
-If you have sufficient information to answer the question, you must call the output handler tool.
+If you have sufficient information to answer the question, you must call the relevant tool.
 
-NEVER return the final answer directly, but always do it by CALLING this tool:
+NEVER return the final answer directly, but always do it by CALLING the relevant tool:
 """
 
     output_instruction_without_output_handler = """
@@ -200,8 +200,8 @@ Your reply MUST be enclosed in `<thinking></thinking>` tags and describe what th
 The reply must contain the tool call or calls that you described in the thought.
 TOOL CALLS WITHOUT A THOUGHT WILL NOT BE ACCEPTED!
 
-If you have sufficient information to answer the question, call the output handler tool with the relevant arguments:
-{output_handler}
+If you have sufficient information to answer the question, call the relevant tool:
+{output_handlers}
 
 Write your reply, starting with `<thinking>`:
 """

@@ -10,10 +10,10 @@ class AuxPrompts:
     """
 
     DIRECT_OUTPUT_ERROR_WITH_SINGLE_OUTPUT_HANDLER = (
-        "You must call the `{output_handler}` tool to return the final output.\n"
+        "You must call the `{output_handler}` tool to return the final output."
     )
     DIRECT_OUTPUT_ERROR_WITH_MULTIPLE_OUTPUT_HANDLERS = (
-        "You must call one of the following tools to return the final output: {output_handlers}\n"
+        "You must call one of the following tools to return the final output: {output_handlers}"
     )
     AMBIGUOUS_OUTPUT_HANDLER_CALL_ERROR = (
         "You attempted to return output by calling `{current_output_handler}` tool, "

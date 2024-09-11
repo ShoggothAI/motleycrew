@@ -120,7 +120,7 @@ class MotleyTool(Runnable):
                     return result
             except tuple(self.exceptions_to_reflect or []) as e:
                 # we need to return the exception to the agent
-                return e
+                return f"{e.__class__.__name__}: {e}"
 
         patched_run.__signature__ = signature
         object.__setattr__(self.tool, "_run", patched_run)

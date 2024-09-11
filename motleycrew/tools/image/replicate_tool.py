@@ -51,7 +51,14 @@ class ImageToolInput(BaseModel):
 
 
 class ReplicateImageGeneratorTool(MotleyTool):
-    def __init__(self, model_name: str, images_directory: Optional[str] = None, **kwargs):
+    def __init__(
+        self,
+        model_name: str,
+        images_directory: Optional[str] = None,
+        return_direct: bool = False,
+        exceptions_to_reflect: Optional[List[Exception]] = None,
+        **kwargs,
+    ):
         """
         A tool for generating images from text descriptions using the Replicate API.
         :param model_name: one of "sdxl", "flux-pro", "flux-dev", "flux-schnell", or a full model name supported by replicate
@@ -64,7 +71,11 @@ class ReplicateImageGeneratorTool(MotleyTool):
             model_name=model_name, images_directory=images_directory, **kwargs
         )
 
-        super().__init__(langchain_tool)
+        super().__init__(
+            tool=langchain_tool,
+            return_direct=return_direct,
+            exceptions_to_reflect=exceptions_to_reflect,
+        )
 
 
 def create_replicate_image_generator_langchain_tool(

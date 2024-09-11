@@ -1,11 +1,12 @@
-import os.path
+import os
+from typing import List, Optional
 
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import StructuredTool
 from llama_index.core import (
-    VectorStoreIndex,
     SimpleDirectoryReader,
     StorageContext,
+    VectorStoreIndex,
     load_index_from_storage,
 )
 from llama_index.core.node_parser import SentenceSplitter

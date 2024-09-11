@@ -1,5 +1,6 @@
 """Common utilities, types, enums, exceptions, loggers etc."""
 
+from .aux_prompts import AuxPrompts
 from .defaults import Defaults
 from .enums import AsyncBackend
 from .enums import GraphStoreType
@@ -13,6 +14,7 @@ from .types import MotleyAgentFactory
 from .types import MotleySupportedTool
 
 __all__ = [
+    "AuxPrompts",
     "Defaults",
     "MotleySupportedTool",
     "MotleyAgentFactory",

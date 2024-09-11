@@ -1,4 +1,4 @@
-from typing import Optional, Type
+from typing import Optional, Type, List
 
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.prompts import PromptTemplate
@@ -21,6 +21,8 @@ class LLMTool(MotleyTool):
         prompt: str | BasePromptTemplate,
         llm: Optional[BaseLanguageModel] = None,
         input_schema: Optional[Type[BaseModel]] = None,
+        return_direct: bool = False,
+        exceptions_to_reflect: Optional[List[Exception]] = None,
     ):
         """
         Args:
@@ -40,7 +42,11 @@ class LLMTool(MotleyTool):
             llm=llm,
             input_schema=input_schema,
         )
-        super().__init__(langchain_tool)
+        super().__init__(
+            tool=langchain_tool,
+            return_direct=return_direct,
+            exceptions_to_reflect=exceptions_to_reflect,
+        )
 
 
 def create_llm_langchain_tool(

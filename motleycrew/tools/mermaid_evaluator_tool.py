@@ -4,7 +4,7 @@ import io
 import os.path
 import subprocess
 import tempfile
-from typing import Optional
+from typing import Optional, List
 
 from langchain_core.pydantic_v1 import create_model, Field
 from langchain_core.tools import Tool
@@ -13,7 +13,12 @@ from motleycrew.tools import MotleyTool
 
 
 class MermaidEvaluatorTool(MotleyTool):
-    def __init__(self, format: Optional[str] = "svg"):
+    def __init__(
+        self,
+        format: Optional[str] = "svg",
+        return_direct: bool = False,
+        exceptions_to_reflect: Optional[List[Exception]] = None,
+    ):
         def eval_mermaid_partial(mermaid_code: str):
             return eval_mermaid(mermaid_code, format)
 
@@ -26,7 +31,11 @@ class MermaidEvaluatorTool(MotleyTool):
                 mermaid_code=(str, Field(description="The Mermaid code to evaluate.")),
             ),
         )
-        super().__init__(langchain_tool)
+        super().__init__(
+            tool=langchain_tool,
+            return_direct=return_direct,
+            exceptions_to_reflect=exceptions_to_reflect,
+        )
 
 
 def eval_mermaid(mermaid_code: str, format: Optional[str] = "svg") -> io.BytesIO:
@@ -81,7 +90,7 @@ if __name__ == "__main__":
         C --> E[End]
         D --> E
         E[End] --> F[End]
-        
+
         [[
     """
 

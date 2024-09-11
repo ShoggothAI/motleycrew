@@ -1,6 +1,7 @@
 from langchain.agents import Tool
 from langchain_experimental.utilities import PythonREPL
 from langchain_core.pydantic_v1 import BaseModel, Field
+from typing import Optional, List
 
 from .tool import MotleyTool
 
@@ -12,9 +13,17 @@ class PythonREPLTool(MotleyTool):
     Because of this, any data you want to be in the output should be printed using `print(...)`.
     """
 
-    def __init__(self):
+    def __init__(
+        self,
+        return_direct: bool = False,
+        exceptions_to_reflect: Optional[List[Exception]] = None,
+    ):
         langchain_tool = create_repl_tool()
-        super().__init__(langchain_tool)
+        super().__init__(
+            tool=langchain_tool,
+            return_direct=return_direct,
+            exceptions_to_reflect=exceptions_to_reflect,
+        )
 
 
 class REPLToolInput(BaseModel):

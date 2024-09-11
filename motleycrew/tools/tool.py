@@ -1,9 +1,12 @@
 import functools
 import inspect
-from typing import Callable, Union, Optional, Dict, Any
+from typing import Callable, Union, Optional, Dict, Any, List
 
-from langchain.tools import BaseTool
+from langchain.tools import BaseTool, Tool, StructuredTool
 from langchain_core.runnables import Runnable, RunnableConfig
+from langchain_core.pydantic_v1 import BaseModel
+
+from motleycrew.common.exceptions import InvalidOutput
 
 try:
     from llama_index.core.tools import BaseTool as LlamaIndex__BaseTool
@@ -19,9 +22,21 @@ except ImportError:
     CrewAI__BaseTool = None
     Crewai__Tool = None
 
+from motleycrew.common import logger
 from motleycrew.common.utils import ensure_module_is_installed
 from motleycrew.common.types import MotleySupportedTool
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
+
+
+class DirectOutput(BaseException):
+    """Auxiliary exception to return a tool's output directly.
+
+    When the tool returns an output, this exception is raised with the output.
+    It is then handled by the agent, who should gracefully return the output to the user.
+    """
+
+    def __init__(self, output: Any):
+        self.output = output
 
 
 class MotleyTool(Runnable):
@@ -30,13 +45,43 @@ class MotleyTool(Runnable):
     It is a wrapper for Langchain BaseTool, containing all necessary adapters and converters.
     """
 
-    def __init__(self, tool: BaseTool):
+    def __init__(
+        self,
+        tool: Optional[BaseTool] = None,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
+        args_schema: Optional[BaseModel] = None,
+        return_direct: bool = False,
+        exceptions_to_reflect: Optional[List[Exception]] = None,
+    ):
         """Initialize the MotleyTool.
 
         Args:
+            name: Name of the tool (required if tool is None).
+            description: Description of the tool (required if tool is None).
+            args_schema: Schema of the tool arguments (required if tool is None).
             tool: Langchain BaseTool to wrap.
+            return_direct: If True, the tool's output will be returned directly to the user.
+            exceptions_to_reflect: List of exceptions to reflect back to the agent.
         """
-        self.tool = tool
+        if tool is None:
+            assert name is not None
+            assert description is not None
+            self.tool = self._tool_from_run_method(
+                name=name, description=description, args_schema=args_schema
+            )
+        else:
+            self.tool = tool
+
+        self.return_direct = return_direct
+        self.exceptions_to_reflect = exceptions_to_reflect or []
+        if InvalidOutput not in self.exceptions_to_reflect:
+            self.exceptions_to_reflect = [InvalidOutput, *self.exceptions_to_reflect]
+
+        self._patch_tool_run()
+
+        self.agent: Optional[MotleyAgentAbstractParent] = None
+        self.agent_input: Optional[dict] = None
 
     def __repr__(self):
         return f"MotleyTool(name={self.name})"
@@ -59,6 +104,27 @@ class MotleyTool(Runnable):
         """Schema of the tool arguments."""
         return self.tool.args_schema
 
+    def _patch_tool_run(self):
+        """Patch the tool run method to reflect exceptions."""
+
+        original_run = self.tool._run
+        signature = inspect.signature(original_run)
+
+        @functools.wraps(original_run)
+        def patched_run(*args, **kwargs):
+            try:
+                result = original_run(*args, **kwargs)
+                if self.return_direct:
+                    raise DirectOutput(result)
+                else:
+                    return result
+            except tuple(self.exceptions_to_reflect or []) as e:
+                # we need to return the exception to the agent
+                return f"{e.__class__.__name__}: {e}"
+
+        patched_run.__signature__ = signature
+        object.__setattr__(self.tool, "_run", patched_run)
+
     def invoke(
         self,
         input: Union[str, Dict],
@@ -67,43 +133,91 @@ class MotleyTool(Runnable):
     ) -> Any:
         return self.tool.invoke(input=input, config=config, **kwargs)
 
-    def _run(self, *args: tuple, **kwargs: Dict[str, Any]) -> Any:
-        return self.tool._run(*args, **kwargs)
+    def run(self, *args, **kwargs):
+        pass
+
+    def _tool_from_run_method(self, name: str, description: str, args_schema: BaseModel):
+        return StructuredTool.from_function(
+            name=name,
+            description=description,
+            args_schema=args_schema,
+            func=self.run,
+        )
 
     @staticmethod
-    def from_langchain_tool(langchain_tool: BaseTool) -> "MotleyTool":
+    def from_langchain_tool(
+        langchain_tool: BaseTool,
+        return_direct: bool = False,
+        exceptions_to_reflect: Optional[List[Exception]] = None,
+    ) -> "MotleyTool":
         """Create a MotleyTool from a Langchain tool.
 
         Args:
             langchain_tool: Langchain tool to convert.
+            return_direct: If True, the tool's output will be returned directly to the user.
+            exceptions_to_reflect: List of exceptions to reflect back to the agent.
 
         Returns:
             MotleyTool instance.
         """
+        if langchain_tool.return_direct:
+            logger.warning(
+                "Please set `return_direct` in MotleyTool instead of the tool you're converting. "
+                "Automatic conversion will be removed in motleycrew v1."
+            )
+            return_direct = True
+            langchain_tool.return_direct = False
 
-        return MotleyTool(tool=langchain_tool)
+        return MotleyTool(
+            tool=langchain_tool,
+            return_direct=return_direct,
+            exceptions_to_reflect=exceptions_to_reflect,
+        )
 
     @staticmethod
-    def from_llama_index_tool(llama_index_tool: LlamaIndex__BaseTool) -> "MotleyTool":
+    def from_llama_index_tool(
+        llama_index_tool: LlamaIndex__BaseTool,
+        return_direct: bool = False,
+        exceptions_to_reflect: Optional[List[Exception]] = None,
+    ) -> "MotleyTool":
         """Create a MotleyTool from a LlamaIndex tool.
 
         Args:
             llama_index_tool: LlamaIndex tool to convert.
+            return_direct: If True, the tool's output will be returned directly to the user.
+            exceptions_to_reflect: List of exceptions to reflect back to the agent.
 
         Returns:
             MotleyTool instance.
         """
-
         ensure_module_is_installed("llama_index")
+        if llama_index_tool.metadata and llama_index_tool.metadata.return_direct:
+            logger.warning(
+                "Please set `return_direct` in MotleyTool instead of the tool you're converting. "
+                "Automatic conversion will be removed in motleycrew v1."
+            )
+            return_direct = True
+            llama_index_tool.metadata.return_direct = False
+
         langchain_tool = llama_index_tool.to_langchain_tool()
-        return MotleyTool.from_langchain_tool(langchain_tool=langchain_tool)
+        return MotleyTool.from_langchain_tool(
+            langchain_tool=langchain_tool,
+            return_direct=return_direct,
+            exceptions_to_reflect=exceptions_to_reflect,
+        )
 
     @staticmethod
-    def from_crewai_tool(crewai_tool: CrewAI__BaseTool) -> "MotleyTool":
+    def from_crewai_tool(
+        crewai_tool: CrewAI__BaseTool,
+        return_direct: bool = False,
+        exceptions_to_reflect: Optional[List[Exception]] = None,
+    ) -> "MotleyTool":
         """Create a MotleyTool from a CrewAI tool.
 
         Args:
             crewai_tool: CrewAI tool to convert.
+            return_direct: If True, the tool's output will be returned directly to the user.
+            exceptions_to_reflect: List of exceptions to reflect back to the agent.
 
         Returns:
             MotleyTool instance.
@@ -115,29 +229,83 @@ class MotleyTool(Runnable):
         for old_symbol, new_symbol in [(" ", "_"), ("'", "")]:
             langchain_tool.name = langchain_tool.name.replace(old_symbol, new_symbol)
 
-        return MotleyTool.from_langchain_tool(langchain_tool=langchain_tool)
+        return MotleyTool.from_langchain_tool(
+            langchain_tool=langchain_tool,
+            return_direct=return_direct,
+            exceptions_to_reflect=exceptions_to_reflect,
+        )
 
     @staticmethod
-    def from_supported_tool(tool: MotleySupportedTool) -> "MotleyTool":
+    def from_motley_agent(
+        agent: MotleyAgentAbstractParent,
+        return_direct: bool = False,
+        exceptions_to_reflect: Optional[List[Exception]] = None,
+    ) -> "MotleyTool":
+        """Convert an agent to a tool to be used by other agents via delegation.
+
+        Returns:
+            The tool representation of the agent.
+        """
+
+        if not getattr(agent, "name", None) or not getattr(agent, "description", None):
+            raise ValueError("Agent must have a name and description to be called as a tool")
+
+        # To be specialized if we expect structured input
+        return MotleyTool.from_langchain_tool(
+            Tool(
+                name=agent.name.replace(
+                    " ", "_"
+                ).lower(),  # OpenAI doesn't accept spaces in function names
+                description=agent.description,
+                func=agent.call_as_tool,
+            ),
+            return_direct=return_direct,
+            exceptions_to_reflect=exceptions_to_reflect,
+        )
+
+    @staticmethod
+    def from_supported_tool(
+        tool: MotleySupportedTool,
+        return_direct: bool = False,
+        exceptions_to_reflect: Optional[List[Exception]] = None,
+    ) -> "MotleyTool":
         """Create a MotleyTool from any supported tool type.
 
         Args:
             tool: Tool of any supported type.
                 Currently, we support tools from Langchain, LlamaIndex,
                 as well as motleycrew agents.
+            return_direct: If True, the tool's output will be returned directly to the user.
+            exceptions_to_reflect: List of exceptions to reflect back to the agent.
         Returns:
             MotleyTool instance.
         """
         if isinstance(tool, MotleyTool):
             return tool
         elif isinstance(tool, BaseTool):
-            return MotleyTool.from_langchain_tool(tool)
+            return MotleyTool.from_langchain_tool(
+                tool,
+                return_direct=return_direct,
+                exceptions_to_reflect=exceptions_to_reflect,
+            )
         elif isinstance(tool, LlamaIndex__BaseTool):
-            return MotleyTool.from_llama_index_tool(tool)
+            return MotleyTool.from_llama_index_tool(
+                tool,
+                return_direct=return_direct,
+                exceptions_to_reflect=exceptions_to_reflect,
+            )
         elif isinstance(tool, MotleyAgentAbstractParent):
-            return tool.as_tool()
+            return MotleyTool.from_motley_agent(
+                tool,
+                return_direct=return_direct,
+                exceptions_to_reflect=exceptions_to_reflect,
+            )
         elif CrewAI__BaseTool is not None and isinstance(tool, CrewAI__BaseTool):
-            return MotleyTool.from_crewai_tool(tool)
+            return MotleyTool.from_crewai_tool(
+                tool,
+                return_direct=return_direct,
+                exceptions_to_reflect=exceptions_to_reflect,
+            )
         else:
             raise Exception(
                 f"Tool type `{type(tool)}` is not supported, please convert to MotleyTool first"

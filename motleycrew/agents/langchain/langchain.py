@@ -26,7 +26,7 @@ class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin)
         prompt_prefix: str | ChatPromptTemplate | None = None,
         agent_factory: MotleyAgentFactory[AgentExecutor] | None = None,
         tools: Sequence[MotleySupportedTool] | None = None,
-        output_handler: MotleySupportedTool | None = None,
+        force_output_handler: bool = False,
         chat_history: bool | GetSessionHistoryCallable = True,
         input_as_messages: bool = False,
         runnable_config: RunnableConfig | None = None,
@@ -60,7 +60,8 @@ class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin)
 
             tools: Tools to add to the agent.
 
-            output_handler: Output handler for the agent.
+            force_output_handler: Whether to force the agent to return through an output handler.
+                If True, at least one tool must have return_direct set to True.
 
             chat_history: Whether to use chat history or not.
                 If `True`, uses `InMemoryChatMessageHistory`.
@@ -82,11 +83,9 @@ class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin)
             name=name,
             agent_factory=agent_factory,
             tools=tools,
-            output_handler=output_handler,
+            force_output_handler=force_output_handler,
             verbose=verbose,
         )
-
-        self._agent_finish_blocker_tool = self._create_agent_finish_blocker_tool()
 
         if chat_history is True:
             chat_history = InMemoryChatMessageHistory()
@@ -97,6 +96,8 @@ class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin)
         self.input_as_messages = input_as_messages
         self.runnable_config = runnable_config
 
+        self._create_agent_error_tool()
+
     def materialize(self):
         """Materialize the agent and wrap it in RunnableWithMessageHistory if needed."""
         if self.is_materialized:
@@ -105,8 +106,9 @@ class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin)
         super().materialize()
         assert isinstance(self._agent, AgentExecutor)
 
-        if self.output_handler:
-            self._agent.tools += [self._agent_finish_blocker_tool]
+        if self.get_output_handlers():
+            assert self._agent_error_tool
+            self._agent.tools += [self._agent_error_tool]
 
             object.__setattr__(
                 self._agent.agent, "plan", self.agent_plan_decorator(self._agent.agent.plan)
@@ -118,22 +120,19 @@ class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin)
                 self.take_next_step_decorator(self._agent._take_next_step),
             )
 
-            prepared_output_handler = None
             for tool in self.agent.tools:
-                if tool.name == self.output_handler.name:
-                    prepared_output_handler = tool
+                if tool.return_direct:
+                    object.__setattr__(
+                        tool,
+                        "_run",
+                        self._run_tool_direct_decorator(tool._run),
+                    )
 
-            object.__setattr__(
-                prepared_output_handler,
-                "_run",
-                self._run_tool_direct_decorator(prepared_output_handler._run),
-            )
-
-            object.__setattr__(
-                prepared_output_handler,
-                "run",
-                self.run_tool_direct_decorator(prepared_output_handler.run),
-            )
+                    object.__setattr__(
+                        tool,
+                        "run",
+                        self.run_tool_direct_decorator(tool.run),
+                    )
 
         if self.get_session_history_callable:
             logger.info("Wrapping agent in RunnableWithMessageHistory")

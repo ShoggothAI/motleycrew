@@ -1,45 +1,22 @@
 from __future__ import annotations
 
-import inspect
 from abc import ABC, abstractmethod
-from typing import (
-    TYPE_CHECKING,
-    Optional,
-    Sequence,
-    Any,
-    Union,
-)
+from typing import TYPE_CHECKING, Any, Optional, Sequence, Union
 
 from langchain_core.messages import BaseMessage
 from langchain_core.prompts.chat import ChatPromptTemplate, HumanMessage, SystemMessage
 from langchain_core.runnables import RunnableConfig
-from langchain_core.tools import StructuredTool
-from langchain_core.tools import Tool
+
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
-from motleycrew.agents.output_handler import MotleyOutputHandler
-from motleycrew.common import MotleyAgentFactory, MotleySupportedTool
-from motleycrew.common import logger, Defaults
+from motleycrew.common import MotleyAgentFactory, MotleySupportedTool, logger
 from motleycrew.common.exceptions import (
     AgentNotMaterialized,
     CannotModifyMaterializedAgent,
-    InvalidOutput,
-    OutputHandlerMaxIterationsExceeded,
 )
 from motleycrew.tools import MotleyTool
 
 if TYPE_CHECKING:
     from motleycrew import MotleyCrew
-
-
-class DirectOutput(BaseException):
-    """Auxiliary exception to return the agent output directly through the output handler.
-
-    When the output handler returns an output, this exception is raised with the output.
-    It is then handled by the agent, who should gracefully return the output to the user.
-    """
-
-    def __init__(self, output: Any):
-        self.output = output
 
 
 class MotleyAgentParent(MotleyAgentAbstractParent, ABC):
@@ -61,9 +38,8 @@ class MotleyAgentParent(MotleyAgentAbstractParent, ABC):
         name: str | None = None,
         agent_factory: MotleyAgentFactory | None = None,
         tools: Sequence[MotleySupportedTool] | None = None,
-        output_handler: MotleySupportedTool | None = None,
+        force_output_handler: bool = False,
         verbose: bool = False,
-        agent_name: str | None = None,
     ):
         """
         Args:
@@ -85,7 +61,8 @@ class MotleyAgentParent(MotleyAgentAbstractParent, ABC):
 
                 See :class:`motleycrew.common.types.MotleyAgentFactory` for more details.
             tools: Tools to add to the agent.
-            output_handler: Output handler for the agent.
+            force_output_handler: Whether to force the agent to return through an output handler.
+                If True, at least one tool must have return_direct set to True.
             verbose: Whether to log verbose output.
         """
         self.name = name or description
@@ -93,7 +70,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent, ABC):
         self.prompt_prefix = prompt_prefix
         self.agent_factory = agent_factory
         self.tools: dict[str, MotleyTool] = {}
-        self.output_handler = output_handler
+        self.force_output_handler = force_output_handler
         self.verbose = verbose
         self.crew: MotleyCrew | None = None
 
@@ -101,6 +78,8 @@ class MotleyAgentParent(MotleyAgentAbstractParent, ABC):
 
         if tools:
             self.add_tools(tools)
+
+        self._check_force_output_handler()
 
     def __repr__(self):
         return f"{self.__class__.__name__}(name={self.name})"
@@ -169,55 +148,16 @@ class MotleyAgentParent(MotleyAgentAbstractParent, ABC):
         """Whether the agent is materialized."""
         return self._agent is not None
 
-    def _prepare_output_handler(self) -> Optional[MotleyTool]:
-        """
-        Wraps the output handler in one more tool layer,
-        adding the necessary stuff for returning direct output through output handler.
-        """
-        if not self.output_handler:
-            return None
+    def get_output_handlers(self):
+        """Get all output handlers (tools with return_direct set to True)."""
+        return [tool for tool in self.tools.values() if tool.return_direct]
 
-        # TODO: make this neater by constructing MotleyOutputHandler from tools?
-        if isinstance(self.output_handler, MotleyOutputHandler):
-            exceptions_to_handle = self.output_handler.exceptions_to_handle
-            description = self.output_handler.description
-            max_iterations = self.output_handler.max_iterations
-
-        else:
-            exceptions_to_handle = (InvalidOutput,)
-            description = self.output_handler.description or f"Output handler"
-            assert isinstance(description, str)
-            description += "\n ONLY RETURN THE FINAL RESULT USING THIS TOOL!"
-            max_iterations = Defaults.DEFAULT_OUTPUT_HANDLER_MAX_ITERATIONS
-
-        iteration = 0
-
-        def handle_agent_output(*args, **kwargs):
-            assert self.output_handler
-            nonlocal iteration
-
-            try:
-                iteration += 1
-                output = self.output_handler._run(*args, **kwargs, config=RunnableConfig())
-            except exceptions_to_handle as exc:
-                if iteration <= max_iterations:
-                    return f"{exc.__class__.__name__}: {str(exc)}"
-                raise OutputHandlerMaxIterationsExceeded(
-                    last_call_args=args,
-                    last_call_kwargs=kwargs,
-                    last_exception=exc,
-                )
-
-            raise DirectOutput(output)
-
-        prepared_output_handler = StructuredTool(
-            name=self.output_handler.name,
-            description=description,
-            func=handle_agent_output,
-            args_schema=self.output_handler.args_schema,
-        )
-
-        return MotleyTool.from_langchain_tool(prepared_output_handler)
+    def _check_force_output_handler(self):
+        """If force_output_handler is set to True, at least one tool must have return_direct set to True."""
+        if self.force_output_handler and not self.get_output_handlers():
+            raise ValueError(
+                "force_return_through_tool is set to True, but no tools have return_direct set to True."
+            )
 
     def materialize(self):
         """Materialize the agent by creating the agent instance using the agent factory.
@@ -229,18 +169,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent, ABC):
             return
         assert self.agent_factory, "Cannot materialize agent without a factory provided"
 
-        output_handler = self._prepare_output_handler()
-
-        if inspect.signature(self.agent_factory).parameters.get("output_handler"):
-            logger.info("Agent factory accepts output handler, passing it")
-            self._agent = self.agent_factory(tools=self.tools, output_handler=output_handler)
-        elif output_handler:
-            logger.info("Agent factory does not accept output handler, passing it as a tool")
-            tools_with_output_handler = self.tools.copy()
-            tools_with_output_handler[output_handler.name] = output_handler
-            self._agent = self.agent_factory(tools=tools_with_output_handler)
-        else:
-            self._agent = self.agent_factory(tools=self.tools)
+        self._agent = self.agent_factory(tools=self.tools)
 
     def prepare_for_invocation(self, input: dict, prompt_as_messages: bool = False) -> str:
         """Prepare the agent for invocation by materializing it and composing the prompt.
@@ -257,9 +186,9 @@ class MotleyAgentParent(MotleyAgentAbstractParent, ABC):
         """
         self.materialize()
 
-        if isinstance(self.output_handler, MotleyOutputHandler):
-            self.output_handler.agent = self
-            self.output_handler.agent_input = input
+        for tool in self.tools.values():
+            tool.agent = self
+            tool.agent_input = input
 
         prompt = self.compose_prompt(input, input.get("prompt"), as_messages=prompt_as_messages)
         return prompt
@@ -276,36 +205,21 @@ class MotleyAgentParent(MotleyAgentAbstractParent, ABC):
         for t in tools:
             motley_tool = MotleyTool.from_supported_tool(t)
             if motley_tool.name not in self.tools:
+                if motley_tool.agent is not None:
+                    raise ValueError(
+                        f"Tool {motley_tool.name} already has an agent assigned to it, please use unique tool instances."
+                    )
                 self.tools[motley_tool.name] = motley_tool
 
-    def as_tool(self) -> MotleyTool:
-        """Convert the agent to a tool to be used by other agents via delegation.
+    def call_as_tool(self, *args, **kwargs):
+        """Method that is called when the agent is used as a tool by another agent."""
 
-        Returns:
-            The tool representation of the agent.
-        """
-
-        if not self.description:
-            raise ValueError("Agent must have a description to be called as a tool")
-
-        def call_agent(*args, **kwargs):
-            # TODO: this thing is hacky, we should have a better way to pass structured input
-            if args:
-                return self.invoke({"prompt": args[0]})
-            if len(kwargs) == 1:
-                return self.invoke({"prompt": list(kwargs.values())[0]})
-            return self.invoke(kwargs)
-
-        # To be specialized if we expect structured input
-        return MotleyTool.from_langchain_tool(
-            Tool(
-                name=self.name.replace(
-                    " ", "_"
-                ).lower(),  # OpenAI doesn't accept spaces in function names
-                description=self.description,
-                func=call_agent,
-            )
-        )
+        # TODO: this thing is hacky, we should have a better way to pass structured input
+        if args:
+            return self.invoke({"prompt": args[0]})
+        if len(kwargs) == 1:
+            return self.invoke({"prompt": list(kwargs.values())[0]})
+        return self.invoke(kwargs)
 
     @abstractmethod
     def invoke(

@@ -1,6 +1,7 @@
 """MotleyTool class and tools library."""
 
 from motleycrew.tools.tool import MotleyTool
+from motleycrew.tools.tool import DirectOutput
 
 from .autogen_chat_tool import AutoGenChatTool
 from .code.postgresql_linter import PostgreSQLLinterTool

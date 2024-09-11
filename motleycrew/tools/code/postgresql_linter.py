@@ -1,3 +1,5 @@
+from typing import Optional, List
+
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import Tool
 
@@ -16,11 +18,19 @@ from motleycrew.common.utils import ensure_module_is_installed
 class PostgreSQLLinterTool(MotleyTool):
     """PostgreSQL code verification tool."""
 
-    def __init__(self):
+    def __init__(
+        self,
+        return_direct: bool = False,
+        exceptions_to_reflect: Optional[List[Exception]] = None,
+    ):
         ensure_module_is_installed("pglast")
 
         langchain_tool = create_pgsql_linter_tool()
-        super().__init__(langchain_tool)
+        super().__init__(
+            tool=langchain_tool,
+            return_direct=return_direct,
+            exceptions_to_reflect=exceptions_to_reflect,
+        )
 
 
 class PostgreSQLLinterInput(BaseModel):

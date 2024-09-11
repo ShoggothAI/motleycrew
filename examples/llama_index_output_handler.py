@@ -30,6 +30,7 @@ def main():
     researcher = ReActLlamaIndexMotleyAgent(
         prompt_prefix="Your goal is to uncover cutting-edge developments in AI and data science",
         tools=[search_tool, output_handler],
+        force_output_handler=True,
         verbose=True,
         max_iterations=16,  # default is 10, we add more because the output handler may reject the output
     )

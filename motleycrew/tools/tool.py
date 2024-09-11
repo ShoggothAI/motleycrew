@@ -163,7 +163,7 @@ class MotleyTool(Runnable):
         if langchain_tool.return_direct:
             logger.warning(
                 "Please set `return_direct` in MotleyTool instead of the tool you're converting. "
-                "Automatic conversion will be removed in motleycrew v0.2."
+                "Automatic conversion will be removed in motleycrew v1."
             )
             return_direct = True
             langchain_tool.return_direct = False
@@ -194,7 +194,7 @@ class MotleyTool(Runnable):
         if llama_index_tool.metadata and llama_index_tool.metadata.return_direct:
             logger.warning(
                 "Please set `return_direct` in MotleyTool instead of the tool you're converting. "
-                "Automatic conversion will be removed in motleycrew v0.2."
+                "Automatic conversion will be removed in motleycrew v1."
             )
             return_direct = True
             llama_index_tool.metadata.return_direct = False

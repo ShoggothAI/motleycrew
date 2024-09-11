@@ -31,7 +31,7 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
         name: str | None = None,
         agent_factory: MotleyAgentFactory[CrewAIAgentWithConfig] | None = None,
         tools: Sequence[MotleySupportedTool] | None = None,
-        output_handler: MotleySupportedTool | None = None,
+        force_output_handler: bool = False,
         verbose: bool = False,
     ):
         """
@@ -63,14 +63,15 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
 
             tools: Tools to add to the agent.
 
-            output_handler: Output handler for the agent.
+            force_output_handler: Whether to force the agent to return through an output handler.
+                NOTE: This is currently not supported for CrewAI agents.
 
             verbose: Whether to log verbose output.
         """
 
-        if output_handler:
+        if force_output_handler:
             raise NotImplementedError(
-                "Output handler is not supported for CrewAI agents "
+                "Forced output handlers are not supported for CrewAI agents "
                 "because of the specificity of CrewAI's prompts."
             )
 
@@ -81,7 +82,7 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
             name=name,
             agent_factory=agent_factory,
             tools=tools,
-            output_handler=output_handler,
+            force_output_handler=False,
             verbose=verbose,
         )
 

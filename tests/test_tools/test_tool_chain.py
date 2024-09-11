@@ -7,6 +7,9 @@ class ToolMock:
     def invoke(self, input: dict, *args, **kwargs):
         return input
 
+    def _run(self, input: dict, *args, **kwargs):
+        return input
+
 
 @pytest.fixture
 def tools():

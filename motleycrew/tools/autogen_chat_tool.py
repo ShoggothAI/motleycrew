@@ -1,4 +1,4 @@
-from typing import Optional, Type, Callable, Any
+from typing import Optional, Type, Callable, Any, List
 
 from langchain_core.prompts import PromptTemplate
 from langchain_core.prompts.base import BasePromptTemplate
@@ -33,6 +33,8 @@ class AutoGenChatTool(MotleyTool):
         recipient: ConversableAgent,
         result_extractor: Callable[[ChatResult], Any] = get_last_message,
         input_schema: Optional[Type[BaseModel]] = None,
+        return_direct: bool = False,
+        exceptions_to_reflect: Optional[List[Exception]] = None,
     ):
         """
         Args:
@@ -58,7 +60,11 @@ class AutoGenChatTool(MotleyTool):
             result_extractor=result_extractor,
             input_schema=input_schema,
         )
-        super().__init__(langchain_tool)
+        super().__init__(
+            tool=langchain_tool,
+            return_direct=return_direct,
+            exceptions_to_reflect=exceptions_to_reflect,
+        )
 
 
 def create_autogen_chat_tool(

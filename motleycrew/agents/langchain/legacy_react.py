@@ -14,10 +14,10 @@ from motleycrew.common import MotleySupportedTool
 from motleycrew.common.llms import init_llm
 from motleycrew.tools import MotleyTool
 
-OUTPUT_HANDLER_WITH_DEFAULT_PROMPT_MESSAGE = (
+FORCED_OUTPUT_HANDLER_WITH_DEFAULT_PROMPT_MESSAGE = (
     "Langchain's default ReAct prompt tells the agent to include a final answer keyword, "
-    "which later confuses the parser when an output handler is used. "
-    "Please provide a custom prompt if using an output handler."
+    "which later confuses the agent when an output handler is used. "
+    "Please provide a custom prompt if forcing an output handler."
 )
 
 
@@ -34,8 +34,8 @@ class LegacyReActMotleyAgent(LangchainMotleyAgent):
         description: str | None = None,
         name: str | None = None,
         prompt_prefix: str | None = None,
-        output_handler: MotleySupportedTool | None = None,
         chat_history: bool | GetSessionHistoryCallable = True,
+        force_output_handler: bool = False,
         prompt: str | None = None,
         handle_parsing_errors: bool = True,
         handle_tool_errors: bool = True,
@@ -51,6 +51,7 @@ class LegacyReActMotleyAgent(LangchainMotleyAgent):
             prompt_prefix: Prefix to the agent's prompt.
             output_handler: Output handler for the agent.
             chat_history: Whether to use chat history or not.
+            force_output_handler: Whether to force the agent to return through an output handler.
             prompt: Custom prompt to use with the agent.
             handle_parsing_errors: Whether to handle parsing errors.
             handle_tool_errors: Whether to handle tool errors.
@@ -60,8 +61,8 @@ class LegacyReActMotleyAgent(LangchainMotleyAgent):
             verbose: Whether to log verbose output.
         """
         if prompt is None:
-            if output_handler is not None:
-                raise Exception(OUTPUT_HANDLER_WITH_DEFAULT_PROMPT_MESSAGE)
+            if force_output_handler:
+                raise Exception(FORCED_OUTPUT_HANDLER_WITH_DEFAULT_PROMPT_MESSAGE)
             prompt = hub.pull("hwchase17/react")
 
         if llm is None:
@@ -97,7 +98,6 @@ class LegacyReActMotleyAgent(LangchainMotleyAgent):
             name=name,
             agent_factory=agent_factory,
             tools=tools,
-            output_handler=output_handler,
             chat_history=chat_history,
             runnable_config=runnable_config,
             verbose=verbose,

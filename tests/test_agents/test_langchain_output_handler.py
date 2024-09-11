@@ -1,17 +1,23 @@
 import pytest
 from langchain_core.agents import AgentFinish, AgentAction
 
-from motleycrew.agents import MotleyOutputHandler
 from motleycrew.agents.langchain.tool_calling_react import ReActToolCallingMotleyAgent
-from motleycrew.agents.parent import DirectOutput
-from motleycrew.common.exceptions import InvalidOutput, OutputHandlerMaxIterationsExceeded
+from motleycrew.common.exceptions import InvalidOutput
+from motleycrew.tools import MotleyTool, DirectOutput
 from tests.test_agents import MockTool
 
 invalid_output = "Add more information about AI applications in medicine."
 
 
-class ReportOutputHandler(MotleyOutputHandler):
-    def handle_output(self, output: str):
+class ReportOutputHandler(MotleyTool):
+    def __init__(self):
+        super().__init__(
+            name="output_handler",
+            description="Output handler",
+            return_direct=True,
+        )
+
+    def run(self, output: str):
         if "medical" not in output.lower():
             raise InvalidOutput(invalid_output)
 
@@ -38,10 +44,10 @@ def fake_agent_take_next_step(
 @pytest.fixture
 def agent():
     agent = ReActToolCallingMotleyAgent(
-        tools=[MockTool()],
+        tools=[MockTool(), ReportOutputHandler()],
         verbose=True,
         chat_history=True,
-        output_handler=ReportOutputHandler(max_iterations=5),
+        force_output_handler=True,
     )
     agent.materialize()
     object.__setattr__(agent._agent, "plan", fake_agent_plan)
@@ -71,17 +77,20 @@ def run_kwargs(agent):
 
 def test_agent_plan(agent):
     agent_executor = agent.agent
-    agent_action = AgentAction("tool", "tool_input", "tool_log")
-    step = agent_executor.plan([], agent_action)
-    assert agent_action == step
+    agent_actions = [AgentAction("tool", "tool_input", "tool_log")]
+    step = agent_executor.plan([], agent_actions)
+    assert agent_actions == step
 
     return_values = {"output": "test_output"}
     agent_finish = AgentFinish(return_values=return_values, log="test_output")
 
     step = agent_executor.plan([], agent_finish)
     assert isinstance(step, AgentAction)
-    assert step.tool == agent._agent_finish_blocker_tool.name
-    assert step.tool_input == "test_output"
+    assert step.tool == agent._agent_error_tool.name
+    assert step.tool_input == {
+        "error_message": "You must call the `output_handler` tool to return the final output.",
+        "message": "test_output",
+    }
 
 
 def test_agent_take_next_step(agent, run_kwargs):
@@ -100,14 +109,3 @@ def test_agent_take_next_step(agent, run_kwargs):
     assert isinstance(step_result.return_values, dict)
     output_result = step_result.return_values.get("output")
     assert output_result == {"checked_output": input_data}
-
-
-def test_output_handler_max_iteration(agent, run_kwargs):
-    input_data = "Latest advancements in AI in 2024."
-    run_kwargs["inputs"] = input_data
-
-    with pytest.raises(OutputHandlerMaxIterationsExceeded):
-        for iteration in range(agent.output_handler.max_iterations + 1):
-            agent.agent._take_next_step(**run_kwargs)
-
-    assert iteration == agent.output_handler.max_iterations

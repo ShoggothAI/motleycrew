@@ -1,3 +1,5 @@
+from typing import Optional, List
+
 from motleycrew.common.utils import ensure_module_is_installed
 
 try:
@@ -17,7 +19,13 @@ from motleycrew.tools import MotleyTool
 class AiderTool(MotleyTool):
     """Tool for code generation using Aider."""
 
-    def __init__(self, model: str = None, **kwargs):
+    def __init__(
+        self,
+        model: str = None,
+        return_direct: bool = False,
+        exceptions_to_reflect: Optional[List[Exception]] = None,
+        **kwargs
+    ):
         ensure_module_is_installed("aider")
 
         model = model or Defaults.DEFAULT_LLM_NAME
@@ -25,7 +33,11 @@ class AiderTool(MotleyTool):
         coder = Coder.create(main_model=llm_model, **kwargs)
 
         langchain_tool = create_aider_tool(coder)
-        super(AiderTool, self).__init__(langchain_tool)
+        super().__init__(
+            tool=langchain_tool,
+            return_direct=return_direct,
+            exceptions_to_reflect=exceptions_to_reflect,
+        )
 
 
 class AiderToolInput(BaseModel):

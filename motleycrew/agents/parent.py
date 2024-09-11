@@ -1,22 +1,17 @@
 from __future__ import annotations
 
-import inspect
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Optional, Sequence, Any, Union, List
+from typing import TYPE_CHECKING, Any, Optional, Sequence, Union
 
 from langchain_core.messages import BaseMessage
 from langchain_core.prompts.chat import ChatPromptTemplate, HumanMessage, SystemMessage
 from langchain_core.runnables import RunnableConfig
-from langchain_core.tools import StructuredTool
-from langchain_core.tools import Tool
+
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
-from motleycrew.common import MotleyAgentFactory, MotleySupportedTool
-from motleycrew.common import logger, Defaults
+from motleycrew.common import MotleyAgentFactory, MotleySupportedTool, logger
 from motleycrew.common.exceptions import (
     AgentNotMaterialized,
     CannotModifyMaterializedAgent,
-    InvalidOutput,
-    OutputHandlerMaxIterationsExceeded,
 )
 from motleycrew.tools import MotleyTool
 

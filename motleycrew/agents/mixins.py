@@ -74,6 +74,9 @@ class LangchainOutputHandlingAgentMixin:
 
             step = func(intermediate_steps, callbacks, **kwargs)
 
+            if isinstance(step, AgentAction):
+                step = [step]
+
             if output_handlers:
                 if isinstance(step, AgentFinish) and self.force_output_handler:
                     # Attempted to return output directly, blocking

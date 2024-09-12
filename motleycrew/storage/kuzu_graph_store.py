@@ -606,7 +606,7 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
         """
         cypher_type = MotleyKuzuGraphStore.PYTHON_TO_CYPHER_TYPES_MAPPING.get(annotation)
         if not cypher_type:
-            logger.warning(
+            logger.info(
                 "No known Cypher type matching annotation %s, will use JSON string",
                 annotation,
             )

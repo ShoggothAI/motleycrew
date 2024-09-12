@@ -5,6 +5,7 @@ from typing import Any, Optional, Sequence
 from langchain.agents import AgentExecutor
 from langchain_core.chat_history import InMemoryChatMessageHistory
 from langchain_core.runnables import RunnableConfig
+from langchain_core.runnables.config import merge_configs
 from langchain_core.runnables.history import RunnableWithMessageHistory, GetSessionHistoryCallable
 from langchain_core.prompts.chat import ChatPromptTemplate
 
@@ -25,8 +26,10 @@ class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin)
         prompt_prefix: str | ChatPromptTemplate | None = None,
         agent_factory: MotleyAgentFactory[AgentExecutor] | None = None,
         tools: Sequence[MotleySupportedTool] | None = None,
-        output_handler: MotleySupportedTool | None = None,
+        force_output_handler: bool = False,
         chat_history: bool | GetSessionHistoryCallable = True,
+        input_as_messages: bool = False,
+        runnable_config: RunnableConfig | None = None,
         verbose: bool = False,
     ):
         """
@@ -57,7 +60,8 @@ class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin)
 
             tools: Tools to add to the agent.
 
-            output_handler: Output handler for the agent.
+            force_output_handler: Whether to force the agent to return through an output handler.
+                If True, at least one tool must have return_direct set to True.
 
             chat_history: Whether to use chat history or not.
                 If `True`, uses `InMemoryChatMessageHistory`.
@@ -65,6 +69,11 @@ class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin)
 
                 See :class:`langchain_core.runnables.history.RunnableWithMessageHistory`
                 for more details.
+
+            input_as_messages: Whether the agent expects a list of messages as input instead of a single string.
+
+            runnable_config: Default Langchain config to use when invoking the agent.
+                It can be used to add callbacks, metadata, etc.
 
             verbose: Whether to log verbose output.
         """
@@ -74,17 +83,20 @@ class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin)
             name=name,
             agent_factory=agent_factory,
             tools=tools,
-            output_handler=output_handler,
+            force_output_handler=force_output_handler,
             verbose=verbose,
         )
-
-        self._agent_finish_blocker_tool = self._create_agent_finish_blocker_tool()
 
         if chat_history is True:
             chat_history = InMemoryChatMessageHistory()
             self.get_session_history_callable = lambda _: chat_history
         else:
             self.get_session_history_callable = chat_history
+
+        self.input_as_messages = input_as_messages
+        self.runnable_config = runnable_config
+
+        self._create_agent_error_tool()
 
     def materialize(self):
         """Materialize the agent and wrap it in RunnableWithMessageHistory if needed."""
@@ -94,8 +106,9 @@ class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin)
         super().materialize()
         assert isinstance(self._agent, AgentExecutor)
 
-        if self.output_handler:
-            self._agent.tools += [self._agent_finish_blocker_tool]
+        if self.get_output_handlers():
+            assert self._agent_error_tool
+            self._agent.tools += [self._agent_error_tool]
 
             object.__setattr__(
                 self._agent.agent, "plan", self.agent_plan_decorator(self._agent.agent.plan)
@@ -107,22 +120,19 @@ class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin)
                 self.take_next_step_decorator(self._agent._take_next_step),
             )
 
-            prepared_output_handler = None
             for tool in self.agent.tools:
-                if tool.name == self.output_handler.name:
-                    prepared_output_handler = tool
+                if tool.return_direct:
+                    object.__setattr__(
+                        tool,
+                        "_run",
+                        self._run_tool_direct_decorator(tool._run),
+                    )
 
-            object.__setattr__(
-                prepared_output_handler,
-                "_run",
-                self._run_tool_direct_decorator(prepared_output_handler._run),
-            )
-
-            object.__setattr__(
-                prepared_output_handler,
-                "run",
-                self.run_tool_direct_decorator(prepared_output_handler.run),
-            )
+                    object.__setattr__(
+                        tool,
+                        "run",
+                        self.run_tool_direct_decorator(tool.run),
+                    )
 
         if self.get_session_history_callable:
             logger.info("Wrapping agent in RunnableWithMessageHistory")
@@ -142,7 +152,8 @@ class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin)
         config: Optional[RunnableConfig] = None,
         **kwargs: Any,
     ) -> Any:
-        prompt = self.prepare_for_invocation(input=input)
+        config = merge_configs(self.runnable_config, config)
+        prompt = self.prepare_for_invocation(input=input, prompt_as_messages=self.input_as_messages)
 
         config = add_default_callbacks_to_langchain_config(config)
         if self.get_session_history_callable:
@@ -161,6 +172,7 @@ class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin)
         description: str | None = None,
         prompt_prefix: str | None = None,
         tools: Sequence[MotleySupportedTool] | None = None,
+        runnable_config: RunnableConfig | None = None,
         verbose: bool = False,
     ) -> "LangchainMotleyAgent":
         """Create a LangchainMotleyAgent from a :class:`langchain.agents.AgentExecutor` instance.
@@ -182,6 +194,9 @@ class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin)
 
             tools: Tools to add to the agent.
 
+            runnable_config: Default Langchain config to use when invoking the agent.
+                It can be used to add callbacks, metadata, etc.
+
             verbose: Whether to log verbose output.
         """
         # TODO: do we really need to unite the tools implicitly like this?
@@ -192,7 +207,11 @@ class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin)
             tools = list(tools or []) + list(agent.tools or [])
 
         wrapped_agent = LangchainMotleyAgent(
-            prompt_prefix=prompt_prefix, description=description, tools=tools, verbose=verbose
+            prompt_prefix=prompt_prefix,
+            description=description,
+            tools=tools,
+            runnable_config=runnable_config,
+            verbose=verbose,
         )
         wrapped_agent._agent = agent
         return wrapped_agent

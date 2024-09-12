@@ -8,7 +8,6 @@ from motleycrew.agents.langchain.tool_calling_react import ReActToolCallingMotle
 from motleycrew.agents.llama_index.llama_index_react import ReActLlamaIndexMotleyAgent
 from motleycrew.common.exceptions import AgentNotMaterialized, CannotModifyMaterializedAgent
 from motleycrew.tools.python_repl import create_repl_tool
-from motleycrew.tools.tool import MotleyTool
 from tests.test_agents import MockTool
 
 os.environ["OPENAI_API_KEY"] = "YOUR OPENAI API KEY"
@@ -82,11 +81,6 @@ class TestAgents:
         with pytest.raises(CannotModifyMaterializedAgent):
             tool = create_repl_tool()
             agent.add_tools([tool])
-
-    @pytest.mark.parametrize("agent", test_agents_names, indirect=True)
-    def test_as_tool(self, agent):
-        tool = agent.as_tool()
-        assert isinstance(tool, MotleyTool)
 
     @pytest.mark.parametrize("agent", test_agents_names, indirect=True)
     def test_compose_prompt(self, agent):

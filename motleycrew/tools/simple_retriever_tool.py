@@ -1,11 +1,12 @@
-import os.path
+import os
+from typing import List, Optional
 
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import StructuredTool
 from llama_index.core import (
-    VectorStoreIndex,
     SimpleDirectoryReader,
     StorageContext,
+    VectorStoreIndex,
     load_index_from_storage,
 )
 from llama_index.core.node_parser import SentenceSplitter
@@ -18,7 +19,14 @@ from motleycrew.tools import MotleyTool
 class SimpleRetrieverTool(MotleyTool):
     """A simple retriever tool that retrieves relevant documents from a local knowledge base."""
 
-    def __init__(self, data_dir: str, persist_dir: str, return_strings_only: bool = False):
+    def __init__(
+        self,
+        data_dir: str,
+        persist_dir: str,
+        return_strings_only: bool = False,
+        return_direct: bool = False,
+        exceptions_to_reflect: Optional[List[Exception]] = None,
+    ):
         """
         Args:
             data_dir: Path to the directory containing the documents.
@@ -28,7 +36,9 @@ class SimpleRetrieverTool(MotleyTool):
         tool = make_retriever_langchain_tool(
             data_dir, persist_dir, return_strings_only=return_strings_only
         )
-        super().__init__(tool)
+        super().__init__(
+            tool=tool, return_direct=return_direct, exceptions_to_reflect=exceptions_to_reflect
+        )
 
 
 class RetrieverToolInput(BaseModel, arbitrary_types_allowed=True):

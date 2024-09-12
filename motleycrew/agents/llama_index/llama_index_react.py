@@ -27,8 +27,8 @@ class ReActLlamaIndexMotleyAgent(LlamaIndexMotleyAgent):
         description: str | None = None,
         name: str | None = None,
         tools: Sequence[MotleySupportedTool] | None = None,
+        force_output_handler: bool = False,
         llm: LLM | None = None,
-        output_handler: MotleySupportedTool | None = None,
         verbose: bool = False,
         max_iterations: int = 10,
     ):
@@ -51,9 +51,10 @@ class ReActLlamaIndexMotleyAgent(LlamaIndexMotleyAgent):
 
             tools: Tools to add to the agent.
 
-            llm: LLM instance to use.
+            force_output_handler: Whether to force the agent to return through an output handler.
+                If True, at least one tool must have return_direct set to True.
 
-            output_handler: Output handler for the agent.
+            llm: LLM instance to use.
 
             verbose: Whether to log verbose output.
 
@@ -82,6 +83,6 @@ class ReActLlamaIndexMotleyAgent(LlamaIndexMotleyAgent):
             name=name,
             agent_factory=agent_factory,
             tools=tools,
-            output_handler=output_handler,
+            force_output_handler=force_output_handler,
             verbose=verbose,
         )

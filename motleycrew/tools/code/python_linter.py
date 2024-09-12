@@ -1,5 +1,5 @@
 import os
-from typing import Union
+from typing import Union, Optional, List
 
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import StructuredTool
@@ -16,11 +16,19 @@ from motleycrew.tools import MotleyTool
 class PythonLinterTool(MotleyTool):
     """Python code verification tool"""
 
-    def __init__(self):
+    def __init__(
+        self,
+        return_direct: bool = False,
+        exceptions_to_reflect: Optional[List[Exception]] = None,
+    ):
         ensure_module_is_installed("aider")
 
         langchain_tool = create_python_linter_tool()
-        super().__init__(langchain_tool)
+        super().__init__(
+            tool=langchain_tool,
+            return_direct=return_direct,
+            exceptions_to_reflect=exceptions_to_reflect,
+        )
 
 
 class PythonLinterInput(BaseModel):

@@ -1,8 +1,10 @@
 """Various helpers and utility functions used throughout the project."""
+
+import hashlib
 import sys
 from typing import Optional, Sequence
-import hashlib
 from urllib.parse import urlparse
+
 from langchain_core.messages import BaseMessage
 
 from motleycrew.common.exceptions import ModuleNotInstalled
@@ -47,9 +49,8 @@ def generate_hex_hash(data: str, length: Optional[int] = None):
 def print_passthrough(x):
     """A helper function useful for debugging LCEL chains. It just returns the input value.
 
-    You can put a breakpoint in this function to debug the chain.
+    You can put a breakpoint in this function to debug a chain.
     """
-
     return x
 
 

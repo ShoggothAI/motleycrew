@@ -8,33 +8,29 @@ from motleycrew.common import configure_logging
 from motleycrew.tasks import SimpleTask
 from motleycrew.common.exceptions import InvalidOutput
 from motleycrew.common import AsyncBackend
-
-from langchain_core.tools import StructuredTool
+from motleycrew.tools import MotleyTool
 
 
 def main():
     """Main function of running the example."""
     search_tool = DuckDuckGoSearchRun()
 
-    def check_output(output: str):
-        if "medicine" not in output.lower():
-            raise InvalidOutput(
-                "Add more information about AI applications in medicine."
-            )
+    class OutputHandler(MotleyTool):
+        def run(self, output: str):
+            if "medicine" not in output.lower():
+                raise InvalidOutput("Add more information about AI applications in medicine.")
 
-        return {"checked_output": output}
+            return {"checked_output": output}
 
-    output_handler = StructuredTool.from_function(
-        name="output_handler",
-        description="Output handler",
-        func=check_output,
+    output_handler = OutputHandler(
+        name="output_handler", description="Output handler", return_direct=True
     )
 
     # TODO: add LlamaIndex native tools
     researcher = ReActLlamaIndexMotleyAgent(
         prompt_prefix="Your goal is to uncover cutting-edge developments in AI and data science",
-        tools=[search_tool],
-        output_handler=output_handler,
+        tools=[search_tool, output_handler],
+        force_output_handler=True,
         verbose=True,
         max_iterations=16,  # default is 10, we add more because the output handler may reject the output
     )

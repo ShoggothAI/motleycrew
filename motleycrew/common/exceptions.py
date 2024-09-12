@@ -5,15 +5,15 @@ from typing import Any, Dict, Optional
 from motleycrew.common import Defaults
 
 
-class LLMFamilyNotSupported(Exception):
-    """Raised when an LLM family is not supported in motleycrew via a framework."""
+class LLMProviderNotSupported(Exception):
+    """Raised when an LLM provider is not supported in motleycrew via a framework."""
 
-    def __init__(self, llm_framework: str, llm_family: str):
+    def __init__(self, llm_framework: str, llm_provider: str):
         self.llm_framework = llm_framework
-        self.llm_family = llm_family
+        self.llm_provider = llm_provider
 
     def __str__(self) -> str:
-        return f"LLM family `{self.llm_family}` is not supported via the framework `{self.llm_framework}`"
+        return f"LLM provider `{self.llm_provider}` is not supported via the framework `{self.llm_framework}`"
 
 
 class LLMFrameworkNotSupported(Exception):
@@ -122,28 +122,3 @@ class InvalidOutput(Exception):
     """Raised in output handlers when an agent's output is not accepted."""
 
     pass
-
-
-class OutputHandlerMaxIterationsExceeded(BaseException):
-    """Raised when the output handler iterations limit is exceeded."""
-
-    def __init__(
-        self,
-        last_call_args: tuple,
-        last_call_kwargs: Dict[str, Any],
-        last_exception: Exception,
-    ):
-        """
-        Args:
-            last_call_args: Positional arguments with which the output handler was last called.
-            last_call_kwargs: Keyword arguments with which the output handler was last called.
-            last_exception: Exception that occurred during the last output handler iteration.
-        """
-        self.last_call_args = last_call_args
-        self.last_call_kwargs = last_call_kwargs
-        self.last_exception = last_exception
-
-    def __str__(self):
-        return "Maximum number of output handler iterations exceeded. Last exception: {}".format(
-            self.last_exception
-        )

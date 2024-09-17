@@ -111,7 +111,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent, ABC):
                 prompt_messages += self.prompt_prefix.invoke(input_dict).to_messages()
 
             elif isinstance(self.prompt_prefix, str):
-                prompt_messages.append(SystemMessage(content=self.prompt_prefix))
+                prompt_messages.append(SystemMessage(content=self.prompt_prefix.format(**input_dict)))
 
             else:
                 raise ValueError("Agent description must be a string or a ChatPromptTemplate")

@@ -23,6 +23,11 @@ class MotleyAgentAbstractParent(Runnable, ABC):
         pass
 
     @abstractmethod
-    def call_as_tool(self, *args, **kwargs) -> Any:
-        """Method that is called when the agent is used as a tool by another agent."""
+    def as_tool(self, **kwargs) -> Any:
+        """Convert the agent to a tool to be used by other agents via delegation.
+
+        Args:
+            kwargs: Additional arguments to pass to the tool.
+                See :class:`motleycrew.tools.tool.MotleyTool` for more details.
+        """
         pass

@@ -1,7 +1,6 @@
 """Helper functions to initialize Language Models (LLMs) from different frameworks."""
 
-from motleycrew.common import Defaults
-from motleycrew.common import LLMProvider, LLMFramework
+from motleycrew.common import Defaults, LLMFramework, LLMProvider
 from motleycrew.common.exceptions import LLMProviderNotSupported
 from motleycrew.common.utils import ensure_module_is_installed
 
@@ -209,6 +208,20 @@ def llama_index_ollama_llm(
     return Ollama(model=llm_name, temperature=llm_temperature, **kwargs)
 
 
+def litellm_llm(
+    llm_name: str = Defaults.DEFAULT_LLM_NAME,
+    llm_temperature: float = Defaults.DEFAULT_LLM_TEMPERATURE,
+    **kwargs,
+):
+    """
+    Args:
+        llm_name: Name of the LLM in Litellm API.
+        llm_temperature: Temperature for the LLM.
+    """
+    ensure_module_is_installed("litellm")
+    return llm_name  # TODO: temperature
+
+
 LLM_MAP = {
     (LLMFramework.LANGCHAIN, LLMProvider.OPENAI): langchain_openai_llm,
     (LLMFramework.LLAMA_INDEX, LLMProvider.OPENAI): llama_index_openai_llm,
@@ -222,6 +235,12 @@ LLM_MAP = {
     (LLMFramework.LLAMA_INDEX, LLMProvider.GROQ): llama_index_groq_llm,
     (LLMFramework.LANGCHAIN, LLMProvider.OLLAMA): langchain_ollama_llm,
     (LLMFramework.LLAMA_INDEX, LLMProvider.OLLAMA): llama_index_ollama_llm,
+    (LLMFramework.LITELLM, LLMProvider.OPENAI): litellm_llm,
+    (LLMFramework.LITELLM, LLMProvider.ANTHROPIC): litellm_llm,
+    (LLMFramework.LITELLM, LLMProvider.REPLICATE): litellm_llm,
+    (LLMFramework.LITELLM, LLMProvider.TOGETHER): litellm_llm,
+    (LLMFramework.LITELLM, LLMProvider.GROQ): litellm_llm,
+    (LLMFramework.LITELLM, LLMProvider.OLLAMA): litellm_llm,
 }
 
 

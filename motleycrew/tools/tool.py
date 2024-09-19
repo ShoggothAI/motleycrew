@@ -1,11 +1,11 @@
 import functools
 import inspect
-from typing import Callable, Union, Optional, Dict, Any, List
+from typing import Any, Callable, Dict, List, Optional, Union
 
-from langchain.tools import BaseTool, Tool, StructuredTool
-from langchain_core.runnables import Runnable, RunnableConfig
+from langchain.tools import BaseTool, StructuredTool, Tool
 from langchain_core.pydantic_v1 import BaseModel
-
+from langchain_core.runnables import Runnable, RunnableConfig
+from langchain_core.utils.function_calling import convert_to_openai_tool
 from motleycrew.common.exceptions import InvalidOutput
 
 try:
@@ -22,10 +22,10 @@ except ImportError:
     CrewAI__BaseTool = None
     Crewai__Tool = None
 
-from motleycrew.common import logger
-from motleycrew.common.utils import ensure_module_is_installed
-from motleycrew.common.types import MotleySupportedTool
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
+from motleycrew.common import logger
+from motleycrew.common.types import MotleySupportedTool
+from motleycrew.common.utils import ensure_module_is_installed
 
 
 class DirectOutput(BaseException):
@@ -381,3 +381,11 @@ class MotleyTool(Runnable):
             args_schema=self.tool.args_schema,
         )
         return crewai_tool
+
+    def to_openai_tool(self) -> Dict[str, Any]:
+        """Convert the MotleyTool to OpenAI tool format.
+
+        Returns:
+            OpenAI tool JSON description.
+        """
+        return convert_to_openai_tool(self.tool)

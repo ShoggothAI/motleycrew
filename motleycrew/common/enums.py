@@ -14,9 +14,10 @@ class LLMProvider:
 
 class LLMFramework:
     LANGCHAIN = "langchain"
+    LITELLM = "litellm"
     LLAMA_INDEX = "llama_index"
 
-    ALL = {LANGCHAIN, LLAMA_INDEX}
+    ALL = {LANGCHAIN, LITELLM, LLAMA_INDEX}
 
 
 class GraphStoreType:

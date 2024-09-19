@@ -157,7 +157,7 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
         wrapped_agent._agent = agent
         return wrapped_agent
 
-    def as_tool(self) -> MotleyTool:
+    def as_tool(self, **kwargs) -> MotleyTool:
         if not self.description:
             raise ValueError("Agent must have a description to be called as a tool")
 
@@ -182,5 +182,6 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
                 description=self.description,
                 func=call_agent,
                 args_schema=CrewAIAgentInputSchema,
-            )
+            ),
+            **kwargs,
         )

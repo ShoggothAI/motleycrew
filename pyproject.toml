@@ -8,7 +8,6 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.10"
 langchain = "^0.2"
-setuptools = "^67.6.2"
 langchain-experimental = "^0.0.62"
 python-dotenv = "^1.0.0"
 langchainhub = "^0.1.15"

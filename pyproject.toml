@@ -7,15 +7,14 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-langchain = "^0.2"
-langchain-experimental = "^0.0.62"
+langchain = "^0.3"
+langchain-experimental = "*"
+langchain-openai = "*"
 python-dotenv = "^1.0.0"
-langchainhub = "^0.1.15"
 kuzu = "^0.4.2"
 cloudpickle = "^3.0.0"
 platformdirs = "^4.2.1"
 pydantic = "^2.7.1"
-langchain-openai = "^0.1.22"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.2.0"

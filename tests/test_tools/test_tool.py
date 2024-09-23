@@ -1,6 +1,6 @@
 import pytest
 from langchain.tools import BaseTool
-from langchain_core.pydantic_v1 import BaseModel, Field
+from pydantic import BaseModel, Field
 
 try:
     from crewai_tools import Tool as CrewAiTool

@@ -1,14 +1,13 @@
-from typing import Optional, List
+from typing import List, Optional
 
 import replicate
-
 from langchain.agents import Tool
-from langchain_core.pydantic_v1 import BaseModel, Field
+from pydantic import BaseModel, Field
 
 import motleycrew.common.utils as motley_utils
+from motleycrew.common import logger
 from motleycrew.tools.image.download_image import download_url_to_directory
 from motleycrew.tools.tool import MotleyTool
-from motleycrew.common import logger
 
 model_map = {
     "sdxl": "stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b",

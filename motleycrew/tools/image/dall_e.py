@@ -1,13 +1,12 @@
-from typing import Optional, List
+from typing import List, Optional
 
 from langchain.agents import Tool
 from langchain.prompts import PromptTemplate
 from langchain_community.utilities.dalle_image_generator import DallEAPIWrapper
-from langchain_core.pydantic_v1 import BaseModel, Field
+from pydantic import BaseModel, Field
 
 import motleycrew.common.utils as motley_utils
-from motleycrew.common import LLMFramework
-from motleycrew.common import logger
+from motleycrew.common import LLMFramework, logger
 from motleycrew.common.llms import init_llm
 from motleycrew.tools.image.download_image import download_url_to_directory
 from motleycrew.tools.tool import MotleyTool

@@ -338,12 +338,12 @@ class MotleyTool(Runnable):
         Returns:
             AutoGen tool function.
         """
-        fields = list(self.tool.args_schema.__fields__.values())
+        fields = list(self.tool.args_schema.model_fields.items())
         if len(fields) != 1:
             raise Exception("Multiple input fields are not supported in to_autogen_tool")
 
-        field_name = fields[0].name
-        field_type = fields[0].annotation
+        field_name, field_info = fields[0]
+        field_type = field_info.annotation
 
         def autogen_tool_fn(input: field_type) -> str:
             return self.invoke({field_name: input})

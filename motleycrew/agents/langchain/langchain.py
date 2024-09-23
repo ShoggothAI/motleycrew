@@ -1,18 +1,21 @@
 from __future__ import annotations
 
+import asyncio
 from typing import Any, Optional, Sequence
 
 from langchain.agents import AgentExecutor
 from langchain_core.chat_history import InMemoryChatMessageHistory
+from langchain_core.prompts.chat import ChatPromptTemplate
 from langchain_core.runnables import RunnableConfig
 from langchain_core.runnables.config import merge_configs
-from langchain_core.runnables.history import RunnableWithMessageHistory, GetSessionHistoryCallable
-from langchain_core.prompts.chat import ChatPromptTemplate
+from langchain_core.runnables.history import (
+    GetSessionHistoryCallable,
+    RunnableWithMessageHistory,
+)
 
 from motleycrew.agents.mixins import LangchainOutputHandlingAgentMixin
 from motleycrew.agents.parent import MotleyAgentParent
-from motleycrew.common import MotleyAgentFactory
-from motleycrew.common import MotleySupportedTool, logger
+from motleycrew.common import MotleyAgentFactory, MotleySupportedTool, logger
 from motleycrew.tracking import add_default_callbacks_to_langchain_config
 
 
@@ -146,23 +149,43 @@ class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin)
                 history_messages_key="chat_history",
             )
 
-    def invoke(
-        self,
-        input: dict,
-        config: Optional[RunnableConfig] = None,
-        **kwargs: Any,
-    ) -> Any:
+    def _prepare_config(self, config: RunnableConfig) -> RunnableConfig:
         config = merge_configs(self.runnable_config, config)
-        prompt = self.prepare_for_invocation(input=input, prompt_as_messages=self.input_as_messages)
-
         config = add_default_callbacks_to_langchain_config(config)
         if self.get_session_history_callable:
             config["configurable"] = config.get("configurable") or {}
             config["configurable"]["session_id"] = (
                 config["configurable"].get("session_id") or "default"
             )
+        return config
+
+    def invoke(
+        self,
+        input: dict,
+        config: Optional[RunnableConfig] = None,
+        **kwargs: Any,
+    ) -> Any:
+        config = self._prepare_config(config)
+        prompt = self._prepare_for_invocation(
+            input=input, prompt_as_messages=self.input_as_messages
+        )
 
         output = self.agent.invoke({"input": prompt}, config, **kwargs)
+        output = output.get("output")
+        return output
+
+    async def ainvoke(
+        self,
+        input: dict,
+        config: Optional[RunnableConfig] = None,
+        **kwargs: Any,
+    ) -> Any:
+        config = self._prepare_config(config)
+        prompt = await asyncio.to_thread(
+            self._prepare_for_invocation, input=input, prompt_as_messages=self.input_as_messages
+        )
+
+        output = await self.agent.ainvoke({"input": prompt}, config, **kwargs)
         output = output.get("output")
         return output
 

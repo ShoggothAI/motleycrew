@@ -1,10 +1,10 @@
 import asyncio
 import threading
 import time
-from typing import Collection, Generator, Optional, Any
+from typing import Any, Collection, Generator, Optional
 
 from motleycrew.agents.parent import MotleyAgentParent
-from motleycrew.common import logger, AsyncBackend, Defaults
+from motleycrew.common import AsyncBackend, Defaults, logger
 from motleycrew.crew.crew_threads import TaskUnitThreadPool
 from motleycrew.storage import MotleyGraphStore
 from motleycrew.storage.graph_store_utils import init_graph_store
@@ -112,7 +112,7 @@ class MotleyCrew:
             Agent, task, unit to be dispatched.
         """
         available_tasks = self.get_available_tasks()
-        logger.info("Available tasks: %s", available_tasks)
+        logger.debug("Available tasks: %s", available_tasks)
 
         for task in available_tasks:
             if not task.allow_async_units and task in running_sync_tasks:

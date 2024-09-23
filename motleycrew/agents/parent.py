@@ -175,7 +175,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent, ABC):
 
         self._agent = self.agent_factory(tools=self.tools)
 
-    def prepare_for_invocation(self, input: dict, prompt_as_messages: bool = False) -> str:
+    def _prepare_for_invocation(self, input: dict, prompt_as_messages: bool = False) -> str:
         """Prepare the agent for invocation by materializing it and composing the prompt.
 
         Should be called in the beginning of the agent's invoke method.

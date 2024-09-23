@@ -5,8 +5,9 @@ from typing import TYPE_CHECKING, Any, Optional, Sequence, Union
 
 from langchain_core.messages import BaseMessage
 from langchain_core.prompts.chat import ChatPromptTemplate, HumanMessage, SystemMessage
+from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.runnables import RunnableConfig
-from langchain_core.tools import Tool
+from langchain_core.tools import StructuredTool
 
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
 from motleycrew.common import MotleyAgentFactory, MotleySupportedTool, logger
@@ -174,7 +175,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent, ABC):
 
         self._agent = self.agent_factory(tools=self.tools)
 
-    def prepare_for_invocation(self, input: dict, prompt_as_messages: bool = False) -> str:
+    def _prepare_for_invocation(self, input: dict, prompt_as_messages: bool = False) -> str:
         """Prepare the agent for invocation by materializing it and composing the prompt.
 
         Should be called in the beginning of the agent's invoke method.
@@ -225,8 +226,10 @@ class MotleyAgentParent(MotleyAgentAbstractParent, ABC):
         if not getattr(self, "name", None) or not getattr(self, "description", None):
             raise ValueError("Agent must have a name and description to be called as a tool")
 
-        def call_as_tool(self, *args, **kwargs):
-            # TODO: this thing is hacky, we should have a better way to pass structured input
+        class CallAsToolInput(BaseModel):
+            input: str = Field(..., description="Input to the tool")
+
+        def call_as_tool(*args, **kwargs):
             if args:
                 return self.invoke({"prompt": args[0]})
             if len(kwargs) == 1:
@@ -235,12 +238,13 @@ class MotleyAgentParent(MotleyAgentAbstractParent, ABC):
 
         # To be specialized if we expect structured input
         return MotleyTool.from_langchain_tool(
-            Tool(
+            StructuredTool(
                 name=self.name.replace(
                     " ", "_"
                 ).lower(),  # OpenAI doesn't accept spaces in function names
                 description=self.description,
                 func=call_as_tool,
+                args_schema=CallAsToolInput,
             ),
             **kwargs,
         )

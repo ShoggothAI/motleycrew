@@ -8,8 +8,7 @@ from langchain_core.tools import StructuredTool
 
 from motleycrew.agents.crewai import CrewAIAgentWithConfig
 from motleycrew.agents.parent import MotleyAgentParent
-from motleycrew.common import MotleyAgentFactory
-from motleycrew.common import MotleySupportedTool
+from motleycrew.common import MotleyAgentFactory, MotleySupportedTool
 from motleycrew.common.utils import ensure_module_is_installed
 from motleycrew.tools import MotleyTool
 from motleycrew.tracking import add_default_callbacks_to_langchain_config
@@ -92,7 +91,7 @@ class CrewAIMotleyAgentParent(MotleyAgentParent):
         config: Optional[RunnableConfig] = None,
         **kwargs: Any,
     ) -> Any:
-        prompt = self.prepare_for_invocation(input=input)
+        prompt = self._prepare_for_invocation(input=input)
 
         langchain_tools = [tool.to_langchain_tool() for tool in self.tools.values()]
         config = add_default_callbacks_to_langchain_config(config)

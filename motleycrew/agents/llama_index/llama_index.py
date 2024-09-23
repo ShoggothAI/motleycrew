@@ -1,13 +1,13 @@
 from __future__ import annotations
 
+import asyncio
 import uuid
 from typing import Any, Optional, Sequence
 
 try:
     from llama_index.core.agent import AgentRunner
-    from llama_index.core.chat_engine.types import ChatResponseMode
     from llama_index.core.agent.types import TaskStep, TaskStepOutput
-    from llama_index.core.chat_engine.types import AgentChatResponse
+    from llama_index.core.chat_engine.types import AgentChatResponse, ChatResponseMode
 except ImportError:
     AgentRunner = None
     ChatResponseMode = None
@@ -18,7 +18,7 @@ except ImportError:
 from langchain_core.runnables import RunnableConfig
 
 from motleycrew.agents.parent import MotleyAgentParent
-from motleycrew.common import MotleySupportedTool, MotleyAgentFactory, AuxPrompts
+from motleycrew.common import AuxPrompts, MotleyAgentFactory, MotleySupportedTool
 from motleycrew.common.utils import ensure_module_is_installed
 from motleycrew.tools import DirectOutput
 
@@ -154,9 +154,24 @@ class LlamaIndexMotleyAgent(MotleyAgentParent):
         config: Optional[RunnableConfig] = None,
         **kwargs: Any,
     ) -> Any:
-        prompt = self.prepare_for_invocation(input=input)
+        prompt = self._prepare_for_invocation(input=input)
 
         output = self.agent.chat(prompt)
+
+        if self.direct_output is not None:
+            return self.direct_output.output
+
+        return output.response
+
+    async def ainvoke(
+        self,
+        input: dict,
+        config: Optional[RunnableConfig] = None,
+        **kwargs: Any,
+    ) -> Any:
+        prompt = await asyncio.to_thread(self._prepare_for_invocation, input=input)
+
+        output = await self.agent.achat(prompt)
 
         if self.direct_output is not None:
             return self.direct_output.output

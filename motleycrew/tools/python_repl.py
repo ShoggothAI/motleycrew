@@ -1,7 +1,8 @@
+from typing import List, Optional
+
 from langchain.agents import Tool
 from langchain_experimental.utilities import PythonREPL
-from langchain_core.pydantic_v1 import BaseModel, Field
-from typing import Optional, List
+from pydantic import BaseModel, Field
 
 from .tool import MotleyTool
 

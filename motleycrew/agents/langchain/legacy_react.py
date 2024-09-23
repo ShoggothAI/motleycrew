@@ -1,23 +1,38 @@
 from __future__ import annotations
 
-from typing import Sequence, Optional
+from typing import Optional, Sequence
 
-from langchain import hub
-from langchain.agents import AgentExecutor
-from langchain.agents import create_react_agent
+from langchain.agents import AgentExecutor, create_react_agent
 from langchain_core.language_models import BaseLanguageModel
+from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables.history import GetSessionHistoryCallable
 
 from motleycrew.agents.langchain import LangchainMotleyAgent
-from motleycrew.common import LLMFramework
-from motleycrew.common import MotleySupportedTool
+from motleycrew.common import LLMFramework, MotleySupportedTool
 from motleycrew.common.llms import init_llm
 from motleycrew.tools import MotleyTool
 
-FORCED_OUTPUT_HANDLER_WITH_DEFAULT_PROMPT_MESSAGE = (
-    "Langchain's default ReAct prompt tells the agent to include a final answer keyword, "
-    "which later confuses the agent when an output handler is used. "
-    "Please provide a custom prompt if forcing an output handler."
+DEFAULT_REACT_PROMPT = PromptTemplate.from_template(
+    """Answer the following questions as best you can. You have access to the following tools:
+
+{tools}
+
+Use the following format:
+
+Question: the input question you must answer
+Thought: you should always think about what to do
+Action: the action to take, should be one of [{tool_names}]
+Action Input: the input to the action
+Observation: the result of the action
+... (this Thought/Action/Action Input/Observation can repeat N times)
+Thought: I now know the final answer
+Final Answer: the final answer to the original input question
+
+Begin!
+
+Question: {input}
+Thought: {agent_scratchpad}
+"""
 )
 
 
@@ -60,10 +75,11 @@ class LegacyReActMotleyAgent(LangchainMotleyAgent):
                 It can be used to add callbacks, metadata, etc.
             verbose: Whether to log verbose output.
         """
+        if force_output_handler:
+            raise Exception("Forced output handler is not supported with legacy ReAct agent.")
+
         if prompt is None:
-            if force_output_handler:
-                raise Exception(FORCED_OUTPUT_HANDLER_WITH_DEFAULT_PROMPT_MESSAGE)
-            prompt = hub.pull("hwchase17/react")
+            prompt = DEFAULT_REACT_PROMPT
 
         if llm is None:
             llm = init_llm(llm_framework=LLMFramework.LANGCHAIN)

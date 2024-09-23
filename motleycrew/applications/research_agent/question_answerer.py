@@ -1,17 +1,13 @@
 from langchain.prompts import PromptTemplate
 from langchain_core.prompts.base import BasePromptTemplate
-from langchain_core.pydantic_v1 import BaseModel, Field
-from langchain_core.runnables import (
-    RunnablePassthrough,
-    RunnableLambda,
-    chain,
-)
+from langchain_core.runnables import RunnableLambda, RunnablePassthrough, chain
 from langchain_core.tools import Tool
+from pydantic import BaseModel, Field
 
 from motleycrew.applications.research_agent.question import Question
 from motleycrew.common.utils import print_passthrough
 from motleycrew.storage import MotleyGraphStore
-from motleycrew.tools import MotleyTool, LLMTool
+from motleycrew.tools import LLMTool, MotleyTool
 
 _default_prompt = PromptTemplate.from_template(
     """

@@ -20,6 +20,7 @@ concurrency:
 
 jobs:
   test:
+    environment: integration_test
     strategy:
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
@@ -58,6 +59,6 @@ jobs:
 
     - name: Run integration tests
       env:
-        OPENAI_API_KEY: fake_key_1337
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         TIKTOKEN_CACHE_DIR: tests/itest_cache/tiktoken_cache
       run: poetry run python tests/run_integration_tests.py --minimal-only

@@ -2,6 +2,7 @@ import argparse
 import difflib
 import json
 import os
+import shutil
 import sys
 import traceback
 from copy import copy
@@ -18,7 +19,7 @@ from nbformat.v4.nbbase import new_code_cell
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, project_root)  # ensure the examples are importable
 
-from motleycrew.common import configure_logging, logger
+from motleycrew.common import logger, configure_logging
 from motleycrew.common.exceptions import (
     IntegrationTestException,
     IpynbIntegrationTestResultNotFound,

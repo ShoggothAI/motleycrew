@@ -5,7 +5,9 @@ from typing import TYPE_CHECKING, Any, Optional, Sequence, Union
 
 from langchain_core.messages import BaseMessage
 from langchain_core.prompts.chat import ChatPromptTemplate, HumanMessage, SystemMessage
+from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.runnables import RunnableConfig
+from langchain_core.tools import StructuredTool
 
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
 from motleycrew.common import MotleyAgentFactory, MotleySupportedTool, logger
@@ -111,7 +113,9 @@ class MotleyAgentParent(MotleyAgentAbstractParent, ABC):
                 prompt_messages += self.prompt_prefix.invoke(input_dict).to_messages()
 
             elif isinstance(self.prompt_prefix, str):
-                prompt_messages.append(SystemMessage(content=self.prompt_prefix))
+                prompt_messages.append(
+                    SystemMessage(content=self.prompt_prefix.format(**input_dict))
+                )
 
             else:
                 raise ValueError("Agent description must be a string or a ChatPromptTemplate")
@@ -171,7 +175,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent, ABC):
 
         self._agent = self.agent_factory(tools=self.tools)
 
-    def prepare_for_invocation(self, input: dict, prompt_as_messages: bool = False) -> str:
+    def _prepare_for_invocation(self, input: dict, prompt_as_messages: bool = False) -> str:
         """Prepare the agent for invocation by materializing it and composing the prompt.
 
         Should be called in the beginning of the agent's invoke method.
@@ -211,15 +215,39 @@ class MotleyAgentParent(MotleyAgentAbstractParent, ABC):
                     )
                 self.tools[motley_tool.name] = motley_tool
 
-    def call_as_tool(self, *args, **kwargs):
-        """Method that is called when the agent is used as a tool by another agent."""
+    def as_tool(self, **kwargs) -> MotleyTool:
+        """Convert the agent to a tool to be used by other agents via delegation.
 
-        # TODO: this thing is hacky, we should have a better way to pass structured input
-        if args:
-            return self.invoke({"prompt": args[0]})
-        if len(kwargs) == 1:
-            return self.invoke({"prompt": list(kwargs.values())[0]})
-        return self.invoke(kwargs)
+        Args:
+            kwargs: Additional arguments to pass to the tool.
+                See :class:`motleycrew.tools.tool.MotleyTool` for more details.
+        """
+
+        if not getattr(self, "name", None) or not getattr(self, "description", None):
+            raise ValueError("Agent must have a name and description to be called as a tool")
+
+        class CallAsToolInput(BaseModel):
+            input: str = Field(..., description="Input to the tool")
+
+        def call_as_tool(*args, **kwargs):
+            if args:
+                return self.invoke({"prompt": args[0]})
+            if len(kwargs) == 1:
+                return self.invoke({"prompt": list(kwargs.values())[0]})
+            return self.invoke(kwargs)
+
+        # To be specialized if we expect structured input
+        return MotleyTool.from_langchain_tool(
+            StructuredTool(
+                name=self.name.replace(
+                    " ", "_"
+                ).lower(),  # OpenAI doesn't accept spaces in function names
+                description=self.description,
+                func=call_as_tool,
+                args_schema=CallAsToolInput,
+            ),
+            **kwargs,
+        )
 
     @abstractmethod
     def invoke(

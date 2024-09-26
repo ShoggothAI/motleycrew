@@ -247,20 +247,8 @@ class MotleyTool(Runnable):
             The tool representation of the agent.
         """
 
-        if not getattr(agent, "name", None) or not getattr(agent, "description", None):
-            raise ValueError("Agent must have a name and description to be called as a tool")
-
-        # To be specialized if we expect structured input
-        return MotleyTool.from_langchain_tool(
-            Tool(
-                name=agent.name.replace(
-                    " ", "_"
-                ).lower(),  # OpenAI doesn't accept spaces in function names
-                description=agent.description,
-                func=agent.call_as_tool,
-            ),
-            return_direct=return_direct,
-            exceptions_to_reflect=exceptions_to_reflect,
+        return agent.as_tool(
+            return_direct=return_direct, exceptions_to_reflect=exceptions_to_reflect
         )
 
     @staticmethod

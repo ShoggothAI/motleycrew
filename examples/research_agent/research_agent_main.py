@@ -1,19 +1,18 @@
-from pathlib import Path
-import shutil
 import os
 import platform
+import shutil
+from pathlib import Path
 
 import kuzu
 from dotenv import load_dotenv
 
 from motleycrew import MotleyCrew
-from motleycrew.storage import MotleyKuzuGraphStore
-from motleycrew.common import configure_logging
-from motleycrew.applications.research_agent.question_task import QuestionTask
 from motleycrew.applications.research_agent.answer_task import AnswerTask
-
+from motleycrew.applications.research_agent.question_task import QuestionTask
+from motleycrew.common import LLMFramework, configure_logging
+from motleycrew.common.llms import init_llm
+from motleycrew.storage import MotleyKuzuGraphStore
 from motleycrew.tools.simple_retriever_tool import SimpleRetrieverTool
-
 
 WORKING_DIR = Path(__file__).parent
 if "Dropbox" in WORKING_DIR.parts and platform.system() == "Windows":
@@ -31,11 +30,16 @@ ANSWER_LENGTH = 200
 
 
 def main():
+    llm = init_llm(
+        llm_framework=LLMFramework.LANGCHAIN
+    )  # throughout this project, we use LangChain's LLM wrappers
+
     load_dotenv()
     configure_logging(verbose=True)
 
     shutil.rmtree(DB_PATH)
 
+    # You can pass any LlamaIndex embedding to the retriever tool, default is OpenAI's text-embedding-ada-002
     query_tool = SimpleRetrieverTool(DATA_DIR, PERSIST_DIR, return_strings_only=True)
 
     db = kuzu.Database(DB_PATH)
@@ -43,9 +47,13 @@ def main():
     crew = MotleyCrew(graph_store=graph_store)
 
     question_task = QuestionTask(
-        crew=crew, question=QUESTION, query_tool=query_tool, max_iter=MAX_ITER
+        crew=crew,
+        question=QUESTION,
+        query_tool=query_tool,
+        max_iter=MAX_ITER,
+        llm=llm,
     )
-    answer_task = AnswerTask(answer_length=ANSWER_LENGTH, crew=crew)
+    answer_task = AnswerTask(answer_length=ANSWER_LENGTH, crew=crew, llm=llm)
 
     question_task >> answer_task
 

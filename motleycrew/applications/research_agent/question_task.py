@@ -1,5 +1,6 @@
 from typing import List, Optional
 
+from langchain_core.language_models import BaseLanguageModel
 from langchain_core.runnables import Runnable
 
 from motleycrew.common import logger
@@ -26,6 +27,7 @@ class QuestionTask(Task):
         crew: MotleyCrew,
         max_iter: int = 10,
         allow_async_units: bool = False,
+        llm: Optional[BaseLanguageModel] = None,
         name: str = "QuestionTask",
     ):
         super().__init__(
@@ -41,7 +43,7 @@ class QuestionTask(Task):
         self.graph_store.insert_node(self.question)
         self.question_prioritization_tool = QuestionPrioritizerTool()
         self.question_generation_tool = QuestionGeneratorTool(
-            query_tool=query_tool, graph=self.graph_store
+            query_tool=query_tool, graph=self.graph_store, llm=llm
         )
 
     def get_next_unit(self) -> QuestionGenerationTaskUnit | None:

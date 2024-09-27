@@ -10,4 +10,5 @@ Examples
    examples/validating_agent_output
    examples/advanced_output_handling
    examples/streaming_agent_output
+   examples/event_driven
    autogen

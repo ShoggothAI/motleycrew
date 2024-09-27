@@ -1,17 +1,16 @@
+from typing import Optional
+
 from langchain.prompts import PromptTemplate
+from langchain_core.language_models import BaseLanguageModel
 from langchain_core.prompts.base import BasePromptTemplate
 from langchain_core.pydantic_v1 import BaseModel, Field
-from langchain_core.runnables import (
-    RunnablePassthrough,
-    RunnableLambda,
-    chain,
-)
+from langchain_core.runnables import RunnableLambda, RunnablePassthrough, chain
 from langchain_core.tools import Tool
 
 from motleycrew.applications.research_agent.question import Question
 from motleycrew.common.utils import print_passthrough
 from motleycrew.storage import MotleyGraphStore
-from motleycrew.tools import MotleyTool, LLMTool
+from motleycrew.tools import LLMTool, MotleyTool
 
 _default_prompt = PromptTemplate.from_template(
     """
@@ -37,11 +36,13 @@ class AnswerSubQuestionTool(MotleyTool):
         graph: MotleyGraphStore,
         answer_length: int,
         prompt: str | BasePromptTemplate = None,
+        llm: Optional[BaseLanguageModel] = None,
     ):
         langchain_tool = create_answer_question_langchain_tool(
             graph=graph,
             answer_length=answer_length,
             prompt=prompt,
+            llm=llm,
         )
 
         super().__init__(langchain_tool)
@@ -70,6 +71,7 @@ def create_answer_question_langchain_tool(
     graph: MotleyGraphStore,
     answer_length: int,
     prompt: str | BasePromptTemplate = None,
+    llm: Optional[BaseLanguageModel] = None,
 ) -> Tool:
     if prompt is None:
         prompt = _default_prompt
@@ -78,6 +80,7 @@ def create_answer_question_langchain_tool(
         prompt=prompt.partial(answer_length=str(answer_length)),
         name="Question answerer",
         description="Tool to answer a question from notes and sub-questions",
+        llm=llm,
     )
     """
     Gets a valid question node ID, question, and context as input dict

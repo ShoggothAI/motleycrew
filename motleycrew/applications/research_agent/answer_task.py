@@ -1,6 +1,7 @@
 from typing import List, Optional
 
 from langchain_core.runnables import Runnable
+from langchain_core.language_models import BaseLanguageModel
 
 from motleycrew.applications.research_agent.question import Question
 from motleycrew.applications.research_agent.question_answerer import AnswerSubQuestionTool
@@ -21,6 +22,7 @@ class AnswerTask(Task):
         self,
         crew: MotleyCrew,
         answer_length: int = 1000,
+        llm: Optional[BaseLanguageModel] = None,
     ):
         super().__init__(
             name="AnswerTask",
@@ -30,7 +32,7 @@ class AnswerTask(Task):
         )
         self.answer_length = answer_length
         self.answerer = AnswerSubQuestionTool(
-            graph=self.graph_store, answer_length=self.answer_length
+            graph=self.graph_store, answer_length=self.answer_length, llm=llm
         )
 
     def get_next_unit(self) -> QuestionAnsweringTaskUnit | None:

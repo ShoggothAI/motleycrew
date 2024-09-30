@@ -2,7 +2,6 @@ import argparse
 import difflib
 import json
 import os
-import shutil
 import sys
 import traceback
 from copy import copy
@@ -19,7 +18,7 @@ from nbformat.v4.nbbase import new_code_cell
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, project_root)  # ensure the examples are importable
 
-from motleycrew.common import logger, configure_logging
+from motleycrew.common import configure_logging, logger
 from motleycrew.common.exceptions import (
     IntegrationTestException,
     IpynbIntegrationTestResultNotFound,
@@ -34,7 +33,7 @@ IPYNB_INTEGRATION_TESTS = {
     "math_via_python_code_with_a_single_agent_ipynb": "examples/Math via python code with a single agent.ipynb",
     "validating_agent_output_ipynb": "examples/Validating agent output.ipynb",
     "advanced_output_handling_ipynb": "examples/Advanced output handling.ipynb",
-    "using_autogen_with_motleycrew_ipynb": "examples/Using AutoGen with motleycrew.ipynb"
+    "using_autogen_with_motleycrew_ipynb": "examples/Using AutoGen with motleycrew.ipynb",
 }
 
 MINIMAL_INTEGRATION_TESTS = {}
@@ -149,14 +148,14 @@ def run_ipynb(ipynb_path: str, strong_cache: bool = False, cache_sub_dir: str = 
 
         # ipynb save final result
         # final_result variable must be present in ipynb and store the result of the execution as a string
-        ipynb_result_file_path = os.path.join(cache_sub_dir, "ipynb_result.txt")
-        save_result_command = "with open(r'{}', 'w') as f:\n\tf.write(final_result)".format(
-            ipynb_result_file_path
-        )
+        # ipynb_result_file_path = os.path.join(cache_sub_dir, "ipynb_result.txt")
+        # save_result_command = "with open(r'{}', 'w') as f:\n\tf.write(final_result)".format(
+        #     ipynb_result_file_path
+        # )
         cells = [new_code_cell(save_result_command), new_code_cell("disable_cache()")]
         nb.cells += cells
-    else:
-        ipynb_result_file_path = None
+
+    ipynb_result_file_path = None
 
     ep = ExecutePreprocessor(kernel_name="python3")
     ep.preprocess(nb)

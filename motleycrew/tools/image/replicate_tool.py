@@ -1,13 +1,19 @@
 from typing import List, Optional
 
-import replicate
 from langchain.agents import Tool
 from pydantic import BaseModel, Field
 
 import motleycrew.common.utils as motley_utils
 from motleycrew.common import logger
+from motleycrew.common.utils import ensure_module_is_installed
 from motleycrew.tools.image.download_image import download_url_to_directory
 from motleycrew.tools.tool import MotleyTool
+
+try:
+    import replicate
+except ImportError:
+    replicate = None
+
 
 model_map = {
     "sdxl": "stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b",
@@ -64,6 +70,8 @@ class ReplicateImageGeneratorTool(MotleyTool):
         :param images_directory: the directory to save the images to
         :param kwargs: model-specific parameters, from pages such as https://replicate.com/black-forest-labs/flux-dev/api/schema
         """
+        ensure_module_is_installed("replicate")
+
         self.model_name = model_name
         self.kwargs = kwargs
         langchain_tool = create_replicate_image_generator_langchain_tool(

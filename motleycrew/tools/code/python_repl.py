@@ -4,7 +4,7 @@ from langchain.agents import Tool
 from langchain_experimental.utilities import PythonREPL
 from pydantic import BaseModel, Field
 
-from .tool import MotleyTool
+from ..tool import MotleyTool
 
 
 class PythonREPLTool(MotleyTool):

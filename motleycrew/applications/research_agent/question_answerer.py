@@ -10,7 +10,8 @@ from pydantic import BaseModel, Field
 from motleycrew.applications.research_agent.question import Question
 from motleycrew.common.utils import print_passthrough
 from motleycrew.storage import MotleyGraphStore
-from motleycrew.tools import LLMTool, MotleyTool
+from motleycrew.tools import MotleyTool
+from motleycrew.tools.llm_tool import LLMTool
 
 _default_prompt = PromptTemplate.from_template(
     """

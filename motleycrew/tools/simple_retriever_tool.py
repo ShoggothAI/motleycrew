@@ -1,7 +1,6 @@
 import os
 from typing import List, Optional
 
-from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import StructuredTool
 from llama_index.core import (
     SimpleDirectoryReader,
@@ -12,6 +11,7 @@ from llama_index.core import (
 from llama_index.core.node_parser import SentenceSplitter
 from llama_index.core.embeddings import BaseEmbedding
 from llama_index.embeddings.openai import OpenAIEmbedding
+from pydantic import BaseModel, Field
 
 from motleycrew.applications.research_agent.question import Question
 from motleycrew.tools import MotleyTool

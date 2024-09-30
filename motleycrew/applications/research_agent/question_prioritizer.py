@@ -6,7 +6,8 @@ from pydantic import BaseModel, Field
 
 from motleycrew.applications.research_agent.question import Question
 from motleycrew.common.utils import print_passthrough
-from motleycrew.tools import LLMTool, MotleyTool
+from motleycrew.tools import MotleyTool
+from motleycrew.tools.llm_tool import LLMTool
 
 
 class QuestionPrioritizerTool(MotleyTool):

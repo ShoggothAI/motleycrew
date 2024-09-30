@@ -1,3 +1,4 @@
+import os
 from typing import List, Optional
 
 from langchain.agents import Tool
@@ -94,12 +95,15 @@ def run_dalle_and_save_images(
 
     prompt_value = dall_e_prompt.invoke({"text": description})
 
-    dalle_api = DallEAPIWrapper(
+    dalle_api = DallEAPIWrapper.model_construct(
         model=model,
         quality=quality,
         size=size,
         model_kwargs={"style": style} if (model == "dall-e-3" and style) else {},
+        openai_api_key=os.getenv("OPENAI_API_KEY"),
+        # TODO: remove this after https://github.com/langchain-ai/langchain/issues/26941 is fixed
     )
+    dalle_api.validate_environment()
 
     dalle_result = dalle_api.run(prompt_value.text)
     logger.info("Dall-E API output: %s", dalle_result)

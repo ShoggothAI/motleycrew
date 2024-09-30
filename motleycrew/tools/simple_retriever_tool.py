@@ -1,7 +1,6 @@
 import os
 from typing import List, Optional
 
-from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import StructuredTool
 from llama_index.core import (
     SimpleDirectoryReader,
@@ -10,7 +9,9 @@ from llama_index.core import (
     load_index_from_storage,
 )
 from llama_index.core.node_parser import SentenceSplitter
+from llama_index.core.embeddings import BaseEmbedding
 from llama_index.embeddings.openai import OpenAIEmbedding
+from pydantic import BaseModel, Field
 
 from motleycrew.applications.research_agent.question import Question
 from motleycrew.tools import MotleyTool
@@ -26,6 +27,7 @@ class SimpleRetrieverTool(MotleyTool):
         return_strings_only: bool = False,
         return_direct: bool = False,
         exceptions_to_reflect: Optional[List[Exception]] = None,
+        embeddings: Optional[BaseEmbedding] = None,
     ):
         """
         Args:
@@ -34,7 +36,7 @@ class SimpleRetrieverTool(MotleyTool):
             return_strings_only: Whether to return only the text of the retrieved documents.
         """
         tool = make_retriever_langchain_tool(
-            data_dir, persist_dir, return_strings_only=return_strings_only
+            data_dir, persist_dir, return_strings_only=return_strings_only, embeddings=embeddings
         )
         super().__init__(
             tool=tool, return_direct=return_direct, exceptions_to_reflect=exceptions_to_reflect
@@ -49,9 +51,15 @@ class RetrieverToolInput(BaseModel, arbitrary_types_allowed=True):
     )
 
 
-def make_retriever_langchain_tool(data_dir, persist_dir, return_strings_only: bool = False):
-    text_embedding_model = "text-embedding-ada-002"
-    embeddings = OpenAIEmbedding(model=text_embedding_model)
+def make_retriever_langchain_tool(
+    data_dir,
+    persist_dir,
+    return_strings_only: bool = False,
+    embeddings: Optional[BaseEmbedding] = None,
+):
+    if embeddings is None:
+        text_embedding_model = "text-embedding-ada-002"
+        embeddings = OpenAIEmbedding(model=text_embedding_model)
 
     if not os.path.exists(persist_dir):
         # load the documents and create the index

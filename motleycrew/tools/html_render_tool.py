@@ -1,6 +1,6 @@
 from datetime import datetime
 from pathlib import Path
-from typing import Tuple, Optional, List
+from typing import List, Optional, Tuple
 
 from motleycrew.common.utils import ensure_module_is_installed
 
@@ -12,10 +12,10 @@ except ImportError:
     Service = None
 
 from langchain.tools import Tool
-from langchain_core.pydantic_v1 import BaseModel, Field
+from pydantic import BaseModel, Field
 
-from motleycrew.tools import MotleyTool
 from motleycrew.common import logger
+from motleycrew.tools import MotleyTool
 
 
 class HTMLRenderer:

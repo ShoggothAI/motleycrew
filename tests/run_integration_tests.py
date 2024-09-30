@@ -152,8 +152,8 @@ def run_ipynb(ipynb_path: str, strong_cache: bool = False, cache_sub_dir: str = 
         # save_result_command = "with open(r'{}', 'w') as f:\n\tf.write(final_result)".format(
         #     ipynb_result_file_path
         # )
-        cells = [new_code_cell(save_result_command), new_code_cell("disable_cache()")]
-        nb.cells += cells
+        # cells = [new_code_cell(save_result_command), new_code_cell("disable_cache()")]
+        # nb.cells += cells
 
     ipynb_result_file_path = None
 

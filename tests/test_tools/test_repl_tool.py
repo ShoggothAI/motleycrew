@@ -1,4 +1,4 @@
-from motleycrew.tools import PythonREPLTool
+from motleycrew.tools.code import PythonREPLTool
 
 
 class TestREPLTool:

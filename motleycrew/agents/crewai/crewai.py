@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import Any, Optional, Sequence
 
-from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import StructuredTool
+from pydantic import BaseModel, Field
 
 from motleycrew.agents.crewai import CrewAIAgentWithConfig
 from motleycrew.agents.parent import MotleyAgentParent

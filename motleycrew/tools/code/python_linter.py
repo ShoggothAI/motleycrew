@@ -1,8 +1,8 @@
 import os
-from typing import Union, Optional, List
+from typing import List, Optional, Union
 
-from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import StructuredTool
+from pydantic import BaseModel, Field
 
 try:
     from aider.linter import Linter

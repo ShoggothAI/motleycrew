@@ -1,10 +1,12 @@
 import functools
 import inspect
-from typing import Callable, Union, Optional, Dict, Any, List
+from dataclasses import dataclass
+from time import sleep
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
-from langchain.tools import BaseTool, Tool, StructuredTool
+from langchain.tools import BaseTool, StructuredTool
 from langchain_core.runnables import Runnable, RunnableConfig
-from langchain_core.pydantic_v1 import BaseModel
+from pydantic import BaseModel
 
 from motleycrew.common.exceptions import InvalidOutput
 
@@ -22,10 +24,10 @@ except ImportError:
     CrewAI__BaseTool = None
     Crewai__Tool = None
 
-from motleycrew.common import logger
-from motleycrew.common.utils import ensure_module_is_installed
-from motleycrew.common.types import MotleySupportedTool
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
+from motleycrew.common import logger
+from motleycrew.common.types import MotleySupportedTool
+from motleycrew.common.utils import ensure_module_is_installed
 
 
 class DirectOutput(BaseException):
@@ -37,6 +39,23 @@ class DirectOutput(BaseException):
 
     def __init__(self, output: Any):
         self.output = output
+
+
+@dataclass
+class RetryConfig:
+    """Configuration for retry behavior of MotleyTool.
+
+    Attributes:
+        max_retries (int): Maximum number of retry attempts.
+        wait_time (float): Base wait time between retries in seconds.
+        backoff_factor (float): Multiplicative factor for exponential backoff.
+        exceptions_to_retry (List[Type[Exception]]): Exceptions that should trigger a retry.
+    """
+
+    max_retries: int = 3
+    wait_time: float = 1.0
+    backoff_factor: float = 2.0
+    exceptions_to_retry: Tuple[Type[Exception]] = (Exception,)
 
 
 class MotleyTool(Runnable):
@@ -52,7 +71,8 @@ class MotleyTool(Runnable):
         description: Optional[str] = None,
         args_schema: Optional[BaseModel] = None,
         return_direct: bool = False,
-        exceptions_to_reflect: Optional[List[Exception]] = None,
+        exceptions_to_reflect: Optional[List[Type[Exception]]] = None,
+        retry_config: Optional[RetryConfig] = None,
     ):
         """Initialize the MotleyTool.
 
@@ -63,6 +83,7 @@ class MotleyTool(Runnable):
             tool: Langchain BaseTool to wrap.
             return_direct: If True, the tool's output will be returned directly to the user.
             exceptions_to_reflect: List of exceptions to reflect back to the agent.
+            retry_config: Configuration for retry behavior. If None, exceptions will not be retried.
         """
         if tool is None:
             assert name is not None
@@ -78,6 +99,7 @@ class MotleyTool(Runnable):
         if InvalidOutput not in self.exceptions_to_reflect:
             self.exceptions_to_reflect = [InvalidOutput, *self.exceptions_to_reflect]
 
+        self.retry_config = retry_config or RetryConfig(max_retries=0, exceptions_to_retry=())
         self._patch_tool_run()
 
         self.agent: Optional[MotleyAgentAbstractParent] = None
@@ -105,22 +127,38 @@ class MotleyTool(Runnable):
         return self.tool.args_schema
 
     def _patch_tool_run(self):
-        """Patch the tool run method to reflect exceptions."""
+        """Patch the tool run method to implement retry logic and reflect exceptions."""
 
         original_run = self.tool._run
         signature = inspect.signature(original_run)
 
         @functools.wraps(original_run)
         def patched_run(*args, **kwargs):
-            try:
-                result = original_run(*args, **kwargs)
-                if self.return_direct:
-                    raise DirectOutput(result)
-                else:
-                    return result
-            except tuple(self.exceptions_to_reflect or []) as e:
-                # we need to return the exception to the agent
-                return f"{e.__class__.__name__}: {e}"
+            for attempt in range(self.retry_config.max_retries + 1):
+                try:
+                    result = original_run(*args, **kwargs)
+                    if self.return_direct:
+                        raise DirectOutput(result)
+                    else:
+                        return result
+                except Exception as e:
+                    e_repr = f"{e.__class__.__name__}: {e}"
+
+                    if attempt < self.retry_config.max_retries and isinstance(
+                        e, self.retry_config.exceptions_to_retry
+                    ):
+                        logger.info(
+                            f"Retry {attempt + 1} of {self.retry_config.max_retries} in tool {self.name}: {e_repr}"
+                        )
+                        sleep(
+                            self.retry_config.wait_time
+                            * (self.retry_config.backoff_factor**attempt)
+                        )
+                    else:
+                        if any(isinstance(e, exc_type) for exc_type in self.exceptions_to_reflect):
+                            logger.info(f"Reflecting exception in tool {self.name}: {e_repr}")
+                            return e_repr
+                        raise e
 
         patched_run.__signature__ = signature
         object.__setattr__(self.tool, "_run", patched_run)
@@ -149,6 +187,7 @@ class MotleyTool(Runnable):
         langchain_tool: BaseTool,
         return_direct: bool = False,
         exceptions_to_reflect: Optional[List[Exception]] = None,
+        retry_config: Optional[RetryConfig] = None,
     ) -> "MotleyTool":
         """Create a MotleyTool from a Langchain tool.
 
@@ -156,6 +195,7 @@ class MotleyTool(Runnable):
             langchain_tool: Langchain tool to convert.
             return_direct: If True, the tool's output will be returned directly to the user.
             exceptions_to_reflect: List of exceptions to reflect back to the agent.
+            retry_config: Configuration for retry behavior. If None, exceptions will not be retried.
 
         Returns:
             MotleyTool instance.
@@ -172,6 +212,7 @@ class MotleyTool(Runnable):
             tool=langchain_tool,
             return_direct=return_direct,
             exceptions_to_reflect=exceptions_to_reflect,
+            retry_config=retry_config,
         )
 
     @staticmethod
@@ -179,6 +220,7 @@ class MotleyTool(Runnable):
         llama_index_tool: LlamaIndex__BaseTool,
         return_direct: bool = False,
         exceptions_to_reflect: Optional[List[Exception]] = None,
+        retry_config: Optional[RetryConfig] = None,
     ) -> "MotleyTool":
         """Create a MotleyTool from a LlamaIndex tool.
 
@@ -186,6 +228,7 @@ class MotleyTool(Runnable):
             llama_index_tool: LlamaIndex tool to convert.
             return_direct: If True, the tool's output will be returned directly to the user.
             exceptions_to_reflect: List of exceptions to reflect back to the agent.
+            retry_config: Configuration for retry behavior. If None, exceptions will not be retried.
 
         Returns:
             MotleyTool instance.
@@ -204,6 +247,7 @@ class MotleyTool(Runnable):
             langchain_tool=langchain_tool,
             return_direct=return_direct,
             exceptions_to_reflect=exceptions_to_reflect,
+            retry_config=retry_config,
         )
 
     @staticmethod
@@ -211,6 +255,7 @@ class MotleyTool(Runnable):
         crewai_tool: CrewAI__BaseTool,
         return_direct: bool = False,
         exceptions_to_reflect: Optional[List[Exception]] = None,
+        retry_config: Optional[RetryConfig] = None,
     ) -> "MotleyTool":
         """Create a MotleyTool from a CrewAI tool.
 
@@ -218,6 +263,7 @@ class MotleyTool(Runnable):
             crewai_tool: CrewAI tool to convert.
             return_direct: If True, the tool's output will be returned directly to the user.
             exceptions_to_reflect: List of exceptions to reflect back to the agent.
+            retry_config: Configuration for retry behavior. If None, exceptions will not be retried.
 
         Returns:
             MotleyTool instance.
@@ -233,6 +279,7 @@ class MotleyTool(Runnable):
             langchain_tool=langchain_tool,
             return_direct=return_direct,
             exceptions_to_reflect=exceptions_to_reflect,
+            retry_config=retry_config,
         )
 
     @staticmethod
@@ -240,15 +287,24 @@ class MotleyTool(Runnable):
         agent: MotleyAgentAbstractParent,
         return_direct: bool = False,
         exceptions_to_reflect: Optional[List[Exception]] = None,
+        retry_config: Optional[RetryConfig] = None,
     ) -> "MotleyTool":
         """Convert an agent to a tool to be used by other agents via delegation.
+
+        Args:
+            agent: The MotleyAgent to convert to a tool.
+            return_direct: If True, the tool's output will be returned directly to the user.
+            exceptions_to_reflect: List of exceptions to reflect back to the agent.
+            retry_config: Configuration for retry behavior. If None, exceptions will not be retried.
 
         Returns:
             The tool representation of the agent.
         """
 
         return agent.as_tool(
-            return_direct=return_direct, exceptions_to_reflect=exceptions_to_reflect
+            return_direct=return_direct,
+            exceptions_to_reflect=exceptions_to_reflect,
+            retry_config=retry_config,
         )
 
     @staticmethod
@@ -256,6 +312,7 @@ class MotleyTool(Runnable):
         tool: MotleySupportedTool,
         return_direct: bool = False,
         exceptions_to_reflect: Optional[List[Exception]] = None,
+        retry_config: Optional[RetryConfig] = None,
     ) -> "MotleyTool":
         """Create a MotleyTool from any supported tool type.
 
@@ -265,6 +322,7 @@ class MotleyTool(Runnable):
                 as well as motleycrew agents.
             return_direct: If True, the tool's output will be returned directly to the user.
             exceptions_to_reflect: List of exceptions to reflect back to the agent.
+            retry_config: Configuration for retry behavior. If None, exceptions will not be retried.
         Returns:
             MotleyTool instance.
         """
@@ -275,24 +333,28 @@ class MotleyTool(Runnable):
                 tool,
                 return_direct=return_direct,
                 exceptions_to_reflect=exceptions_to_reflect,
+                retry_config=retry_config,
             )
         elif isinstance(tool, LlamaIndex__BaseTool):
             return MotleyTool.from_llama_index_tool(
                 tool,
                 return_direct=return_direct,
                 exceptions_to_reflect=exceptions_to_reflect,
+                retry_config=retry_config,
             )
         elif isinstance(tool, MotleyAgentAbstractParent):
             return MotleyTool.from_motley_agent(
                 tool,
                 return_direct=return_direct,
                 exceptions_to_reflect=exceptions_to_reflect,
+                retry_config=retry_config,
             )
         elif CrewAI__BaseTool is not None and isinstance(tool, CrewAI__BaseTool):
             return MotleyTool.from_crewai_tool(
                 tool,
                 return_direct=return_direct,
                 exceptions_to_reflect=exceptions_to_reflect,
+                retry_config=retry_config,
             )
         else:
             raise Exception(
@@ -320,16 +382,11 @@ class MotleyTool(Runnable):
         else:
             fn = self.tool._run
 
-        fn_schema = self.tool.args_schema
-        fn_schema.model_json_schema = (
-            fn_schema.schema
-        )  # attempt to make it compatible with Langchain's old Pydantic v1
-
         llama_index_tool = LlamaIndex__FunctionTool.from_defaults(
             fn=fn,
             name=self.tool.name,
             description=self.tool.description,
-            fn_schema=fn_schema,
+            fn_schema=self.tool.args_schema,
         )
         return llama_index_tool
 
@@ -343,12 +400,12 @@ class MotleyTool(Runnable):
         Returns:
             AutoGen tool function.
         """
-        fields = list(self.tool.args_schema.__fields__.values())
+        fields = list(self.tool.args_schema.model_fields.items())
         if len(fields) != 1:
             raise Exception("Multiple input fields are not supported in to_autogen_tool")
 
-        field_name = fields[0].name
-        field_type = fields[0].annotation
+        field_name, field_info = fields[0]
+        field_type = field_info.annotation
 
         def autogen_tool_fn(input: field_type) -> str:
             return self.invoke({field_name: input})

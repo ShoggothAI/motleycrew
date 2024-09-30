@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from motleycrew.tools import HTMLRenderTool
+from motleycrew.tools.html_render_tool import HTMLRenderTool
 
 
 @pytest.mark.fat

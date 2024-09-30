@@ -4,7 +4,7 @@ from motleycrew import MotleyCrew
 from motleycrew.agents.crewai import CrewAIMotleyAgent
 from motleycrew.common import configure_logging
 from motleycrew.tasks import SimpleTask
-from motleycrew.tools import PythonREPLTool
+from motleycrew.tools.code import PythonREPLTool
 
 
 def main():

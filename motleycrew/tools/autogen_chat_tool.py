@@ -1,18 +1,18 @@
-from typing import Optional, Type, Callable, Any, List
+from typing import Any, Callable, List, Optional, Type
 
 from langchain_core.prompts import PromptTemplate
 from langchain_core.prompts.base import BasePromptTemplate
-from langchain_core.pydantic_v1 import BaseModel, Field, create_model
 from langchain_core.tools import StructuredTool
+from pydantic import BaseModel, Field, create_model
 
 try:
-    from autogen import ConversableAgent, ChatResult
+    from autogen import ChatResult, ConversableAgent
 except ImportError:
     ConversableAgent = None
     ChatResult = None
 
-from motleycrew.tools import MotleyTool
 from motleycrew.common.utils import ensure_module_is_installed
+from motleycrew.tools import MotleyTool
 
 
 def get_last_message(chat_result: ChatResult) -> str:

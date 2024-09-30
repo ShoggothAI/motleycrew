@@ -3,9 +3,9 @@ from typing import Optional
 from langchain.prompts import PromptTemplate
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.prompts.base import BasePromptTemplate
-from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.runnables import RunnableLambda, RunnablePassthrough, chain
 from langchain_core.tools import Tool
+from pydantic import BaseModel, Field
 
 from motleycrew.applications.research_agent.question import Question
 from motleycrew.common.utils import print_passthrough

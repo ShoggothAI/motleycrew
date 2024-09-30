@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import List, Optional
 
 from motleycrew.common.utils import ensure_module_is_installed
 
@@ -10,7 +10,7 @@ except ImportError:
     Model = None
 
 from langchain.tools import Tool
-from langchain_core.pydantic_v1 import BaseModel, Field
+from pydantic import BaseModel, Field
 
 from motleycrew.common import Defaults
 from motleycrew.tools import MotleyTool

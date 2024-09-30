@@ -1,10 +1,10 @@
 import functools
 import inspect
-from typing import Callable, Union, Optional, Dict, Any, List
+from typing import Any, Callable, Dict, List, Optional, Union
 
-from langchain.tools import BaseTool, Tool, StructuredTool
+from langchain.tools import BaseTool, StructuredTool
 from langchain_core.runnables import Runnable, RunnableConfig
-from langchain_core.pydantic_v1 import BaseModel
+from pydantic import BaseModel
 
 from motleycrew.common.exceptions import InvalidOutput
 
@@ -22,10 +22,10 @@ except ImportError:
     CrewAI__BaseTool = None
     Crewai__Tool = None
 
-from motleycrew.common import logger
-from motleycrew.common.utils import ensure_module_is_installed
-from motleycrew.common.types import MotleySupportedTool
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
+from motleycrew.common import logger
+from motleycrew.common.types import MotleySupportedTool
+from motleycrew.common.utils import ensure_module_is_installed
 
 
 class DirectOutput(BaseException):
@@ -320,16 +320,11 @@ class MotleyTool(Runnable):
         else:
             fn = self.tool._run
 
-        fn_schema = self.tool.args_schema
-        fn_schema.model_json_schema = (
-            fn_schema.schema
-        )  # attempt to make it compatible with Langchain's old Pydantic v1
-
         llama_index_tool = LlamaIndex__FunctionTool.from_defaults(
             fn=fn,
             name=self.tool.name,
             description=self.tool.description,
-            fn_schema=fn_schema,
+            fn_schema=self.tool.args_schema,
         )
         return llama_index_tool
 
@@ -343,12 +338,12 @@ class MotleyTool(Runnable):
         Returns:
             AutoGen tool function.
         """
-        fields = list(self.tool.args_schema.__fields__.values())
+        fields = list(self.tool.args_schema.model_fields.items())
         if len(fields) != 1:
             raise Exception("Multiple input fields are not supported in to_autogen_tool")
 
-        field_name = fields[0].name
-        field_type = fields[0].annotation
+        field_name, field_info = fields[0]
+        field_type = field_info.annotation
 
         def autogen_tool_fn(input: field_type) -> str:
             return self.invoke({field_name: input})

@@ -22,12 +22,10 @@ jobs:
   test:
     environment: integration_test
     strategy:
+      max-parallel: 1
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
         os: [ubuntu-latest, macos-latest, windows-latest]
-        concurrency:
-          group: ${{ github.ref }}
-          cancel-in-progress: true
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4

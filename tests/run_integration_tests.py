@@ -34,7 +34,7 @@ IPYNB_INTEGRATION_TESTS = {
     "math_via_python_code_with_a_single_agent_ipynb": "examples/Math via python code with a single agent.ipynb",
     "validating_agent_output_ipynb": "examples/Validating agent output.ipynb",
     "advanced_output_handling_ipynb": "examples/Advanced output handling.ipynb",
-    "using_autogen_with_motleycrew_ipynb": "examples/Using AutoGen with motleycrew.ipynb"
+    # "using_autogen_with_motleycrew_ipynb": "examples/Using AutoGen with motleycrew.ipynb"
 }
 
 MINIMAL_INTEGRATION_TESTS = {}

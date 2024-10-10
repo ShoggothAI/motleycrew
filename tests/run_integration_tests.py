@@ -2,6 +2,7 @@ import argparse
 import difflib
 import json
 import os
+import shutil
 import sys
 import traceback
 from copy import copy
@@ -28,11 +29,12 @@ INTEGRATION_TESTS = {}
 
 IPYNB_INTEGRATION_TESTS = {
     "blog_with_images_ipynb": "examples/Blog with Images.ipynb",
+    # TODO: this particular test was problematic in terms of caching, find ways to enable
     "multi_step_research_agent_ipynb": "examples/Multi-step research agent.ipynb",
     "math_via_python_code_with_a_single_agent_ipynb": "examples/Math via python code with a single agent.ipynb",
     "validating_agent_output_ipynb": "examples/Validating agent output.ipynb",
     "advanced_output_handling_ipynb": "examples/Advanced output handling.ipynb",
-    "using_autogen_with_motleycrew_ipynb": "examples/Using AutoGen with motleycrew.ipynb",
+    "using_autogen_with_motleycrew_ipynb": "examples/Using AutoGen with motleycrew.ipynb"
 }
 
 MINIMAL_INTEGRATION_TESTS = {}
@@ -113,6 +115,13 @@ def write_content(golden_dir: str, test_name: str, content: str, extension: str 
         json.dump(content, fd)
 
 
+def read_golden_data(golden_dir: str, test_name: str, extension: str = "json"):
+    """Read golden data from file"""
+    file_path = build_excepted_content_file_path(golden_dir, test_name, extension)
+    with open(file_path, "r") as fd:
+        return json.load(fd)
+
+
 def run_ipynb(ipynb_path: str, strong_cache: bool = False, cache_sub_dir: str = None) -> str:
     """Run jupiter notebook execution"""
     with open(ipynb_path) as f:
@@ -140,14 +149,14 @@ def run_ipynb(ipynb_path: str, strong_cache: bool = False, cache_sub_dir: str = 
 
         # ipynb save final result
         # final_result variable must be present in ipynb and store the result of the execution as a string
-        # ipynb_result_file_path = os.path.join(cache_sub_dir, "ipynb_result.txt")
-        # save_result_command = "with open(r'{}', 'w') as f:\n\tf.write(final_result)".format(
-        #     ipynb_result_file_path
-        # )
-        # cells = [new_code_cell(save_result_command), new_code_cell("disable_cache()")]
-        # nb.cells += cells
-
-    ipynb_result_file_path = None
+        ipynb_result_file_path = os.path.join(cache_sub_dir, "ipynb_result.txt")
+        save_result_command = "with open(r'{}', 'w') as f:\n\tf.write(final_result)".format(
+            ipynb_result_file_path
+        )
+        cells = [new_code_cell(save_result_command), new_code_cell("disable_cache()")]
+        nb.cells += cells
+    else:
+        ipynb_result_file_path = None
 
     ep = ExecutePreprocessor(kernel_name="python3")
     ep.preprocess(nb)

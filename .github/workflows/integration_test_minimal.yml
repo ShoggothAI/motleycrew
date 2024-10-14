@@ -57,6 +57,8 @@ jobs:
       with:
         path: tests/itest_cache
         key: tests-itest-cache
+        restore-keys: |
+          test-itest-cache
 
     - name: Install extra dependencies
       run: poetry run pip install -r requirements-extra.txt

@@ -1,4 +1,7 @@
 from typing import List, Optional
+from dotenv import load_dotenv
+import shutil
+from pathlib import Path
 
 import pandas
 from langchain.prompts import ChatPromptTemplate
@@ -194,10 +197,14 @@ class IssueCategorizer:
 
 
 def main():
-    # Initialize the graph store
-    graph_store = MotleyKuzuGraphStore.from_persist_dir("./issue_tree_db")
+    load_dotenv()
 
-    issues = pandas.read_csv("example_issues.csv")
+    # (Re-)initialize the graph store
+    db_path = Path(__file__).parent / "issue_tree_db"
+    shutil.rmtree(db_path, ignore_errors=True)
+    graph_store = MotleyKuzuGraphStore.from_persist_dir(db_path)
+
+    issues = pandas.read_csv(Path(__file__).parent / "example_issues.csv")
 
     for _, row in issues.iterrows():
         # Create IssueData node
@@ -220,6 +227,7 @@ def main():
         resolution="Guided the customer through the password reset process. The issue was resolved after the customer set a new password.",
     )
 
+    print(f"Example issue: {issue}")
     leaf_node, issue_node = categorizer.categorize_issue(issue)
     print(f"Issue categorized as: {leaf_node.name}")
 

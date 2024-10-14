@@ -1,5 +1,6 @@
 import asyncio
 from dataclasses import dataclass, field
+from dotenv import load_dotenv
 from pathlib import Path
 from typing import List, Optional, Sequence, Tuple
 
@@ -305,6 +306,8 @@ class SupportAgent(LangchainMotleyAgent):
 
 
 async def main():
+    load_dotenv()
+
     graph_store = MotleyKuzuGraphStore.from_persist_dir(
         str(Path(__file__).parent / "issue_tree_db")
     )

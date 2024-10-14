@@ -1,9 +1,10 @@
 import pytest
-from langchain_core.agents import AgentFinish, AgentAction
+from langchain_core.agents import AgentAction, AgentFinish
 
 from motleycrew.agents.langchain.tool_calling_react import ReActToolCallingMotleyAgent
+from motleycrew.common import AuxPrompts
 from motleycrew.common.exceptions import InvalidOutput
-from motleycrew.tools import MotleyTool, DirectOutput
+from motleycrew.tools import DirectOutput, MotleyTool
 from tests.test_agents import MockTool
 
 invalid_output = "Add more information about AI applications in medicine."
@@ -88,7 +89,7 @@ def test_agent_plan(agent):
     assert isinstance(step, AgentAction)
     assert step.tool == agent._agent_error_tool.name
     assert step.tool_input == {
-        "error_message": "You must call the `output_handler` tool to return the final output.",
+        "error_message": AuxPrompts.get_direct_output_error_message(agent.get_output_handlers()),
         "message": "test_output",
     }
 

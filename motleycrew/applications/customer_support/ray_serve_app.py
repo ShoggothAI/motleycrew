@@ -42,7 +42,7 @@ class WebSocketCommunicationInterface:
 @serve.ingress(app)
 class SupportAgentDeployment:
     def __init__(self):
-        configure_logging(verbose=True, debug=True)
+        configure_logging(verbose=True)
         load_dotenv()
 
         database = MotleyKuzuGraphStore.from_persist_dir(

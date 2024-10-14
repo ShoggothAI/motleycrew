@@ -116,12 +116,22 @@ class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin)
             object.__setattr__(
                 self._agent.agent, "plan", self.agent_plan_decorator(self._agent.agent.plan)
             )
+            if hasattr(self._agent.agent, "aplan"):
+                object.__setattr__(
+                    self._agent.agent, "aplan", self.agent_aplan_decorator(self._agent.agent.aplan)
+                )
 
             object.__setattr__(
                 self._agent,
                 "_take_next_step",
                 self.take_next_step_decorator(self._agent._take_next_step),
             )
+            if hasattr(self._agent, "_atake_next_step"):
+                object.__setattr__(
+                    self._agent,
+                    "_atake_next_step",
+                    self.take_next_step_decorator(self._agent._atake_next_step),
+                )
 
             for tool in self.agent.tools:
                 if tool.return_direct:
@@ -130,12 +140,23 @@ class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin)
                         "_run",
                         self._run_tool_direct_decorator(tool._run),
                     )
-
                     object.__setattr__(
                         tool,
                         "run",
                         self.run_tool_direct_decorator(tool.run),
                     )
+                    if hasattr(tool, "_arun"):
+                        object.__setattr__(
+                            tool,
+                            "_arun",
+                            self._run_tool_direct_decorator(tool._arun),
+                        )
+                    if hasattr(tool, "arun"):
+                        object.__setattr__(
+                            tool,
+                            "arun",
+                            self.run_tool_direct_decorator(tool.arun),
+                        )
 
         if self.get_session_history_callable:
             logger.info("Wrapping agent in RunnableWithMessageHistory")

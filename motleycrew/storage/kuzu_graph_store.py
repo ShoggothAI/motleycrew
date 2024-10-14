@@ -617,6 +617,7 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
     def from_persist_dir(
         cls,
         persist_dir: str,
+        **kwargs,
     ) -> "MotleyKuzuGraphStore":
         """Load from persist dir.
 
@@ -631,7 +632,7 @@ class MotleyKuzuGraphStore(MotleyGraphStore):
             import kuzu
         except ImportError:
             raise ImportError("Please install kuzu: pip install kuzu")
-        database = kuzu.Database(persist_dir)
+        database = kuzu.Database(persist_dir, **kwargs)
         return cls(database)
 
     @classmethod

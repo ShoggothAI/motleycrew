@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Support Chat</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        #chat-container {
+            border: 1px solid #ccc;
+            height: 400px;
+            overflow-y: scroll;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        #input-container {
+            display: flex;
+            gap: 10px;
+        }
+        #message-input {
+            flex-grow: 1;
+            padding: 5px;
+        }
+        #send-button {
+            padding: 5px 15px;
+        }
+        .thinking {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .message-system {
+            background-color: #fff3cd;
+            padding: 5px;
+            border-radius: 5px;
+        }
+        .message-resolution {
+            background-color: #d4edda;
+            padding: 5px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Customer Support Chat</h1>
+    <div id="chat-container"></div>
+    <div id="input-container">
+        <input type="text" id="message-input" placeholder="Type your message...">
+        <button id="send-button">Send</button>
+    </div>
+
+    <script>
+        const chatContainer = document.getElementById('chat-container');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+
+        const socket = new WebSocket('ws://localhost:8000/ws');
+
+        socket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            if (data.type === 'agent_message') {
+                appendMessage('Agent', data.content);
+            } else if (data.type === 'escalation') {
+                appendMessage('System', data.content, 'message-system');
+            } else if (data.type === 'resolution') {
+                appendMessage('Agent', data.content, 'message-resolution');
+            }
+            removeThinkingIndicator();
+        };
+
+        sendButton.onclick = function() {
+            const message = messageInput.value;
+            if (message) {
+                socket.send(message);
+                appendMessage('You', message);
+                messageInput.value = '';
+                addThinkingIndicator();
+            }
+        };
+
+        messageInput.onkeypress = function(event) {
+            if (event.key === 'Enter') {
+                sendButton.click();
+            }
+        };
+
+        function appendMessage(sender, message, className = '') {
+            const messageElement = document.createElement('p');
+            messageElement.innerHTML = `<strong>${sender}:</strong> ${message}`;
+            if (className) {
+                messageElement.className = className;
+            }
+            chatContainer.appendChild(messageElement);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function addThinkingIndicator() {
+            const thinkingElement = document.createElement('div');
+            thinkingElement.className = 'thinking';
+            thinkingElement.id = 'thinking-indicator';
+            chatContainer.appendChild(thinkingElement);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function removeThinkingIndicator() {
+            const thinkingElement = document.getElementById('thinking-indicator');
+            if (thinkingElement) {
+                thinkingElement.remove();
+            }
+        }
+    </script>
+</body>
+</html>

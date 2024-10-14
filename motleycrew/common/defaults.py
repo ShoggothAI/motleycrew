@@ -20,6 +20,7 @@ class Defaults:
         "pglast": "pip install pglast",
         "crewai_tools": "pip install 'crewai[tools]'",
         "replicate": "pip install replicate",
+        "ray": "pip install 'ray[default]'",
     }
 
     DEFAULT_NUM_THREADS = 4

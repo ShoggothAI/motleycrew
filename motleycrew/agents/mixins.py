@@ -1,12 +1,17 @@
-from typing import Any, Optional, Callable, Union, Dict, List, Tuple
+import asyncio
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
-from langchain_core.agents import AgentFinish, AgentAction
-from langchain_core.callbacks import CallbackManagerForChainRun
+from langchain_core.agents import AgentAction, AgentFinish
+from langchain_core.callbacks import (
+    AsyncCallbackManagerForChainRun,
+    CallbackManagerForChainRun,
+)
 from langchain_core.messages import AIMessage
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import BaseTool, StructuredTool
-from motleycrew.tools import MotleyTool, DirectOutput
+
 from motleycrew.common import AuxPrompts
+from motleycrew.tools import DirectOutput, MotleyTool
 
 
 class LangchainOutputHandlingAgentMixin:
@@ -15,6 +20,7 @@ class LangchainOutputHandlingAgentMixin:
     _agent_error_tool: Optional[BaseTool] = None
     get_output_handlers: Callable[[], List[MotleyTool]] = None
     force_output_handler: bool = False
+    aux_prompts: AuxPrompts = AuxPrompts()
 
     def _create_agent_error_tool(self) -> BaseTool:
         """Create a tool that will force the agent to retry if it attempts to return the output
@@ -63,7 +69,7 @@ class LangchainOutputHandlingAgentMixin:
                 if self._is_error_action(action):
                     # Add the interaction telling the LLM that it errored
                     additional_notes.append(("ai", action.tool_input["message"]))
-                    additional_notes.append(("user", action_output))
+                    additional_notes.append(("system", action_output))
                     to_remove_steps.append(intermediate_step)
 
             for to_remove_step in to_remove_steps:
@@ -82,7 +88,9 @@ class LangchainOutputHandlingAgentMixin:
                     # Attempted to return output directly, blocking
                     return self._create_error_action(
                         message=step.log,
-                        error_message=AuxPrompts.get_direct_output_error_message(output_handlers),
+                        error_message=self.aux_prompts.get_direct_output_error_message(
+                            output_handlers
+                        ),
                     )
                 try:
                     step = list(step)
@@ -98,7 +106,67 @@ class LangchainOutputHandlingAgentMixin:
                         # Attempted to call multiple output handlers or included other tool calls, blocking
                         return self._create_error_action(
                             message=step.log,
-                            error_message=AuxPrompts.get_ambiguous_output_handler_call_error_message(
+                            error_message=self.aux_prompts.get_ambiguous_output_handler_call_error_message(
+                                current_output_handler=action.tool, output_handlers=output_handlers
+                            ),
+                        )
+            return step
+
+        return wrapper
+
+    def agent_aplan_decorator(self, func: Callable):
+        """Decorator for Agent.aplan() method that intercepts AgentFinish events"""
+
+        output_handlers = self.get_output_handlers()
+        output_handler_names = set(handler.name for handler in output_handlers)
+
+        async def wrapper(
+            intermediate_steps: List[Tuple[AgentAction, str]],
+            callbacks: "Callbacks" = None,
+            **kwargs: Any,
+        ) -> Union[AgentAction, AgentFinish]:
+            additional_notes = []
+
+            to_remove_steps = []
+            for intermediate_step in intermediate_steps:
+                action, action_output = intermediate_step
+                if self._is_error_action(action):
+                    additional_notes.append(("ai", action.tool_input["message"]))
+                    additional_notes.append(("system", action_output))
+                    to_remove_steps.append(intermediate_step)
+
+            for to_remove_step in to_remove_steps:
+                intermediate_steps.remove(to_remove_step)
+
+            if additional_notes:
+                kwargs["additional_notes"] = additional_notes
+
+            step = await func(intermediate_steps, callbacks, **kwargs)
+
+            if isinstance(step, AgentAction):
+                step = [step]
+
+            if output_handlers:
+                if isinstance(step, AgentFinish) and self.force_output_handler:
+                    return self._create_error_action(
+                        message=step.log,
+                        error_message=self.aux_prompts.get_direct_output_error_message(
+                            output_handlers
+                        ),
+                    )
+                try:
+                    step = list(step)
+                except TypeError:
+                    return step
+
+                if len(step) <= 1:
+                    return step
+
+                for action in step:
+                    if action.tool in output_handler_names:
+                        return self._create_error_action(
+                            message=step.log,
+                            error_message=self.aux_prompts.get_ambiguous_output_handler_call_error_message(
                                 current_output_handler=action.tool, output_handlers=output_handlers
                             ),
                         )
@@ -108,17 +176,37 @@ class LangchainOutputHandlingAgentMixin:
 
     def take_next_step_decorator(self, func: Callable):
         """
-        Decorator for ``AgentExecutor._take_next_step()`` method that catches DirectOutput exceptions.
+        Decorator for ``AgentExecutor._take_next_step()`` and ``AgentExecutor._atake_next_step()`` methods
+        that catches DirectOutput exceptions.
         """
 
-        def wrapper(
+        async def async_wrapper(
+            name_to_tool_map: Dict[str, BaseTool],
+            color_mapping: Dict[str, str],
+            inputs: Dict[str, str],
+            intermediate_steps: List[Tuple[AgentAction, str]],
+            run_manager: Optional[AsyncCallbackManagerForChainRun] = None,
+        ) -> Union[AgentFinish, List[Tuple[AgentAction, str]]]:
+            try:
+                step = await func(
+                    name_to_tool_map, color_mapping, inputs, intermediate_steps, run_manager
+                )
+            except DirectOutput as direct_ex:
+                message = str(direct_ex.output)
+                return AgentFinish(
+                    return_values={"output": direct_ex.output},
+                    messages=[AIMessage(content=message)],
+                    log=message,
+                )
+            return step
+
+        def sync_wrapper(
             name_to_tool_map: Dict[str, BaseTool],
             color_mapping: Dict[str, str],
             inputs: Dict[str, str],
             intermediate_steps: List[Tuple[AgentAction, str]],
             run_manager: Optional[CallbackManagerForChainRun] = None,
         ) -> Union[AgentFinish, List[Tuple[AgentAction, str]]]:
-
             try:
                 step = func(
                     name_to_tool_map, color_mapping, inputs, intermediate_steps, run_manager
@@ -132,27 +220,40 @@ class LangchainOutputHandlingAgentMixin:
                 )
             return step
 
-        return wrapper
+        return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
 
     def _run_tool_direct_decorator(self, func: Callable):
-        """Decorator of the tool's _run method, for intercepting a DirectOutput exception"""
+        """Decorator of the tool's _run and _arun methods, for intercepting a DirectOutput exception"""
 
-        def wrapper(*args, config: RunnableConfig, **kwargs):
+        async def async_wrapper(*args, config: RunnableConfig, **kwargs):
+            try:
+                result = await func(*args, **kwargs, config=config)
+            except DirectOutput as direct_exc:
+                return direct_exc
+            return result
+
+        def sync_wrapper(*args, config: RunnableConfig, **kwargs):
             try:
                 result = func(*args, **kwargs, config=config)
             except DirectOutput as direct_exc:
                 return direct_exc
             return result
 
-        return wrapper
+        return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
 
     def run_tool_direct_decorator(self, func: Callable):
-        """Decorator of the tool's run method, for intercepting a DirectOutput exception"""
+        """Decorator of the tool's run and arun methods, for intercepting a DirectOutput exception"""
 
-        def wrapper(*args, **kwargs):
+        async def async_wrapper(*args, **kwargs):
+            result = await func(*args, **kwargs)
+            if isinstance(result, DirectOutput):
+                raise result
+            return result
+
+        def sync_wrapper(*args, **kwargs):
             result = func(*args, **kwargs)
             if isinstance(result, DirectOutput):
                 raise result
             return result
 
-        return wrapper
+        return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper

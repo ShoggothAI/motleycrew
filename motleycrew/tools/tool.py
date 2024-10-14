@@ -24,6 +24,8 @@ except ImportError:
     CrewAI__BaseTool = None
     Crewai__Tool = None
 
+import asyncio
+
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
 from motleycrew.common import logger
 from motleycrew.common.types import MotleySupportedTool
@@ -73,6 +75,7 @@ class MotleyTool(Runnable):
         return_direct: bool = False,
         exceptions_to_reflect: Optional[List[Type[Exception]]] = None,
         retry_config: Optional[RetryConfig] = None,
+        is_async: bool = False,
     ):
         """Initialize the MotleyTool.
 
@@ -84,7 +87,10 @@ class MotleyTool(Runnable):
             return_direct: If True, the tool's output will be returned directly to the user.
             exceptions_to_reflect: List of exceptions to reflect back to the agent.
             retry_config: Configuration for retry behavior. If None, exceptions will not be retried.
+            is_async: Indicates whether the tool is asynchronous.
         """
+        self.is_async = is_async
+
         if tool is None:
             assert name is not None
             assert description is not None
@@ -100,7 +106,10 @@ class MotleyTool(Runnable):
             self.exceptions_to_reflect = [InvalidOutput, *self.exceptions_to_reflect]
 
         self.retry_config = retry_config or RetryConfig(max_retries=0, exceptions_to_retry=())
-        self._patch_tool_run()
+        if self.is_async:
+            self._patch_tool_arun()
+        else:
+            self._patch_tool_run()
 
         self.agent: Optional[MotleyAgentAbstractParent] = None
         self.agent_input: Optional[dict] = None
@@ -163,24 +172,82 @@ class MotleyTool(Runnable):
         patched_run.__signature__ = signature
         object.__setattr__(self.tool, "_run", patched_run)
 
+    def _patch_tool_arun(self):
+        """Patch the tool arun method to implement retry logic and reflect exceptions."""
+        original_arun = self.tool._arun
+        signature = inspect.signature(original_arun)
+
+        @functools.wraps(original_arun)
+        async def patched_arun(*args, **kwargs):
+            for attempt in range(self.retry_config.max_retries + 1):
+                try:
+                    result = await original_arun(*args, **kwargs)
+                    if self.return_direct:
+                        raise DirectOutput(result)
+                    else:
+                        return result
+                except Exception as e:
+                    e_repr = f"{e.__class__.__name__}: {e}"
+
+                    if attempt < self.retry_config.max_retries and isinstance(
+                        e, self.retry_config.exceptions_to_retry
+                    ):
+                        logger.info(
+                            f"Retry {attempt + 1} of {self.retry_config.max_retries} in tool {self.name}: {e_repr}"
+                        )
+                        await asyncio.sleep(
+                            self.retry_config.wait_time
+                            * (self.retry_config.backoff_factor**attempt)
+                        )
+                    else:
+                        if any(isinstance(e, exc_type) for exc_type in self.exceptions_to_reflect):
+                            logger.info(f"Reflecting exception in tool {self.name}: {e_repr}")
+                            return e_repr
+                        raise e
+
+        patched_arun.__signature__ = signature
+        object.__setattr__(self.tool, "_arun", patched_arun)
+
+    async def ainvoke(
+        self,
+        input: Union[str, Dict],
+        config: Optional[RunnableConfig] = None,
+        **kwargs: Any,
+    ) -> Any:
+        if self.is_async:
+            return await self.tool.ainvoke(input=input, config=config, **kwargs)
+        else:
+            # Fallback to synchronous invoke if no async method is available
+            return await asyncio.to_thread(self.invoke, input, config, **kwargs)
+
     def invoke(
         self,
         input: Union[str, Dict],
         config: Optional[RunnableConfig] = None,
         **kwargs: Any,
     ) -> Any:
+        if self.is_async:
+            raise RuntimeError("Cannot use invoke() with async tools. Use ainvoke() instead.")
         return self.tool.invoke(input=input, config=config, **kwargs)
 
     def run(self, *args, **kwargs):
         pass
 
+    async def arun(self, *args, **kwargs):
+        pass
+
     def _tool_from_run_method(self, name: str, description: str, args_schema: BaseModel):
-        return StructuredTool.from_function(
-            name=name,
-            description=description,
-            args_schema=args_schema,
-            func=self.run,
-        )
+        if self.is_async:
+            return StructuredTool.from_function(
+                name=name,
+                description=description,
+                args_schema=args_schema,
+                coroutine=self.arun,
+            )
+        else:
+            return StructuredTool.from_function(
+                name=name, description=description, args_schema=args_schema, func=self.run
+            )
 
     @staticmethod
     def from_langchain_tool(
@@ -189,30 +256,13 @@ class MotleyTool(Runnable):
         exceptions_to_reflect: Optional[List[Exception]] = None,
         retry_config: Optional[RetryConfig] = None,
     ) -> "MotleyTool":
-        """Create a MotleyTool from a Langchain tool.
-
-        Args:
-            langchain_tool: Langchain tool to convert.
-            return_direct: If True, the tool's output will be returned directly to the user.
-            exceptions_to_reflect: List of exceptions to reflect back to the agent.
-            retry_config: Configuration for retry behavior. If None, exceptions will not be retried.
-
-        Returns:
-            MotleyTool instance.
-        """
-        if langchain_tool.return_direct:
-            logger.warning(
-                "Please set `return_direct` in MotleyTool instead of the tool you're converting. "
-                "Automatic conversion will be removed in motleycrew v1."
-            )
-            return_direct = True
-            langchain_tool.return_direct = False
-
+        is_async = getattr(langchain_tool, "coroutine", None) is not None
         return MotleyTool(
             tool=langchain_tool,
             return_direct=return_direct,
             exceptions_to_reflect=exceptions_to_reflect,
             retry_config=retry_config,
+            is_async=is_async,
         )
 
     @staticmethod

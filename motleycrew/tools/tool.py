@@ -256,7 +256,7 @@ class MotleyTool(Runnable):
         exceptions_to_reflect: Optional[List[Exception]] = None,
         retry_config: Optional[RetryConfig] = None,
     ) -> "MotleyTool":
-        is_async = langchain_tool.coroutine is not None
+        is_async = getattr(langchain_tool, "coroutine", None) is not None
         return MotleyTool(
             tool=langchain_tool,
             return_direct=return_direct,

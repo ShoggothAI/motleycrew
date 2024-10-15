@@ -20,7 +20,9 @@ concurrency:
 
 jobs:
   test:
+    environment: integration_test
     strategy:
+      max-parallel: 1
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
         os: [ubuntu-latest, macos-latest, windows-latest]
@@ -50,6 +52,14 @@ jobs:
         path: .venv
         key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
 
+    - name: Load test cache
+      uses: actions/cache@v4
+      with:
+        path: tests/itest_cache
+        key: tests-itest-cache
+        restore-keys: |
+          test-itest-cache
+
     - name: Install extra dependencies
       run: poetry run pip install -r requirements-extra.txt
 
@@ -58,6 +68,6 @@ jobs:
 
     - name: Run integration tests
       env:
-        OPENAI_API_KEY: fake_key_1337
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         TIKTOKEN_CACHE_DIR: tests/itest_cache/tiktoken_cache
       run: poetry run python tests/run_integration_tests.py

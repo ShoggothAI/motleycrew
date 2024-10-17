@@ -75,7 +75,6 @@ class MotleyTool(Runnable):
         return_direct: bool = False,
         exceptions_to_reflect: Optional[List[Type[Exception]]] = None,
         retry_config: Optional[RetryConfig] = None,
-        is_async: bool = False,
     ):
         """Initialize the MotleyTool.
 
@@ -87,10 +86,7 @@ class MotleyTool(Runnable):
             return_direct: If True, the tool's output will be returned directly to the user.
             exceptions_to_reflect: List of exceptions to reflect back to the agent.
             retry_config: Configuration for retry behavior. If None, exceptions will not be retried.
-            is_async: Indicates whether the tool is asynchronous.
         """
-        self.is_async = is_async
-
         if tool is None:
             assert name is not None
             assert description is not None
@@ -106,10 +102,10 @@ class MotleyTool(Runnable):
             self.exceptions_to_reflect = [InvalidOutput, *self.exceptions_to_reflect]
 
         self.retry_config = retry_config or RetryConfig(max_retries=0, exceptions_to_retry=())
+
+        self._patch_tool_run()
         if self.is_async:
             self._patch_tool_arun()
-        else:
-            self._patch_tool_run()
 
         self.agent: Optional[MotleyAgentAbstractParent] = None
         self.agent_input: Optional[dict] = None
@@ -134,6 +130,11 @@ class MotleyTool(Runnable):
     def args_schema(self):
         """Schema of the tool arguments."""
         return self.tool.args_schema
+
+    @property
+    def is_async(self):
+        """Check if the tool is asynchronous."""
+        return getattr(self.tool, "coroutine", None) is not None
 
     def _patch_tool_run(self):
         """Patch the tool run method to implement retry logic and reflect exceptions."""
@@ -214,11 +215,8 @@ class MotleyTool(Runnable):
         config: Optional[RunnableConfig] = None,
         **kwargs: Any,
     ) -> Any:
-        if self.is_async:
-            return await self.tool.ainvoke(input=input, config=config, **kwargs)
-        else:
-            # Fallback to synchronous invoke if no async method is available
-            return await asyncio.to_thread(self.invoke, input, config, **kwargs)
+        return await self.tool.ainvoke(input=input, config=config, **kwargs)
+
 
     def invoke(
         self,
@@ -226,8 +224,6 @@ class MotleyTool(Runnable):
         config: Optional[RunnableConfig] = None,
         **kwargs: Any,
     ) -> Any:
-        if self.is_async:
-            raise RuntimeError("Cannot use invoke() with async tools. Use ainvoke() instead.")
         return self.tool.invoke(input=input, config=config, **kwargs)
 
     def run(self, *args, **kwargs):
@@ -237,17 +233,27 @@ class MotleyTool(Runnable):
         pass
 
     def _tool_from_run_method(self, name: str, description: str, args_schema: BaseModel):
-        if self.is_async:
-            return StructuredTool.from_function(
-                name=name,
-                description=description,
-                args_schema=args_schema,
-                coroutine=self.arun,
+        func = None
+        coroutine = None
+
+        if self.__class__.run != MotleyTool.run:
+            func = self.run
+        if self.__class__.arun != MotleyTool.arun:
+            coroutine = self.arun
+
+        if func is None and coroutine is None:
+            raise Exception(
+                "At least one of run and arun methods must be overridden in MotleyTool if not "
+                "constructing from a supported tool instance."
             )
-        else:
-            return StructuredTool.from_function(
-                name=name, description=description, args_schema=args_schema, func=self.run
-            )
+
+        return StructuredTool.from_function(
+            name=name,
+            description=description,
+            args_schema=args_schema,
+            func=func,
+            coroutine=coroutine,
+        )
 
     @staticmethod
     def from_langchain_tool(
@@ -256,13 +262,11 @@ class MotleyTool(Runnable):
         exceptions_to_reflect: Optional[List[Exception]] = None,
         retry_config: Optional[RetryConfig] = None,
     ) -> "MotleyTool":
-        is_async = getattr(langchain_tool, "coroutine", None) is not None
         return MotleyTool(
             tool=langchain_tool,
             return_direct=return_direct,
             exceptions_to_reflect=exceptions_to_reflect,
             retry_config=retry_config,
-            is_async=is_async,
         )
 
     @staticmethod

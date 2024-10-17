@@ -58,6 +58,10 @@ class SupportAgentDeployment:
     @app.websocket("/ws")
     async def websocket_endpoint(self, websocket: WebSocket):
         await websocket.accept()
+        await websocket.send_json(
+            {"type": "agent_message", "content": "Hello! How can I help you?"}
+        )
+
         communication_interface = WebSocketCommunicationInterface(websocket)
 
         context = SupportAgentContext(self.graph_store, communication_interface)
@@ -75,11 +79,11 @@ class SupportAgentDeployment:
         try:
             while True:
                 data = await websocket.receive_text()
-                resolution, escalate = await agent.ainvoke({"prompt": data})
-                if escalate:
+                resolution = await agent.ainvoke({"prompt": data})
+                if resolution.additional_kwargs.get("escalate"):
                     await communication_interface.escalate_to_human_agent()
                 else:
-                    await communication_interface.resolve_issue(resolution)
+                    await communication_interface.resolve_issue(resolution.content)
         except Exception as e:
             logger.error(f"WebSocket error: {e}")
 

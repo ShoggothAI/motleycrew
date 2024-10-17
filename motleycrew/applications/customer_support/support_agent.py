@@ -1,9 +1,9 @@
 import asyncio
 from dataclasses import dataclass, field
-from dotenv import load_dotenv
 from pathlib import Path
-from typing import List, Optional, Sequence, Tuple
+from typing import List, Optional, Sequence
 
+from dotenv import load_dotenv
 from langchain.agents import AgentExecutor
 from langchain.agents.format_scratchpad.tools import format_to_tool_messages
 from langchain.agents.output_parsers.tools import ToolsAgentOutputParser
@@ -15,12 +15,12 @@ from langchain_core.runnables import Runnable, RunnablePassthrough
 from langchain_core.tools import BaseTool
 from pydantic import BaseModel, Field
 
+from motleycrew.agents.langchain import LangchainMotleyAgent
 from motleycrew.applications.customer_support.communication import (
     CommunicationInterface,
     DummyCommunicationInterface,
 )
 from motleycrew.applications.customer_support.issue_tree import IssueData, IssueNode
-from motleycrew.agents.langchain import LangchainMotleyAgent
 from motleycrew.common import LLMFramework
 from motleycrew.common.exceptions import InvalidOutput
 from motleycrew.common.llms import init_llm
@@ -139,7 +139,6 @@ class CustomerChatTool(MotleyTool):
             description="Tool that can send a message to the customer and receive a response. "
             "Use it if you need to inquire additional details from the customer or to propose a solution.",
             args_schema=CustomerChatInput,
-            is_async=True,
         )
         self.context = context
 
@@ -169,23 +168,24 @@ class ResolveIssueTool(MotleyTool):
         )
         self.context = context
 
-    def run(self, resolution: Optional[str] = None, escalate: bool = False) -> Tuple[str, bool]:
+    def run(self, resolution: Optional[str] = None, escalate: bool = False) -> AIMessage:
         """
         Args:
             resolution: Resolution to the issue.
             escalate: Whether to escalate the issue to a human agent.
 
         Returns:
-            Tuple[str, bool]: The resolution to the issue and a boolean indicating whether the issue was escalated.
+            AIMessage: The resolution to the issue with `escalate` value in the additional kwargs.
         """
         if escalate:
-            return resolution, True
+            content = f"I am escalating this issue to a human agent. Resolution: {resolution}"
+            return AIMessage(content=content, additional_kwargs={"escalate": True})
         else:
             if not resolution:
                 raise InvalidOutput("Resolution must be provided when not escalating.")
             if not self.context.viewed_issues:
                 raise InvalidOutput("You must view at least some past issues before resolving.")
-            return resolution, False
+            return AIMessage(content=resolution, additional_kwargs={"escalate": False})
 
 
 SUPPORT_AGENT_PROMPT = """You are a customer support agent. Your goal is to answer customer's questions.
@@ -328,7 +328,7 @@ async def main():
 
     print("Starting Customer Support Agent Demo")
 
-    customer_query = "I am having trouble logging in."
+    customer_query = "I forgot my password."
     print(f"\nCustomer: {customer_query}")
 
     response = await agent.ainvoke(
@@ -336,7 +336,17 @@ async def main():
             "prompt": customer_query,
         }
     )
-    print(f"Agent: {response}")
+    print(f"Agent: {response.content}")
+
+    followup_query = "What if I forgot my email?"
+    print(f"\nCustomer: {followup_query}")
+
+    response = await agent.ainvoke(
+        {
+            "prompt": followup_query,
+        }
+    )
+    print(f"Agent: {response.content}")
 
     print("\nDemo completed.")
 

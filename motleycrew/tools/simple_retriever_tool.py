@@ -65,14 +65,16 @@ def make_retriever_langchain_tool(
         # load the documents and create the index
         documents = SimpleDirectoryReader(data_dir).load_data()
         index = VectorStoreIndex.from_documents(
-            documents, transformations=[SentenceSplitter(chunk_size=512), embeddings]
+            documents,
+            transformations=[SentenceSplitter(chunk_size=512), embeddings],
+            embed_model=embeddings,
         )
         # store it for later
         index.storage_context.persist(persist_dir=persist_dir)
     else:
         # load the existing index
         storage_context = StorageContext.from_defaults(persist_dir=persist_dir)
-        index = load_index_from_storage(storage_context)
+        index = load_index_from_storage(storage_context, embed_model=embeddings)
 
     retriever = index.as_retriever(
         similarity_top_k=10,

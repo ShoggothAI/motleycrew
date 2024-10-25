@@ -41,7 +41,7 @@ class QuestionTask(Task):
         self.n_iter = 0
         self.question = Question(question=question)
         self.graph_store.insert_node(self.question)
-        self.question_prioritization_tool = QuestionPrioritizerTool()
+        self.question_prioritization_tool = QuestionPrioritizerTool(llm=llm)
         self.question_generation_tool = QuestionGeneratorTool(
             query_tool=query_tool, graph=self.graph_store, llm=llm
         )

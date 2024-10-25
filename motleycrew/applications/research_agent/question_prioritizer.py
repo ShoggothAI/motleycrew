@@ -1,7 +1,10 @@
+from typing import Optional
+
 from langchain.prompts import PromptTemplate
 from langchain_core.prompts.base import BasePromptTemplate
 from langchain_core.runnables import RunnableLambda, RunnablePassthrough, chain
 from langchain_core.tools import StructuredTool
+from langchain_core.language_models import BaseLanguageModel
 from pydantic import BaseModel, Field
 
 from motleycrew.applications.research_agent.question import Question
@@ -16,8 +19,9 @@ class QuestionPrioritizerTool(MotleyTool):
     def __init__(
         self,
         prompt: str | BasePromptTemplate = None,
+        llm: Optional[BaseLanguageModel] = None,
     ):
-        langchain_tool = create_question_prioritizer_langchain_tool(prompt=prompt)
+        langchain_tool = create_question_prioritizer_langchain_tool(prompt=prompt, llm=llm)
 
         super().__init__(langchain_tool)
 
@@ -47,6 +51,7 @@ class QuestionPrioritizerInput(BaseModel, arbitrary_types_allowed=True):
 
 def create_question_prioritizer_langchain_tool(
     prompt: str | BasePromptTemplate = None,
+    llm: Optional[BaseLanguageModel] = None,
 ) -> StructuredTool:
     if prompt is None:
         prompt = _default_prompt
@@ -56,6 +61,7 @@ def create_question_prioritizer_langchain_tool(
         name="Question prioritizer",
         description="Takes the original question and a list of derived questions, "
         "and selects from the latter the one most pertinent to the former",
+        llm=llm,
     )
 
     @chain

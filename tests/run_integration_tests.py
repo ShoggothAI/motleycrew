@@ -25,12 +25,18 @@ from motleycrew.common.exceptions import (
 INTEGRATION_TESTS = {}
 
 IPYNB_INTEGRATION_TESTS = {
-    # "blog_with_images_ipynb": "examples/Blog with Images.ipynb",
+    "blog_with_images_ipynb": "examples/Blog with Images.ipynb",
     "multi_step_research_agent_ipynb": "examples/Multi-step research agent.ipynb",
     "math_via_python_code_with_a_single_agent_ipynb": "examples/Math via python code with a single agent.ipynb",
     "validating_agent_output_ipynb": "examples/Validating agent output.ipynb",
     "advanced_output_handling_ipynb": "examples/Advanced output handling.ipynb",
-    # "using_autogen_with_motleycrew_ipynb": "examples/Using AutoGen with motleycrew.ipynb"
+    "using_autogen_with_motleycrew_ipynb": "examples/Using AutoGen with motleycrew.ipynb"
+}
+
+INTEGRATION_TESTS_TO_SKIP = {
+    "Windows": [
+        "blog_with_images_ipynb"
+    ]
 }
 
 MINIMAL_INTEGRATION_TESTS = {}
@@ -74,6 +80,10 @@ def get_args_parser():
     parser.add_argument("--cache-dir", type=str, help="Cache directory", default=DEFAULT_CACHE_DIR)
     parser.add_argument(
         "--minimal-only", default=False, action="store_true", help="Run minimal tests"
+    )
+    parser.add_argument(
+        # added to skip problematic tests on Windows workers in GutHub Actions
+        "--os", type=str, default="Unix", help="Target operating system"
     )
 
     return parser
@@ -150,6 +160,7 @@ def run_integration_tests(
     cache_dir: str,
     test_names: Optional[list[str]] = None,
     minimal_only: bool = False,
+    target_os: str = "Unix",
 ):
     failed_tests = {}
 
@@ -168,6 +179,10 @@ def run_integration_tests(
 
     for current_test_name, test_fn in integration_tests.items():
         if test_names and current_test_name not in test_names:
+            continue
+
+        if target_os in INTEGRATION_TESTS_TO_SKIP and current_test_name in INTEGRATION_TESTS_TO_SKIP[target_os]:
+            logger.info("Skipping test %s for target platform %s", current_test_name, target_os)
             continue
 
         logger.info("Running test: %s", current_test_name)
@@ -209,6 +224,7 @@ def main():
         cache_dir=args.cache_dir,
         test_names=args.test_names,
         minimal_only=args.minimal_only,
+        target_os=args.os,
     )
 
 

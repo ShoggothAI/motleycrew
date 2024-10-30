@@ -4,3 +4,4 @@ llama-index==0.11.2
 crewai==0.51.1
 duckduckgo-search==6.3.1
 pglast==6.3
+ray[default]

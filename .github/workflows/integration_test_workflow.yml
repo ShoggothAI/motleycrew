@@ -1,0 +1,76 @@
+name: Integration test workflow
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        default: ubuntu-latest
+        type: string
+      python-version:
+        default: "3.10"
+        type: string
+      minimal-only:
+        default: false
+        type: boolean
+
+jobs:
+  integration_test:
+    environment: integration_test
+    runs-on: ${{ inputs.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ inputs.python-version }}
+        id: setup-python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - name: Install poetry
+        run: pip install -U poetry
+
+      - name: Configure poetry
+        run: |
+          poetry config virtualenvs.create true
+          poetry config virtualenvs.in-project true
+          poetry config installer.parallel true
+
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+
+      - name: Load test cache
+        uses: actions/cache@v4
+        with:
+          path: tests/itest_cache
+          key: integration-tests-cache
+          restore-keys: |
+            integration-tests-cache
+
+      - name: Install extra dependencies
+        run: poetry run pip install -r requirements-extra.txt
+
+      - name: Install minimal dependencies
+        if: inputs.minimal_only == 'true'
+        run: poetry install --no-interaction
+
+      - name: Install dependencies
+        if: inputs.minimal_only == 'false'
+        run: poetry install --no-interaction --all-extras
+
+      - name: Run minimal integration tests
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          TIKTOKEN_CACHE_DIR: tests/itest_cache/tiktoken_cache
+        if: inputs.minimal_only == 'true'
+        run: poetry run python tests/run_integration_tests.py --minimal-only --os ${{ runner.os }}
+
+      - name: Run integration tests
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          TIKTOKEN_CACHE_DIR: tests/itest_cache/tiktoken_cache
+        if: inputs.minimal_only == 'false'
+        run: poetry run python tests/run_integration_tests.py --os ${{ runner.os }}

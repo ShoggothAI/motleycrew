@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test:
+  minimal-test:
     strategy:
       matrix:
         python-version: ["3.10", "3.11", "3.12"]

@@ -17,7 +17,7 @@ jobs:
     # default smoke test against python-3.10 on ubuntu-latest
     uses: ./.github/workflows/integration_test_workflow.yml
 
-  integration-test:
+  test:
     needs: pre-test
     strategy:
       matrix:

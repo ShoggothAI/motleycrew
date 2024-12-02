@@ -12,6 +12,10 @@ on:
       minimal-only:
         default: false
         type: boolean
+    secrets:
+      openai-api-key:
+        required: true
+
 
 jobs:
   test:
@@ -63,14 +67,14 @@ jobs:
 
       - name: Run minimal integration tests
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.openai-api-key }}
           TIKTOKEN_CACHE_DIR: tests/itest_cache/tiktoken_cache
         if: ${{ inputs.minimal-only }}
         run: poetry run python tests/run_integration_tests.py --minimal-only --os ${{ runner.os }}
 
       - name: Run integration tests
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.openai-api-key }}
           TIKTOKEN_CACHE_DIR: tests/itest_cache/tiktoken_cache
         if: ${{ !inputs.minimal-only }}
         run: poetry run python tests/run_integration_tests.py --os ${{ runner.os }}

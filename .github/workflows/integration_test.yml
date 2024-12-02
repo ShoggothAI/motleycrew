@@ -16,6 +16,8 @@ jobs:
   pre-test:
     # default smoke test against python-3.10 on ubuntu-latest
     uses: ./.github/workflows/integration_test_workflow.yml
+    secrets:
+      openai-api-key: ${{ secrets.OPENAI_API_KEY }}
 
   integration-test:
     needs: pre-test
@@ -27,3 +29,5 @@ jobs:
     with:
       os: ${{ matrix.os }}
       python-version: ${{ matrix.python-version }}
+    secrets:
+      openai-api-key: ${{ secrets.OPENAI_API_KEY }}

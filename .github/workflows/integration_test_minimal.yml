@@ -23,3 +23,5 @@ jobs:
       os: ${{ matrix.os }}
       python-version: ${{ matrix.python-version }}
       minimal-only: true
+    secrets:
+      openai-api-key: ${{ secrets.OPENAI_API_KEY }}

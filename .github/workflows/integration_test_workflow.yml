@@ -50,6 +50,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: tests/itest_cache
+          enableCrossOsArchive: true
           key: integration-tests-cache
           restore-keys: |
             integration-tests-cache

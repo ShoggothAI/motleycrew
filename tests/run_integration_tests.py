@@ -139,7 +139,7 @@ def run_ipynb(ipynb_path: str, strong_cache: bool = False, cache_sub_dir: str = 
     else:
         result = ""
 
-    return result
+    return nbformat.writes(nb)
 
 
 def build_ipynb_integration_tests(is_minimal: bool = False) -> dict:
@@ -198,7 +198,7 @@ def run_integration_tests(
             test_fn_kwargs = {}
 
         try:
-            test_fn(**test_fn_kwargs)
+            logger.info(test_fn(**test_fn_kwargs))
         except BaseException as e:
             logger.error("Test %s failed: %s", current_test_name, str(e))
             failed_tests[current_test_name] = traceback.format_exc()

@@ -8,8 +8,9 @@ class LLMProvider:
     TOGETHER = "together"
     GROQ = "groq"
     OLLAMA = "ollama"
+    AZURE_OPENAI = "azure_openai"
 
-    ALL = {OPENAI, ANTHROPIC, REPLICATE, TOGETHER, GROQ, OLLAMA}
+    ALL = {OPENAI, ANTHROPIC, REPLICATE, TOGETHER, GROQ, OLLAMA, AZURE_OPENAI}
 
 
 class LLMFramework:
@@ -58,11 +59,13 @@ class AsyncBackend:
     Attributes:
         ASYNCIO: Asynchronous execution using asyncio.
         THREADING: Parallel execution using threads.
+        RAY: Parallel execution using Ray.
         NONE: Synchronous execution.
     """
 
     ASYNCIO = "asyncio"
     THREADING = "threading"
+    RAY = "ray"
     NONE = "none"
 
-    ALL = {ASYNCIO, THREADING, NONE}
+    ALL = {ASYNCIO, THREADING, RAY, NONE}

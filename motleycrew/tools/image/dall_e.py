@@ -1,13 +1,13 @@
-from typing import Optional, List
+import os
+from typing import List, Optional
 
 from langchain.agents import Tool
 from langchain.prompts import PromptTemplate
 from langchain_community.utilities.dalle_image_generator import DallEAPIWrapper
-from langchain_core.pydantic_v1 import BaseModel, Field
+from pydantic import BaseModel, Field
 
 import motleycrew.common.utils as motley_utils
-from motleycrew.common import LLMFramework
-from motleycrew.common import logger
+from motleycrew.common import LLMFramework, logger
 from motleycrew.common.llms import init_llm
 from motleycrew.tools.image.download_image import download_url_to_directory
 from motleycrew.tools.tool import MotleyTool
@@ -95,12 +95,15 @@ def run_dalle_and_save_images(
 
     prompt_value = dall_e_prompt.invoke({"text": description})
 
-    dalle_api = DallEAPIWrapper(
+    dalle_api = DallEAPIWrapper.model_construct(
         model=model,
         quality=quality,
         size=size,
         model_kwargs={"style": style} if (model == "dall-e-3" and style) else {},
+        openai_api_key=os.getenv("OPENAI_API_KEY"),
+        # TODO: remove this after https://github.com/langchain-ai/langchain/issues/26941 is fixed
     )
+    dalle_api.validate_environment()
 
     dalle_result = dalle_api.run(prompt_value.text)
     logger.info("Dall-E API output: %s", dalle_result)

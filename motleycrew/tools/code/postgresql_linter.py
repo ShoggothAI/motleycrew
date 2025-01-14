@@ -1,7 +1,7 @@
-from typing import Optional, List
+from typing import List, Optional
 
-from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import Tool
+from pydantic import BaseModel, Field
 
 try:
     from pglast import parse_sql, prettify
@@ -11,8 +11,8 @@ except ImportError:
     prettify = None
     ParseError = None
 
-from motleycrew.tools import MotleyTool
 from motleycrew.common.utils import ensure_module_is_installed
+from motleycrew.tools import MotleyTool
 
 
 class PostgreSQLLinterTool(MotleyTool):

@@ -1,10 +1,10 @@
-from typing import Optional, Type, List
+from typing import List, Optional, Type
 
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.prompts import PromptTemplate
 from langchain_core.prompts.base import BasePromptTemplate
-from langchain_core.pydantic_v1 import BaseModel, Field, create_model
 from langchain_core.tools import StructuredTool
+from pydantic import BaseModel, Field, create_model
 
 from motleycrew.common import LLMFramework
 from motleycrew.common.llms import init_llm

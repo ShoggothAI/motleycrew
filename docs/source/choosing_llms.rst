@@ -30,7 +30,7 @@ That's why we have an ``init_llm`` function to help you set up the LLM.
     llm = init_llm(
         llm_framework=LLMFramework.LANGCHAIN,
         llm_provider=LLMProvider.ANTHROPIC,
-        llm_name="claude-3-5-sonnet-20240620",
+        llm_name="claude-3-5-sonnet-latest",
         llm_temperature=0
     )
     agent = ReActToolCallingMotleyAgent(llm=llm, tools=[...])
@@ -49,6 +49,7 @@ The currently supported LLM providers (:py:class:`motleycrew.common.enums.LLMPro
 - :py:class:`Together <motleycrew.common.enums.LLMProvider.TOGETHER>`
 - :py:class:`Replicate <motleycrew.common.enums.LLMProvider.REPLICATE>`
 - :py:class:`Ollama <motleycrew.common.enums.LLMProvider.OLLAMA>`
+- :py:class:`Azure OpenAI <motleycrew.common.enums.LLMProvider.AZURE_OPENAI>`
 
 Please raise an issue if you need to add support for another LLM provider.
 

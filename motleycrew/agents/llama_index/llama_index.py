@@ -82,6 +82,7 @@ class LlamaIndexMotleyAgent(MotleyAgentParent):
         )
 
         self.direct_output = None
+        self.aux_prompts = AuxPrompts()
 
     def _propagate_error_step(self, task_id: str, message: str):
         error_step = TaskStep(
@@ -133,7 +134,7 @@ class LlamaIndexMotleyAgent(MotleyAgentParent):
                     cur_step_output.is_last = False
                     self._propagate_error_step(
                         task_id=cur_step_output.task_step.task_id,
-                        message=AuxPrompts.get_direct_output_error_message(
+                        message=self.aux_prompts.get_direct_output_error_message(
                             output_handlers=output_handlers
                         ),
                     )

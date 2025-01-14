@@ -5,9 +5,9 @@ from typing import TYPE_CHECKING, Any, Optional, Sequence, Union
 
 from langchain_core.messages import BaseMessage
 from langchain_core.prompts.chat import ChatPromptTemplate, HumanMessage, SystemMessage
-from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import StructuredTool
+from pydantic import BaseModel, Field
 
 from motleycrew.agents.abstract_parent import MotleyAgentAbstractParent
 from motleycrew.common import MotleyAgentFactory, MotleySupportedTool, logger

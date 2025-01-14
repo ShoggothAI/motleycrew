@@ -2,27 +2,28 @@
 The module contains callback handlers for sending data to the Lunary service
 """
 
-from typing import List, Dict, Optional, Any, Union
 import traceback
+from typing import Any, Dict, List, Optional, Union
 
 try:
+    from llama_index.core.base.llms.types import ChatMessage
     from llama_index.core.callbacks.base_handler import BaseCallbackHandler
     from llama_index.core.callbacks.schema import CBEventType, EventPayload
-    from llama_index.core.base.llms.types import ChatMessage
 except ImportError:
     BaseCallbackHandler = object
     CBEventType = None
     ChatMessage = None
 
 try:
-    from lunary import track_event, event_queue_ctx
+    from lunary import EventQueue, event_queue_ctx, track_event
 except ImportError:
     track_event = None
     event_queue_ctx = None
+    EventQueue = None
 
-from motleycrew.common.enums import LunaryRunType, LunaryEventName
-from motleycrew.common.utils import ensure_module_is_installed
 from motleycrew.common import logger
+from motleycrew.common.enums import LunaryEventName, LunaryRunType
+from motleycrew.common.utils import ensure_module_is_installed
 
 
 def event_delegate_decorator(f):
@@ -33,6 +34,7 @@ def event_delegate_decorator(f):
     Args:
         f (callable):
     """
+
     def wrapper(self, *args, **kwargs):
         ensure_module_is_installed("llama_index")
         run_type = "start" if "start" in f.__name__ else "end"
@@ -122,7 +124,12 @@ class LlamaIndexLunaryCallbackHandler(BaseCallbackHandler):
         self._track_event = track_event
         self._event_run_type_ids = []
 
-        self.queue = event_queue_ctx.get()
+        try:
+            self.queue = event_queue_ctx.get()
+        except (
+            LookupError
+        ):  # happens when running in a separate thread, so we can't use the global queue
+            self.queue = EventQueue()
 
     def _get_initial_track_event_params(
         self, run_type: LunaryRunType, event_name: LunaryEventName, run_id: str = None
@@ -312,7 +319,7 @@ class LlamaIndexLunaryCallbackHandler(BaseCallbackHandler):
 
         if payload:
             response = payload.get(EventPayload.RESPONSE)
-            output  = response.response
+            output = response.response
         else:
             output = ""
         params["output"] = output
@@ -400,7 +407,7 @@ class LlamaIndexLunaryCallbackHandler(BaseCallbackHandler):
             payload (dict): related event data
             event_id (str): event id (uuid)
             **kwargs:
-       """
+        """
         return
 
     @staticmethod

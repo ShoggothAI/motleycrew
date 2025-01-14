@@ -16,6 +16,7 @@ except ImportError:
     TaskState = None
 
 from motleycrew.agents.llama_index import ReActLlamaIndexMotleyAgent
+from motleycrew.common import AuxPrompts
 from motleycrew.common.exceptions import InvalidOutput
 from motleycrew.tools import MotleyTool
 from tests.test_agents import MockTool
@@ -120,7 +121,9 @@ def test_run_step(agent, task_data):
     _task_step = step_queue.pop()
 
     assert _task_step.task_id == task.task_id
-    assert _task_step.input == "You must call the `output_handler` tool to return the final output."
+    assert _task_step.input == AuxPrompts.get_direct_output_error_message(
+        agent.get_output_handlers()
+    )
 
     # test direct output
     output_handler = ReportOutputHandler()

@@ -4,10 +4,10 @@ import io
 import os.path
 import subprocess
 import tempfile
-from typing import Optional, List
+from typing import List, Optional
 
-from langchain_core.pydantic_v1 import create_model, Field
 from langchain_core.tools import Tool
+from pydantic import Field, create_model
 
 from motleycrew.tools import MotleyTool
 

@@ -50,11 +50,11 @@ jobs:
         path: .venv
         key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
 
-    - name: Install dependencies
-      run: poetry install --no-interaction --all-extras --with dev
-
     - name: Install extra dependencies
       run: poetry run pip install -r requirements-extra.txt
+
+    - name: Install dependencies
+      run: poetry install --no-interaction --all-extras --with dev
 
     - name: Run tests
       run: poetry run pytest

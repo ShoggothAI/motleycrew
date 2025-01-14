@@ -1,4 +1,5 @@
 """Helper functions to initialize Language Models (LLMs) from different frameworks."""
+from typing import Optional
 
 from motleycrew.common import Defaults, LLMFramework, LLMProvider
 from motleycrew.common.exceptions import LLMProviderNotSupported
@@ -269,9 +270,9 @@ LLM_MAP = {
 
 def init_llm(
     llm_framework: str,
-    llm_provider: str = Defaults.DEFAULT_LLM_PROVIDER,
-    llm_name: str = Defaults.DEFAULT_LLM_NAME,
-    llm_temperature: float = Defaults.DEFAULT_LLM_TEMPERATURE,
+    llm_provider: Optional[str] = None,
+    llm_name: Optional[str]=None,
+    llm_temperature: Optional[float] = None,
     **kwargs,
 ):
     """Initialize an LLM client for use with the specified framework and family.
@@ -282,6 +283,9 @@ def init_llm(
         llm_name: Name of the LLM.
         llm_temperature: Temperature for the LLM.
     """
+    llm_provider = llm_provider or Defaults.DEFAULT_LLM_PROVIDER
+    llm_name = llm_name or Defaults.DEFAULT_LLM_NAME
+    llm_temperature = llm_temperature or Defaults.DEFAULT_LLM_TEMPERATURE
 
     func = LLM_MAP.get((llm_framework, llm_provider), None)
     if func is not None:

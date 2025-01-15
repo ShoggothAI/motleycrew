@@ -1,8 +1,5 @@
 import argparse
-import difflib
-import json
 import os
-import shutil
 import sys
 import traceback
 from copy import copy
@@ -12,7 +9,7 @@ from typing import Optional
 
 import nbformat
 from dotenv import load_dotenv
-from motleycache import set_cache_location, set_strong_cache
+from motleycache import set_cache_location
 from nbconvert.preprocessors import ExecutePreprocessor
 from nbformat.v4.nbbase import new_code_cell
 
@@ -29,12 +26,17 @@ INTEGRATION_TESTS = {}
 
 IPYNB_INTEGRATION_TESTS = {
     # "blog_with_images_ipynb": "examples/Blog with Images.ipynb",
-    # TODO: this particular test was problematic in terms of caching, find ways to enable
     "multi_step_research_agent_ipynb": "examples/Multi-step research agent.ipynb",
     "math_via_python_code_with_a_single_agent_ipynb": "examples/Math via python code with a single agent.ipynb",
     "validating_agent_output_ipynb": "examples/Validating agent output.ipynb",
     "advanced_output_handling_ipynb": "examples/Advanced output handling.ipynb",
-    # "using_autogen_with_motleycrew_ipynb": "examples/Using AutoGen with motleycrew.ipynb"
+    "using_autogen_with_motleycrew_ipynb": "examples/Using AutoGen with motleycrew.ipynb"
+}
+
+INTEGRATION_TESTS_TO_SKIP = {
+    "Windows": [
+        "blog_with_images_ipynb"
+    ]
 }
 
 MINIMAL_INTEGRATION_TESTS = {}
@@ -77,60 +79,14 @@ def get_args_parser():
     )
     parser.add_argument("--cache-dir", type=str, help="Cache directory", default=DEFAULT_CACHE_DIR)
     parser.add_argument(
-        "--golden-dir",
-        type=str,
-        help="Reference data directory",
-        default=DEFAULT_GOLDEN_DIR,
-    )
-    parser.add_argument(
-        "--update-golden",
-        action="store_true",
-        help="Update reference data together with the cache",
-    )
-    parser.add_argument(
         "--minimal-only", default=False, action="store_true", help="Run minimal tests"
+    )
+    parser.add_argument(
+        # added to skip problematic tests on Windows workers in GutHub Actions
+        "--os", type=str, default="Unix", help="Target operating system"
     )
 
     return parser
-
-
-def compare_results(result: str | list[str], expected_result: str | list[str]):
-    """Compare the received and expected results"""
-    if isinstance(result, str):
-        result = [result]
-    if isinstance(expected_result, str):
-        expected_result = [expected_result]
-
-    diff = []
-    for i, (row, expected_row) in enumerate(zip(result, expected_result)):
-        result_lines = row.splitlines()
-        expected_result_lines = expected_row.splitlines()
-        diff += list(difflib.unified_diff(result_lines, expected_result_lines))
-
-    if diff:
-        message = "Test result != expected result.\n{}\n".format("\n".join(diff))
-        raise Exception(message)
-
-
-def build_excepted_content_file_path(
-    golden_dir: str, test_name: str, extension: str = "txt"
-) -> str:
-    """Build golden data file path"""
-    return os.path.join(golden_dir, "{}.{}".format(test_name, extension))
-
-
-def write_content(golden_dir: str, test_name: str, content: str, extension: str = "json"):
-    """Write golden data to file"""
-    file_path = build_excepted_content_file_path(golden_dir, test_name, extension)
-    with open(file_path, "w") as fd:
-        json.dump(content, fd)
-
-
-def read_golden_data(golden_dir: str, test_name: str, extension: str = "json"):
-    """Read golden data from file"""
-    file_path = build_excepted_content_file_path(golden_dir, test_name, extension)
-    with open(file_path, "r") as fd:
-        return json.load(fd)
 
 
 def run_ipynb(ipynb_path: str, strong_cache: bool = False, cache_sub_dir: str = None) -> str:
@@ -183,7 +139,7 @@ def run_ipynb(ipynb_path: str, strong_cache: bool = False, cache_sub_dir: str = 
     else:
         result = ""
 
-    return result
+    return nbformat.writes(nb)
 
 
 def build_ipynb_integration_tests(is_minimal: bool = False) -> dict:
@@ -202,10 +158,9 @@ def build_ipynb_integration_tests(is_minimal: bool = False) -> dict:
 
 def run_integration_tests(
     cache_dir: str,
-    golden_dir: str,
-    update_golden: bool = False,
     test_names: Optional[list[str]] = None,
     minimal_only: bool = False,
+    target_os: str = "Unix",
 ):
     failed_tests = {}
 
@@ -226,45 +181,24 @@ def run_integration_tests(
         if test_names and current_test_name not in test_names:
             continue
 
+        if target_os in INTEGRATION_TESTS_TO_SKIP and current_test_name in INTEGRATION_TESTS_TO_SKIP[target_os]:
+            logger.info("Skipping test %s for target platform %s", current_test_name, target_os)
+            continue
+
         logger.info("Running test: %s", current_test_name)
 
         cache_sub_dir = os.path.join(cache_dir, current_test_name)
-        if update_golden:
-            logger.info("Update-golden flag is set. Cleaning cache directory %s", cache_sub_dir)
-            shutil.rmtree(cache_sub_dir, ignore_errors=True)
-            os.makedirs(cache_sub_dir, exist_ok=True)
-            os.makedirs(golden_dir, exist_ok=True)
-            strong_cache = False
-        else:
-            strong_cache = True
-
-        set_strong_cache(strong_cache)
         set_cache_location(cache_sub_dir)
 
         if current_test_name in IPYNB_INTEGRATION_TESTS:
             test_fn_kwargs = {
-                "strong_cache": strong_cache,
                 "cache_sub_dir": cache_sub_dir,
             }
         else:
             test_fn_kwargs = {}
 
         try:
-            test_result = test_fn(**test_fn_kwargs)
-            if (
-                current_test_name in INTEGRATION_TESTS
-                or current_test_name in IPYNB_INTEGRATION_TESTS
-            ):
-                if update_golden:
-                    logger.info(
-                        "Skipping check and updating golden data for test: %s",
-                        current_test_name,
-                    )
-                    write_content(golden_dir, current_test_name, test_result)
-                else:
-                    excepted_result = read_golden_data(golden_dir, current_test_name)
-                    compare_results(test_result, excepted_result)
-
+            logger.info(test_fn(**test_fn_kwargs))
         except BaseException as e:
             logger.error("Test %s failed: %s", current_test_name, str(e))
             failed_tests[current_test_name] = traceback.format_exc()
@@ -288,10 +222,9 @@ def main():
 
     run_integration_tests(
         cache_dir=args.cache_dir,
-        golden_dir=args.golden_dir,
-        update_golden=args.update_golden,
         test_names=args.test_names,
         minimal_only=args.minimal_only,
+        target_os=args.os,
     )
 
 

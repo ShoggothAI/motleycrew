@@ -8,56 +8,26 @@ on:
     branches:
       - main
 
-# If another push to the same PR or branch happens while this workflow is still running,
-# cancel the earlier run in favor of the next run.
-#
-# There's no point in testing an outdated version of the code. GitHub only allows
-# a limited number of job runners to be active at the same time, so it's better to cancel
-# pointless jobs early so that more useful jobs can run sooner.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  test:
+  pre-test:
+    # default smoke test against python-3.10 on ubuntu-latest
+    uses: ./.github/workflows/integration_test_workflow.yml
+    secrets:
+      openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+
+  integration-test:
+    needs: pre-test
     strategy:
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
         os: [ubuntu-latest, macos-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Set up Python ${{ matrix.python-version }}
-      id: setup-python
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Install poetry
-      run: pip install -U poetry
-
-    - name: Configure poetry
-      run: |
-        poetry config virtualenvs.create true
-        poetry config virtualenvs.in-project true
-        poetry config installer.parallel true
-
-    - name: Load cached venv
-      id: cached-poetry-dependencies
-      uses: actions/cache@v4
-      with:
-        path: .venv
-        key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-
-    - name: Install extra dependencies
-      run: poetry run pip install -r requirements-extra.txt
-
-    - name: Install dependencies
-      run: poetry install --no-interaction --all-extras
-
-    - name: Run integration tests
-      env:
-        OPENAI_API_KEY: fake_key_1337
-        TIKTOKEN_CACHE_DIR: tests/itest_cache/tiktoken_cache
-      run: poetry run python tests/run_integration_tests.py
+    uses: ./.github/workflows/integration_test_workflow.yml
+    with:
+      os: ${{ matrix.os }}
+      python-version: ${{ matrix.python-version }}
+    secrets:
+      openai-api-key: ${{ secrets.OPENAI_API_KEY }}

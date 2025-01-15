@@ -77,11 +77,16 @@ class MotleyAgentParent(MotleyAgentAbstractParent, ABC):
         self.crew: MotleyCrew | None = None
 
         self._agent = None
+        self._kv_store = {}
 
         if tools:
             self.add_tools(tools)
 
         self._check_force_output_handler()
+
+    @property
+    def kv_store(self) -> dict:
+        return self._kv_store
 
     def __repr__(self):
         return f"{self.__class__.__name__}(name={self.name})"

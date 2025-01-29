@@ -271,7 +271,7 @@ LLM_MAP = {
 def init_llm(
     llm_framework: str,
     llm_provider: Optional[str] = None,
-    llm_name: Optional[str]=None,
+    llm_name: Optional[str] = None,
     llm_temperature: Optional[float] = None,
     **kwargs,
 ):

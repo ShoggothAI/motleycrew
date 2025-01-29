@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod, abstractproperty
 from typing import Optional, Any, TYPE_CHECKING
 
 from langchain_core.runnables import Runnable, RunnableConfig
@@ -12,6 +12,11 @@ class MotleyAgentAbstractParent(Runnable, ABC):
 
     Agents in motleycrew implement the Langchain Runnable interface.
     """
+
+    @property
+    @abstractmethod
+    def kv_store(self) -> dict:
+        pass
 
     @abstractmethod
     def invoke(

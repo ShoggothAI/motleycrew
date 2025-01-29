@@ -112,7 +112,7 @@ class InvalidToolInput(Exception):
         self.message = message
 
     def __str__(self):
-        msg = "Invalid input `{}` for tool `{}`".format(self.input, self.tool_name)
+        msg = "Invalid input `{}` for tool `{}`".format(self.input, self.tool.name)
         if self.message:
             msg = "{}: {}".format(msg, self.message)
         return msg

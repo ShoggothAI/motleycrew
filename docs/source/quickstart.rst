@@ -43,15 +43,16 @@ If you pass a tool from a supported framework (currently Langchain, LlamaIndex, 
 
     motley_tool = MotleyTool.from_supported_tool(my_tool)
 
-It is also possible to define a custom tool using the ``MotleyTool`` base class, overriding the ``run`` method. This is especially useful if you want to access context such as the caller agent or its last input, which can be useful for validation.
+It is also possible to define a custom tool using the ``MotleyTool`` base class, overriding the ``run`` method. This is especially useful if you want to access context such as the caller agent or its last input, which can be useful for validation. Also, you can use the agent's :doc:`key-value store <key_value_store>` to store and retrieve objects.
 
 .. code-block:: python
 
     class MyTool(MotleyTool):
         def run(self, some_input: str) -> str:
+            self.agent.kv_store["some_key"] = some_input  # for use in other tools
             return f"Received {some_input} from agent {self.agent} with last input {self.agent_input}"
 
-Tools can be executed asynchronously, either directly of via by an asynchronous agent. By default, the async version will just run the sync version in a separate thread
+Tools can be executed asynchronously, either directly of via by an asynchronous agent. By default, the async version will just run the sync version in a separate thread.
 
 MotleyTool can reflect exceptions that are raised inside it back to the agent, which can then retry the tool call. You can pass a list of exception classes to the ``exceptions_to_reflect`` argument in the constructor (or even pass the ``Exception`` class to reflect everything).
 

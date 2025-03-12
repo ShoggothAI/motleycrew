@@ -11,3 +11,4 @@ Usage
    knowledge_graph
    choosing_llms
    caching_observability
+   key_value_store

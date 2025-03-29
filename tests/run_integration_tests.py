@@ -30,14 +30,10 @@ IPYNB_INTEGRATION_TESTS = {
     "math_via_python_code_with_a_single_agent_ipynb": "examples/Math via python code with a single agent.ipynb",
     "validating_agent_output_ipynb": "examples/Validating agent output.ipynb",
     "advanced_output_handling_ipynb": "examples/Advanced output handling.ipynb",
-    "using_autogen_with_motleycrew_ipynb": "examples/Using AutoGen with motleycrew.ipynb"
+    "using_autogen_with_motleycrew_ipynb": "examples/Using AutoGen with motleycrew.ipynb",
 }
 
-INTEGRATION_TESTS_TO_SKIP = {
-    "Windows": [
-        "blog_with_images_ipynb"
-    ]
-}
+INTEGRATION_TESTS_TO_SKIP = {"Windows": ["blog_with_images_ipynb"]}
 
 MINIMAL_INTEGRATION_TESTS = {}
 
@@ -83,7 +79,10 @@ def get_args_parser():
     )
     parser.add_argument(
         # added to skip problematic tests on Windows workers in GutHub Actions
-        "--os", type=str, default="Unix", help="Target operating system"
+        "--os",
+        type=str,
+        default="Unix",
+        help="Target operating system",
     )
 
     return parser
@@ -181,7 +180,10 @@ def run_integration_tests(
         if test_names and current_test_name not in test_names:
             continue
 
-        if target_os in INTEGRATION_TESTS_TO_SKIP and current_test_name in INTEGRATION_TESTS_TO_SKIP[target_os]:
+        if (
+            target_os in INTEGRATION_TESTS_TO_SKIP
+            and current_test_name in INTEGRATION_TESTS_TO_SKIP[target_os]
+        ):
             logger.info("Skipping test %s for target platform %s", current_test_name, target_os)
             continue
 
@@ -198,7 +200,7 @@ def run_integration_tests(
             test_fn_kwargs = {}
 
         try:
-            logger.info(test_fn(**test_fn_kwargs))
+            test_fn(**test_fn_kwargs)
         except BaseException as e:
             logger.error("Test %s failed: %s", current_test_name, str(e))
             failed_tests[current_test_name] = traceback.format_exc()

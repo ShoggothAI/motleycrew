@@ -196,6 +196,7 @@ class MotleyAgentParent(MotleyAgentAbstractParent, ABC):
         self.materialize()
 
         for tool in self.tools.values():
+            assert tool.agent in (None, self), "Tool already has another agent assigned to it"
             tool.agent = self
             tool.agent_input = input
 
@@ -218,7 +219,10 @@ class MotleyAgentParent(MotleyAgentAbstractParent, ABC):
                     raise ValueError(
                         f"Tool {motley_tool.name} already has an agent assigned to it, please use unique tool instances."
                     )
+                motley_tool.agent = self
                 self.tools[motley_tool.name] = motley_tool
+            else:  # TODO: should we raise an error here?
+                logger.warning(f"Tool {motley_tool.name} already added, skipping addition of {t}.")
 
     def as_tool(self, **kwargs) -> MotleyTool:
         """Convert the agent to a tool to be used by other agents via delegation.

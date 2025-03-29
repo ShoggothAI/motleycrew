@@ -10,7 +10,7 @@ For a working example of custom tasks that fully utilize the knowledge graph bac
 Agents and tools
 ----------------
 
-Motleycrew provides thin wrappers for all the common agent frameworks: Langchain, LlamaIndex, CrewAI, and Autogen (please let us know if you want any others added!).
+Motleycrew provides thin wrappers for several common agent frameworks: Langchain, LlamaIndex, CrewAI, and Autogen (please let us know if you want any others added!).
 It also provides thin wrappers for Langchain and LlamaIndex tools, allowing you to use any of these tools with any of these agents.
 
 MotleyCrew also supports **delegation**: you can simply give any agent as a tool to any other agent.

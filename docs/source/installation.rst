@@ -23,12 +23,6 @@ Clone the repository_ and install the dependencies:
 
 This will create a virtual environment and install the required dependencies.
 
-You might also want to install optional dependencies (extra libraries like LlamaIndex or CrewAI) for additional functionality:
-
-.. code-block:: console
-
-    poetry install --all-extras
-
 If you want to install extra dependencies for development, you can use the following command:
 
 .. code-block:: console

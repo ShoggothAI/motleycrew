@@ -34,10 +34,17 @@ For many tasks, it's reasonable to use a pre-built agent from some framework,
 like Langchain, LlamaIndex, CrewAI etc. MotleyCrew provides adapters for these frameworks,
 which allow you to mix and match different agents together and easily provide them with any tools.
 
-
 * :class:`motleycrew.agents.langchain.LangchainMotleyAgent`
 * :class:`motleycrew.agents.llama_index.LlamaIndexMotleyAgent`
-* :class:`motleycrew.agents.crewai.CrewAIMotleyAgent`
+
+
+2025 update on CrewAI agents
+============================
+
+Lately, CrewAI has been increasingly complex and hard to integrate, as it's driving towards a more
+opinionated and closed environment.
+For this reason, we're deprecating the :class:`motleycrew.agents.crewai.CrewAIMotleyAgent`.
+Please use :class:`motleycrew.agents.langchain.ReActToolCallingMotleyAgent` instead.
 
 
 Creating your own agent

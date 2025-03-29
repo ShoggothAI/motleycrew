@@ -1,10 +1,19 @@
 from typing import List, Optional
 
-from langchain.agents import Tool
 from langchain_experimental.utilities import PythonREPL
 from pydantic import BaseModel, Field
 
 from motleycrew.tools import MotleyTool
+
+
+class MissingPrintStatementError(Exception):
+    """Exception raised when a print statement is missing from the command."""
+
+    def __init__(self, command: str):
+        self.command = command
+        super().__init__(
+            f"Command must contain at least one print statement. Remember to print the results you want to see using print(...)."
+        )
 
 
 class PythonREPLTool(MotleyTool):
@@ -15,29 +24,28 @@ class PythonREPLTool(MotleyTool):
     """
 
     def __init__(
-        self,
-        return_direct: bool = False,
-        exceptions_to_reflect: Optional[List[Exception]] = None,
+        self, return_direct: bool = False, exceptions_to_reflect: Optional[List[Exception]] = None
     ):
-        langchain_tool = create_repl_tool()
+        exceptions_to_reflect = (exceptions_to_reflect or []) + [MissingPrintStatementError]
         super().__init__(
-            tool=langchain_tool,
+            name="python_repl",
+            description="A Python shell. Use this to execute python commands. Input should be a valid python command. "
+            "MAKE SURE TO PRINT OUT THE RESULTS YOU CARE ABOUT USING `print(...)`.",
             return_direct=return_direct,
             exceptions_to_reflect=exceptions_to_reflect,
+            args_schema=REPLToolInput,
         )
+
+    def run(self, command: str) -> str:
+        self.validate_input(command)
+        return PythonREPL().run(command)
+
+    def validate_input(self, command: str):
+        if "print(" not in command:
+            raise MissingPrintStatementError(command)
 
 
 class REPLToolInput(BaseModel):
     """Input for the REPL tool."""
 
     command: str = Field(description="code to execute")
-
-
-def create_repl_tool():
-    return Tool.from_function(
-        func=PythonREPL().run,
-        name="python_repl",
-        description="A Python shell. Use this to execute python commands. Input should be a valid python command. "
-        "MAKE SURE TO PRINT OUT THE RESULTS YOU CARE ABOUT USING `print(...)`.",
-        args_schema=REPLToolInput,
-    )

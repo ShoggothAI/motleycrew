@@ -1,4 +1,3 @@
-import os
 from typing import List, Optional
 
 from langchain.agents import Tool
@@ -100,8 +99,6 @@ def run_dalle_and_save_images(
         quality=quality,
         size=size,
         model_kwargs={"style": style} if (model == "dall-e-3" and style) else {},
-        openai_api_key=os.getenv("OPENAI_API_KEY"),
-        # TODO: remove this after https://github.com/langchain-ai/langchain/issues/26941 is fixed
     )
     dalle_api.validate_environment()
 

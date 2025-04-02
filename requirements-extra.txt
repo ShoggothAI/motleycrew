@@ -1,7 +1,6 @@
 motleycache
-lunary==1.1.5
-llama-index==0.11.2
-crewai==0.51.1
-duckduckgo-search==6.3.7
-pglast==6.3
+lunary
+llama-index
+duckduckgo-search
+pglast
 ray[default]

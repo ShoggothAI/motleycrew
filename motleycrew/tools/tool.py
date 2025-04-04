@@ -71,7 +71,7 @@ class MotleyTool(Runnable):
         tool: Optional[BaseTool] = None,
         name: Optional[str] = None,
         description: Optional[str] = None,
-        args_schema: Optional[BaseModel] = None,
+        args_schema: Optional[Type[BaseModel]] = None,
         return_direct: bool = False,
         exceptions_to_reflect: Optional[List[Type[Exception]]] = None,
         retry_config: Optional[RetryConfig] = None,
@@ -232,7 +232,7 @@ class MotleyTool(Runnable):
     async def arun(self, *args, **kwargs):
         pass
 
-    def _tool_from_run_method(self, name: str, description: str, args_schema: BaseModel):
+    def _tool_from_run_method(self, name: str, description: str, args_schema: Type[BaseModel]):
         func = None
         coroutine = None
 

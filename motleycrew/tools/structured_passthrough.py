@@ -9,17 +9,24 @@ class StructuredPassthroughTool(MotleyTool):
     """
     A tool that enforces a certain output shape, raising an error if the output is not as expected.
     """
-    def __init__(self, schema: Type[BaseModel], post_process: Optional[Callable] = None, return_direct: bool=True, **kwargs):
+
+    def __init__(
+        self,
+        schema: Type[BaseModel],
+        post_process: Optional[Callable] = None,
+        return_direct: bool = True,
+        **kwargs
+    ):
         super().__init__(
             name="structured_passthrough_tool",
             description="A tool that enforces a certain output shape, raising an error if the output is not as expected.",
             args_schema=schema,
             return_direct=return_direct,
-        **kwargs)
+            **kwargs
+        )
 
         self.schema = schema
         self.post_process = post_process
-
 
     def run(self, **kwargs) -> Any:
         """

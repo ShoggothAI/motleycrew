@@ -7,11 +7,6 @@ from motleycrew.common import LLMFramework
 from motleycrew.common.llms import init_llm
 from motleycrew.tools import MotleyTool
 from motleycrew.tools.structured_passthrough import StructuredPassthroughTool
-from storyline.common.logging import configure_logging
-from storyline.config import LoggingParams
-
-
-configure_logging(LoggingParams(level="INFO"))
 
 
 class PivotConfigToolInputSchema(BaseModel):

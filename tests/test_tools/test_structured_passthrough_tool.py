@@ -1,5 +1,6 @@
 import pytest
 from pydantic import BaseModel, ValidationError
+
 from motleycrew.tools.structured_passthrough import StructuredPassthroughTool
 
 
@@ -21,10 +22,7 @@ def structured_passthrough_tool(sample_schema):
 def test_structured_passthrough_tool_initialization(structured_passthrough_tool, sample_schema):
     assert structured_passthrough_tool.schema == sample_schema
     assert structured_passthrough_tool.name == "structured_passthrough_tool"
-    assert (
-        structured_passthrough_tool.description
-        == "A tool that enforces a certain output shape, raising an error if the output is not as expected."
-    )
+    assert structured_passthrough_tool.description == "A tool that checks output validity."
 
 
 def test_structured_passthrough_tool_run_valid_input(structured_passthrough_tool):

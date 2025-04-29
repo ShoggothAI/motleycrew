@@ -19,7 +19,7 @@ class StructuredPassthroughTool(MotleyTool):
     ):
         super().__init__(
             name="structured_passthrough_tool",
-            description="A tool that enforces a certain output shape, raising an error if the output is not as expected.",
+            description="A tool that checks output validity.",
             args_schema=schema,
             return_direct=return_direct,
             **kwargs

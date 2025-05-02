@@ -21,6 +21,7 @@ class LLMTool(MotleyTool):
         prompt: str | BasePromptTemplate,
         llm: Optional[BaseLanguageModel] = None,
         input_schema: Optional[Type[BaseModel]] = None,
+        output_schema: Optional[Type[BaseModel]] = None,
         return_direct: bool = False,
         exceptions_to_reflect: Optional[List[Exception]] = None,
     ):
@@ -41,6 +42,7 @@ class LLMTool(MotleyTool):
             prompt=prompt,
             llm=llm,
             input_schema=input_schema,
+            output_schema=output_schema,
         )
         super().__init__(
             tool=langchain_tool,
@@ -55,9 +57,13 @@ def create_llm_langchain_tool(
     prompt: str | BasePromptTemplate,
     llm: Optional[BaseLanguageModel] = None,
     input_schema: Optional[Type[BaseModel]] = None,
+    output_schema: Optional[Type[BaseModel]] = None,
 ):
     if llm is None:
         llm = init_llm(llm_framework=LLMFramework.LANGCHAIN)
+
+    if output_schema is not None:
+        llm = llm.with_structured_output(output_schema)
 
     if not isinstance(prompt, BasePromptTemplate):
         prompt = PromptTemplate.from_template(prompt)

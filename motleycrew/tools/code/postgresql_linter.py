@@ -25,6 +25,8 @@ class PostgreSQLLinterTool(MotleyTool):
     ):
         ensure_module_is_installed("pglast")
 
+        exceptions_to_reflect = exceptions_to_reflect or [ParseError]
+
         langchain_tool = create_pgsql_linter_tool()
         super().__init__(
             tool=langchain_tool,
@@ -41,11 +43,8 @@ class PostgreSQLLinterInput(BaseModel):
 
 def create_pgsql_linter_tool() -> Tool:
     def parse_func(query: str) -> str:
-        try:
-            parse_sql(query)
-            return prettify(query)
-        except ParseError as e:
-            return str(e)
+        parse_sql(query)
+        return prettify(query)
 
     return Tool.from_function(
         func=parse_func,

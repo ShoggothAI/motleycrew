@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from typing import Sequence, Optional, Callable
+from typing import Callable, Sequence
 
 from langchain.agents import AgentExecutor
 from langchain.agents.format_scratchpad.tools import format_to_tool_messages
 from langchain.agents.output_parsers.tools import ToolsAgentOutputParser
 from langchain_core.language_models import BaseChatModel
 from langchain_core.prompts.chat import ChatPromptTemplate
-from langchain_core.runnables import Runnable, RunnablePassthrough, RunnableLambda
+from langchain_core.runnables import Runnable, RunnableLambda, RunnablePassthrough
 from langchain_core.runnables.history import GetSessionHistoryCallable
 from langchain_core.tools import BaseTool
 
@@ -20,11 +20,10 @@ except ImportError:
 
 from motleycrew.agents.langchain import LangchainMotleyAgent
 from motleycrew.agents.langchain.tool_calling_react_prompts import (
-    ToolCallingReActPromptsForOpenAI,
     ToolCallingReActPromptsForAnthropic,
+    ToolCallingReActPromptsForOpenAI,
 )
-from motleycrew.common import LLMFramework, Defaults
-from motleycrew.common import MotleySupportedTool
+from motleycrew.common import Defaults, LLMFramework, MotleySupportedTool
 from motleycrew.common.llms import init_llm
 from motleycrew.tools import MotleyTool
 
@@ -112,8 +111,7 @@ class ReActToolCallingMotleyAgent(LangchainMotleyAgent):
         prompt: ChatPromptTemplate | None = None,
         chat_history: bool | GetSessionHistoryCallable = True,
         force_output_handler: bool = False,
-        handle_parsing_errors: bool = True,
-        handle_tool_errors: bool = True,
+        handle_parsing_errors: bool = False,
         llm: BaseChatModel | None = None,
         max_iterations: int | None = Defaults.DEFAULT_REACT_AGENT_MAX_ITERATIONS,
         intermediate_steps_processor: Callable | None = None,
@@ -178,11 +176,6 @@ class ReActToolCallingMotleyAgent(LangchainMotleyAgent):
                 force_output_handler=force_output_handler,
                 intermediate_steps_processor=intermediate_steps_processor,
             )
-
-            if handle_tool_errors:
-                for tool in tools_for_langchain:
-                    tool.handle_tool_error = True
-                    tool.handle_validation_error = True
 
             agent_executor = AgentExecutor(
                 agent=agent,

@@ -6,7 +6,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 from langchain.tools import BaseTool, StructuredTool
 from langchain_core.runnables import Runnable, RunnableConfig
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from motleycrew.common.exceptions import InvalidOutput
 
@@ -68,13 +68,13 @@ class MotleyTool(Runnable):
 
     def __init__(
         self,
-        tool: Optional[BaseTool] = None,
         name: Optional[str] = None,
         description: Optional[str] = None,
-        args_schema: Optional[BaseModel] = None,
+        args_schema: Optional[Type[BaseModel]] = None,
         return_direct: bool = False,
         exceptions_to_reflect: Optional[List[Type[Exception]]] = None,
         retry_config: Optional[RetryConfig] = None,
+        tool: Optional[BaseTool] = None,
     ):
         """Initialize the MotleyTool.
 
@@ -82,10 +82,10 @@ class MotleyTool(Runnable):
             name: Name of the tool (required if tool is None).
             description: Description of the tool (required if tool is None).
             args_schema: Schema of the tool arguments (required if tool is None).
-            tool: Langchain BaseTool to wrap.
             return_direct: If True, the tool's output will be returned directly to the user.
             exceptions_to_reflect: List of exceptions to reflect back to the agent.
             retry_config: Configuration for retry behavior. If None, exceptions will not be retried.
+            tool: Langchain BaseTool to wrap. Usually not needed, as the tool is created from the run method.
         """
         if tool is None:
             assert name is not None
@@ -95,6 +95,11 @@ class MotleyTool(Runnable):
             )
         else:
             self.tool = tool
+
+        # To reflect errors back to the LLM
+        # TODO: a param to disable/customize this?
+        self.tool.handle_validation_error = self._format_error
+        self.tool.handle_tool_error = self._format_error
 
         self.return_direct = return_direct
         self.exceptions_to_reflect = exceptions_to_reflect or []
@@ -209,6 +214,24 @@ class MotleyTool(Runnable):
         patched_arun.__signature__ = signature
         object.__setattr__(self.tool, "_arun", patched_arun)
 
+    @staticmethod
+    def _format_error(e: Exception) -> str:
+        """Format Pydantic error message by removing the 'For further information' line.
+
+        TODO: find a way to include more information, like the required type in the model
+        TODO: e.g. dict[str, str] instead of just dict
+
+        Args:
+            e: The exception to format
+
+        Returns:
+            Formatted error message
+        """
+        if isinstance(e, ValidationError):
+            return str(e).split("For further information")[0].strip()
+        else:
+            return str(e)
+
     async def ainvoke(
         self,
         input: Union[str, Dict],
@@ -216,7 +239,6 @@ class MotleyTool(Runnable):
         **kwargs: Any,
     ) -> Any:
         return await self.tool.ainvoke(input=input, config=config, **kwargs)
-
 
     def invoke(
         self,
@@ -232,7 +254,7 @@ class MotleyTool(Runnable):
     async def arun(self, *args, **kwargs):
         pass
 
-    def _tool_from_run_method(self, name: str, description: str, args_schema: BaseModel):
+    def _tool_from_run_method(self, name: str, description: str, args_schema: Type[BaseModel]):
         func = None
         coroutine = None
 

@@ -84,14 +84,17 @@ class LangchainOutputHandlingAgentMixin:
                 step = [step]
 
             if output_handlers:
-                if isinstance(step, AgentFinish) and self.force_output_handler:
-                    # Attempted to return output directly, blocking
-                    return self._create_error_action(
-                        message=step.log,
-                        error_message=self.aux_prompts.get_direct_output_error_message(
-                            output_handlers
-                        ),
-                    )
+                if isinstance(step, AgentFinish):
+                    if self.force_output_handler:
+                        # Attempted to return output directly, blocking
+                        return self._create_error_action(
+                            message=step.log,
+                            error_message=self.aux_prompts.get_direct_output_error_message(
+                                output_handlers
+                            ),
+                        )
+                    else:
+                        return step
                 try:
                     step = list(step)
                 except TypeError:

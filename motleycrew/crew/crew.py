@@ -87,15 +87,18 @@ class MotleyCrew:
     def _would_create_cycle(self, upstream: Task, downstream: Task) -> bool:
         """Check if adding upstream -> downstream would create a cycle.
 
-        Traverses the existing dependency graph starting from downstream,
-        following upstream edges. If upstream is reachable, adding the
-        new edge would close a cycle.
+        Adding upstream -> downstream means downstream will depend on upstream.
+        A cycle exists if upstream already depends on downstream (transitively),
+        because then downstream -> ... -> upstream -> downstream forms a loop.
+
+        Traverses upstream edges from upstream. If downstream is reachable,
+        upstream already depends on downstream.
         """
         visited = set()
-        queue = [downstream]
+        queue = [upstream]
         while queue:
             current = queue.pop(0)
-            if current is upstream:
+            if current is downstream:
                 return True
             if id(current) in visited:
                 continue

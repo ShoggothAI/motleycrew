@@ -75,11 +75,36 @@ class MotleyCrew:
             upstream: The upstream task.
             downstream: The downstream task.
         """
+        if self._would_create_cycle(upstream, downstream):
+            from motleycrew.common.exceptions import TaskDependencyCycleError
+            raise TaskDependencyCycleError(
+                f"Adding dependency {upstream.name} -> {downstream.name} would create a cycle"
+            )
         self.graph_store.create_relation(
             upstream.node, downstream.node, label=Task.TASK_IS_UPSTREAM_LABEL
         )
-        # TODO: check cyclical dependencies; rollback if bad?
-        # self.check_cyclical_dependencies()
+
+    def _would_create_cycle(self, upstream: Task, downstream: Task) -> bool:
+        """Check if adding upstream -> downstream would create a cycle.
+
+        Adding upstream -> downstream means downstream will depend on upstream.
+        A cycle exists if upstream already depends on downstream (transitively),
+        because then downstream -> ... -> upstream -> downstream forms a loop.
+
+        Traverses upstream edges from upstream. If downstream is reachable,
+        upstream already depends on downstream.
+        """
+        visited = set()
+        queue = [upstream]
+        while queue:
+            current = queue.pop(0)
+            if current is downstream:
+                return True
+            if id(current) in visited:
+                continue
+            visited.add(id(current))
+            queue.extend(current.get_upstream_tasks())
+        return False
 
     def register_tasks(self, tasks: Collection[Task]):
         """Insert tasks into the crew's graph store.

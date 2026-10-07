@@ -4,9 +4,9 @@ from pathlib import Path
 from typing import List, Optional, Sequence
 
 from dotenv import load_dotenv
-from langchain.agents import AgentExecutor
-from langchain.agents.format_scratchpad.tools import format_to_tool_messages
-from langchain.agents.output_parsers.tools import ToolsAgentOutputParser
+from langchain_classic.agents import AgentExecutor
+from langchain_classic.agents.format_scratchpad.tools import format_to_tool_messages
+from langchain_classic.agents.output_parsers.tools import ToolsAgentOutputParser
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder

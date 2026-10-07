@@ -1,6 +1,6 @@
 from typing import Optional
 
-from langchain.prompts import PromptTemplate
+from langchain_core.prompts import PromptTemplate
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.prompts.base import BasePromptTemplate
 from langchain_core.runnables import RunnableLambda, RunnablePassthrough, chain

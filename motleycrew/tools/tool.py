@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from time import sleep
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
-from langchain.tools import BaseTool, StructuredTool
+from langchain_core.tools import BaseTool, StructuredTool, Tool
 from langchain_core.runnables import Runnable, RunnableConfig
 from pydantic import BaseModel, ValidationError
 
@@ -344,7 +344,14 @@ class MotleyTool(Runnable):
             return_direct = True
             llama_index_tool.metadata.return_direct = False
 
-        langchain_tool = llama_index_tool.to_langchain_tool()
+        # LlamaIndex's to_langchain_tool() imports a bridge that breaks with langchain-community>=0.4.
+        langchain_tool = Tool.from_function(
+            func=getattr(llama_index_tool, "fn", llama_index_tool.__call__),
+            coroutine=getattr(llama_index_tool, "async_fn", None),
+            name=llama_index_tool.metadata.name or "",
+            description=llama_index_tool.metadata.description,
+            args_schema=llama_index_tool.metadata.fn_schema,
+        )
         return MotleyTool.from_langchain_tool(
             langchain_tool=langchain_tool,
             return_direct=return_direct,

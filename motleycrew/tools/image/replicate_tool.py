@@ -1,6 +1,6 @@
 from typing import List, Optional, Type
 
-from langchain.agents import Tool
+from langchain_core.tools import Tool
 from pydantic import BaseModel, Field
 
 import motleycrew.common.utils as motley_utils

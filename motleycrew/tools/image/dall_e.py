@@ -1,7 +1,7 @@
 from typing import List, Optional, Type
 
-from langchain.agents import Tool
-from langchain.prompts import PromptTemplate
+from langchain_core.tools import Tool
+from langchain_core.prompts import PromptTemplate
 from langchain_community.utilities.dalle_image_generator import DallEAPIWrapper
 from pydantic import BaseModel, Field
 

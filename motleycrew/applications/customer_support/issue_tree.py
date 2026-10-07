@@ -4,7 +4,7 @@ import shutil
 from pathlib import Path
 
 import pandas
-from langchain.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel
 
 from motleycrew.common.llms import LLMFramework, init_llm

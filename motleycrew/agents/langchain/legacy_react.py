@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Optional, Sequence
 
-from langchain.agents import AgentExecutor, create_react_agent
+from langchain_classic.agents import AgentExecutor, create_react_agent
 from langchain_core.callbacks import StdOutCallbackHandler
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.prompts import PromptTemplate

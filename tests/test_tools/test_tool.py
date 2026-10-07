@@ -1,5 +1,5 @@
 import pytest
-from langchain.tools import BaseTool
+from langchain_core.tools import BaseTool
 from pydantic import BaseModel, Field
 
 try:
@@ -32,7 +32,7 @@ def mock_input():
 
 @pytest.fixture
 def langchain_tool(mock_tool_args_schema):
-    from langchain.tools import Tool
+    from langchain_core.tools import Tool
 
     return Tool.from_function(
         func=mock_tool_function,

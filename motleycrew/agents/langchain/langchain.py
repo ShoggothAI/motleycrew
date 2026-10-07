@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 from typing import Any, List, Optional, Sequence, Union
 
-from langchain.agents import AgentExecutor
+from langchain_classic.agents import AgentExecutor
 from langchain_core.chat_history import InMemoryChatMessageHistory
 from langchain_core.messages import BaseMessage
 from langchain_core.prompts.chat import ChatPromptTemplate
@@ -239,7 +239,7 @@ class LangchainMotleyAgent(MotleyAgentParent, LangchainOutputHandlingAgentMixin)
         runnable_config: RunnableConfig | None = None,
         verbose: bool = False,
     ) -> "LangchainMotleyAgent":
-        """Create a LangchainMotleyAgent from a :class:`langchain.agents.AgentExecutor` instance.
+        """Create a LangchainMotleyAgent from a :class:`langchain_classic.agents.AgentExecutor` instance.
 
         Using this method, you can wrap an existing AgentExecutor
         without providing a factory function.

@@ -1,5 +1,5 @@
 from dotenv import load_dotenv
-from langchain.schema import HumanMessage, SystemMessage
+from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.prompts.chat import ChatPromptTemplate
 
 from motleycrew import MotleyCrew, Task

@@ -9,7 +9,7 @@ except ImportError:
     Coder = None
     Model = None
 
-from langchain.tools import Tool
+from langchain_core.tools import Tool
 from pydantic import BaseModel, Field
 
 from motleycrew.common import Defaults

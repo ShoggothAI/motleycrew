@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Union, Optional, Protocol, TypeVar
 
 if TYPE_CHECKING:
-    from langchain.tools import BaseTool
+    from langchain_core.tools import BaseTool
 
     try:
         from llama_index.core.tools import BaseTool as LlamaIndex__BaseTool
